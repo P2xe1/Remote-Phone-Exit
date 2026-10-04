@@ -3677,7 +3677,7 @@ rules:
 
             // ==========================================================
             // 【2026-10-04 新增】顶栏"接入设备 / 接入网络"真值
-            //   原来写死 "${DEVICE_NAME} · U MOBILE 5G"。真机确实是 ${DEVICE_NAME}
+            //   原来写死 "${DEVICE_NAME} · ${CARRIER} 5G"。真机确实是 ${DEVICE_NAME}
             //   (getprop: brand=${DEVICE_BRAND} model=${DEVICE_MODEL} device=${DEVICE_CODENAME}), 但运营商并非 ${CARRIER}
             //   (SIM 是 CelcomDigi / Maxis), 且页面实际走 WiFi。所以改为按上报值显示,
             //   没有对应字段就显示 --, 不写死。
