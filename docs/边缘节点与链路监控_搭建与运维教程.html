@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>边缘节点与链路监控 · 搭建与运维教程（用户端 / 服务端）</title>
+<style>
+  :root{
+    --bg:#0b0d10; --panel:#12151a; --panel-2:#171b21; --line:#232833;
+    --tx:#e6e9ef; --tx-2:#a8b0bf; --tx-3:#6f7889;
+    --ok:#4ade80; --warn:#fbbf24; --bad:#f87171; --info:#60a5fa; --accent:#7c9cff;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+    --r:12px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--bg);color:var(--tx);
+    font:15px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    -webkit-text-size-adjust:100%;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:34px 18px 90px}
+  header.hero{
+    border:1px solid var(--line);border-radius:var(--r);
+    background:linear-gradient(180deg,#141922,#0e1116);
+    padding:26px 24px;margin-bottom:22px;
+  }
+  header.hero .kicker{color:var(--accent);font:600 12px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase}
+  header.hero h1{margin:10px 0 8px;font-size:clamp(21px,3.4vw,30px);line-height:1.3}
+  header.hero p{margin:0;color:var(--tx-2);font-size:14px}
+  header.hero .meta{margin-top:14px;display:flex;flex-wrap:wrap;gap:8px}
+  .chip{
+    border:1px solid var(--line);background:#0f1319;border-radius:999px;
+    padding:3px 10px;font:12px/1.6 var(--mono);color:var(--tx-2)
+  }
+  .note{
+    border-left:3px solid var(--info);background:#0f1622;border-radius:0 8px 8px 0;
+    padding:12px 14px;margin:16px 0;color:var(--tx-2);font-size:14px
+  }
+  .note.warn{border-left-color:var(--warn);background:#1e1708}
+  .note.bad{border-left-color:var(--bad);background:#1f1212}
+  .note.ok{border-left-color:var(--ok);background:#0e1a13}
+  .note b{color:var(--tx)}
+  nav.toc{
+    border:1px solid var(--line);border-radius:var(--r);background:var(--panel);
+    padding:16px 18px;margin-bottom:26px
+  }
+  nav.toc h2{margin:0 0 10px;font-size:14px;color:var(--tx-3);letter-spacing:.08em;text-transform:uppercase}
+  nav.toc ol{margin:0;padding-left:22px;columns:2;column-gap:26px}
+  nav.toc li{margin:3px 0;font-size:14px}
+  nav.toc a{color:var(--tx-2);text-decoration:none;border-bottom:1px dashed #2b3240}
+  nav.toc a:hover{color:#fff;border-bottom-color:var(--accent)}
+  @media(max-width:700px){nav.toc ol{columns:1}}
+  section{
+    border:1px solid var(--line);border-radius:var(--r);background:var(--panel);
+    padding:22px 22px 8px;margin:0 0 20px
+  }
+  section > h2{
+    margin:0 0 6px;font-size:20px;line-height:1.35;
+    display:flex;align-items:baseline;gap:10px;flex-wrap:wrap
+  }
+  section > h2 .no{
+    font:700 12px/1 var(--mono);color:#0b0d10;background:var(--accent);
+    border-radius:6px;padding:5px 8px;flex:none
+  }
+  section > h2 + p.lead{margin:2px 0 16px;color:var(--tx-2);font-size:14px}
+  h3{margin:22px 0 8px;font-size:16px}
+  h4{margin:16px 0 6px;font-size:14px;color:var(--tx-2)}
+  p{margin:9px 0}
+  ul,ol{margin:9px 0;padding-left:22px}
+  li{margin:4px 0}
+  code{font-family:var(--mono);font-size:13px;background:#0d1015;border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:#cfe0ff}
+  pre{
+    background:#0a0c10;border:1px solid var(--line);border-radius:10px;
+    padding:13px 14px;overflow-x:auto;margin:12px 0
+  }
+  pre code{background:none;border:0;padding:0;color:#cbd5e1;font-size:12.5px;line-height:1.7}
+  .tablewrap{overflow-x:auto;margin:12px 0;-webkit-overflow-scrolling:touch}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:460px;max-width:100%}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:#0f1319;color:var(--tx-2);font-weight:600;white-space:nowrap}
+  td code{font-size:12.5px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
+  .box{border:1px solid var(--line);border-radius:10px;background:var(--panel-2);padding:14px}
+  .box h4{margin:0 0 8px;color:var(--tx);font-size:13.5px}
+  .box.us{border-color:#1f3a5c}
+  .box.sv{border-color:#3a2f1f}
+  .tag{font:11px/1.6 var(--mono);border-radius:999px;padding:2px 8px;border:1px solid var(--line);color:var(--tx-2)}
+  .tag.ok{color:var(--ok);border-color:#1d3a29}
+  .tag.bad{color:var(--bad);border-color:#3a1f1f}
+  .tag.warn{color:var(--warn);border-color:#3a3320}
+  figure{margin:16px 0;border:1px solid var(--line);border-radius:10px;background:#0a0c10;padding:12px}
+  figure svg{display:block;width:100%;height:auto}
+  figcaption{margin-top:9px;color:var(--tx-3);font-size:12.5px;text-align:center}
+  .steps{counter-reset:s;list-style:none;padding-left:0;margin:14px 0}
+  .steps > li{
+    counter-increment:s;position:relative;padding:12px 14px 12px 52px;
+    border:1px solid var(--line);border-radius:10px;background:var(--panel-2);margin:10px 0
+  }
+  .steps > li::before{
+    content:counter(s);position:absolute;left:13px;top:12px;
+    width:26px;height:26px;border-radius:8px;background:#0f1319;border:1px solid var(--line);
+    color:var(--accent);font:700 12px/26px var(--mono);text-align:center
+  }
+  .steps > li .why{
+    display:block;margin-top:7px;padding-top:7px;border-top:1px dashed #232833;
+    color:var(--tx-3);font-size:13px
+  }
+  .steps > li .why b{color:var(--tx-2)}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:13.5px;margin:8px 0}
+  .kv dt{color:var(--tx-3);font-family:var(--mono);white-space:nowrap}
+  .kv dd{margin:0}
+  footer{color:var(--tx-3);font-size:12.5px;text-align:center;margin-top:30px;line-height:1.9}
+  .anchor{position:relative;top:-14px;display:block;height:0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div class="kicker">Field Manual · 从零到可运维</div>
+  <h1>边缘节点与链路监控 · 完整搭建与运维教程</h1>
+  <p>一条「客户端 → Cloudflare 边缘 → 加密隧道 → 住宅网络 → 公网」的真实链路，怎么设计、怎么搭、怎么维护、怎么排错。全文分<b>用户端</b>与<b>服务端</b>两侧，每一步都说明<b>要做什么</b>和<b>这一步到底在解决什么问题</b>。</p>
+  <div class="meta">
+    <span class="chip">用户端：订阅 · 导入 · 优选</span>
+    <span class="chip">服务端：边缘 Worker · 住宅节点 · 监控大屏</span>
+    <span class="chip">文中所有 IP / 域名 / 密钥均为占位示例</span>
+  </div>
+  <div class="note">
+    <b>阅读方式：</b>只想把客户端跑起来 → 直接看 <a href="#c5" style="color:var(--accent)">第 5 章（用户端）</a>；
+    要自己搭一套 → 按 <a href="#c3" style="color:var(--accent)">第 3 章（服务端）</a> 顺序做；
+    已经在跑但总出问题 → 看 <a href="#c10" style="color:var(--accent)">第 10 章（排错）</a> 和 <a href="#c9" style="color:var(--accent)">第 9 章（数据流）</a>。
+  </div>
+</header>
+
+<nav class="toc">
+  <h2>目录</h2>
+  <ol>
+    <li><a href="#c1">这套系统到底是什么</a></li>
+    <li><a href="#c2">整体架构与数据全景</a></li>
+    <li><a href="#c3">服务端 · 六步搭建</a></li>
+    <li><a href="#c4">协议与参数：为什么必须是这一套</a></li>
+    <li><a href="#c5">用户端 · 五分钟接入</a></li>
+    <li><a href="#c6">优选 IP：用户端唯一需要动手的调优</a></li>
+    <li><a href="#c7">服务端 · 节点矩阵与订阅分发</a></li>
+    <li><a href="#c8">服务端 · 监控：五条采集链路</a></li>
+    <li><a href="#c9">数据流全解析：手机 → Worker → 大屏</a></li>
+    <li><a href="#c10">状态三层与指令通道</a></li>
+    <li><a href="#c11">大屏：渲染工程学与自愈</a></li>
+    <li><a href="#c12">排错手册（按现象查）</a></li>
+    <li><a href="#c13">命令速查与检查清单</a></li>
+    <li><a href="#c14">附录：文件地图 · 约定 · 设计约束</a></li>
+  </ol>
+</nav>
+
+<!-- ============================================================ -->
+<section id="c1">
+  <span class="anchor" id="c1a"></span>
+  <h2><span class="no">01</span>这套系统到底是什么</h2>
+  <p class="lead">先用一句话说清楚它的价值，后面所有设计取舍都是从这句话推导出来的。</p>
+
+  <p><b>它把一台放在海外家里的手机，变成一条可以被远端客户端使用的、出口 IP 属于当地住宅宽带的网络通道。</b></p>
+
+  <p>为什么这件事有价值？因为互联网上大量服务会对「来源 IP 的类型」区别对待：机房 IP（云服务器）容易被风控、被限流、被判定为数据中心流量；而住宅宽带 IP 在各类风控模型里天然更"干净"。传统的机房代理做不到这一点，因为它的出口就是数据中心。</p>
+
+  <p>所以整套系统的技术目标非常明确：<b>让客户端的流量，最终从一个真实的家庭宽带的公网 IP 出去。</b>围绕这个目标，才衍生出后面所有的设计：</p>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>目标</th><th>由此产生的要求</th></tr></thead>
+    <tbody>
+      <tr><td>出口必须是住宅 IP</td><td>不能买云服务器做出入口，必须有一台真实接入家庭宽带的设备常驻运行</td></tr>
+      <tr><td>设备在别人家里，无人值守</td><td>必须能自愈、能远程诊断、能远程重启，不能靠"去现场重启一下"</td></tr>
+      <tr><td>客户端在国内，直连海外会被干扰</td><td>必须借一层全球任播网络（Cloudflare）做前置，并把流量伪装成正常的 HTTPS 访问</td></tr>
+      <tr><td>家庭上行带宽有限、要省电</td><td>所有探测/心跳频率必须精打细算，能合并的上报必须合并</td></tr>
+      <tr><td>运维要能看见"此刻到底通不通"</td><td>必须有一块能实时反映链路每个环节的监控面板</td></tr>
+      <tr><td>数据不能造假</td><td>测不到就显示"未测到"，宁可留空也不填数字</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note ok">
+    <b>本教程的边界：</b>只讲<b>用户端</b>（拿订阅、导入、连通、调优）和<b>服务端</b>（边缘 Worker、住宅节点、采集脚本、监控大屏）。
+    把它当作一条<b>工程链路</b>来拆解——每一层的职责、参数的含义、失败时怎么判断。
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="c2">
+  <span class="anchor" id="c2a"></span>
+  <h2><span class="no">02</span>整体架构与数据全景</h2>
+  <p class="lead">两个方向的数据流，是理解这套系统的钥匙：一条是"用户的流量"，一条是"监控的遥测"。</p>
+
+  <figure>
+    <svg viewBox="0 0 1000 420" role="img" aria-label="整体架构图">
+      <defs>
+        <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 z" fill="#7c9cff"/>
+        </marker>
+        <marker id="ar2" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 z" fill="#4ade80"/>
+        </marker>
+      </defs>
+      <rect x="0" y="0" width="1000" height="420" fill="#0a0c10"/>
+
+      <!-- 用户侧 -->
+      <rect x="24" y="120" width="176" height="128" rx="10" fill="#111722" stroke="#2a3648"/>
+      <text x="112" y="150" fill="#e6e9ef" font-size="14" font-weight="700" text-anchor="middle">用户端</text>
+      <text x="112" y="173" fill="#a8b0bf" font-size="11.5" text-anchor="middle">电脑 / 手机 / 路由器</text>
+      <text x="112" y="193" fill="#a8b0bf" font-size="11.5" text-anchor="middle">Clash / v2rayN / sing-box</text>
+      <text x="112" y="218" fill="#7c9cff" font-size="11.5" text-anchor="middle" font-family="monospace">订阅 URL + 优选 IP</text>
+      <text x="112" y="236" fill="#6f7889" font-size="10.5" text-anchor="middle">出口协议：VLESS + xhttp + TLS</text>
+
+      <!-- Cloudflare -->
+      <rect x="256" y="86" width="212" height="196" rx="10" fill="#141b26" stroke="#33507d"/>
+      <text x="362" y="114" fill="#e6e9ef" font-size="14" font-weight="700" text-anchor="middle">Cloudflare 全球任播</text>
+      <text x="362" y="134" fill="#a8b0bf" font-size="11.5" text-anchor="middle">边缘节点（就近接入）</text>
+      <rect x="276" y="148" width="172" height="52" rx="7" fill="#0e1621" stroke="#2a3648"/>
+      <text x="362" y="168" fill="#cfe0ff" font-size="11.5" text-anchor="middle" font-family="monospace">Worker（边缘计算）</text>
+      <text x="362" y="187" fill="#6f7889" font-size="10.5" text-anchor="middle">订阅下发 / 遥测聚合 / 大屏</text>
+      <rect x="276" y="210" width="172" height="52" rx="7" fill="#0e1621" stroke="#2a3648"/>
+      <text x="362" y="230" fill="#cfe0ff" font-size="11.5" text-anchor="middle" font-family="monospace">Argo 智能路由</text>
+      <text x="362" y="249" fill="#6f7889" font-size="10.5" text-anchor="middle">出站隧道（免开端口）</text>
+
+      <!-- 住宅节点 -->
+      <rect x="548" y="86" width="204" height="196" rx="10" fill="#171a12" stroke="#4a4426"/>
+      <text x="650" y="114" fill="#e6e9ef" font-size="14" font-weight="700" text-anchor="middle">住宅节点（服务端）</text>
+      <text x="650" y="134" fill="#a8b0bf" font-size="11.5" text-anchor="middle">常驻手机 / 小主机</text>
+      <rect x="566" y="148" width="168" height="40" rx="7" fill="#0f1310" stroke="#2a3648"/>
+      <text x="650" y="173" fill="#cfe0ff" font-size="11.5" text-anchor="middle" font-family="monospace">Xray（入站 + 出站）</text>
+      <rect x="566" y="196" width="168" height="40" rx="7" fill="#0f1310" stroke="#2a3648"/>
+      <text x="650" y="221" fill="#cfe0ff" font-size="11.5" text-anchor="middle" font-family="monospace">cloudflared（隧道）</text>
+      <text x="650" y="258" fill="#6f7889" font-size="10.5" text-anchor="middle">5 个采集脚本 + 看门狗</text>
+
+      <!-- 公网 -->
+      <rect x="830" y="120" width="146" height="128" rx="10" fill="#101418" stroke="#2a3648"/>
+      <text x="903" y="152" fill="#e6e9ef" font-size="14" font-weight="700" text-anchor="middle">公网</text>
+      <text x="903" y="176" fill="#a8b0bf" font-size="11.5" text-anchor="middle">目标网站</text>
+      <text x="903" y="200" fill="#4ade80" font-size="11.5" text-anchor="middle" font-family="monospace">出口 = 住宅宽带 IP</text>
+      <text x="903" y="224" fill="#6f7889" font-size="10.5" text-anchor="middle">这是整条链路的产物</text>
+
+      <!-- 流量箭头 -->
+      <line x1="200" y1="184" x2="252" y2="184" stroke="#7c9cff" stroke-width="2" marker-end="url(#ar)"/>
+      <text x="226" y="176" fill="#7c9cff" font-size="10.5" text-anchor="middle" font-family="monospace">HTTPS</text>
+      <line x1="468" y1="184" x2="544" y2="184" stroke="#7c9cff" stroke-width="2" marker-end="url(#ar)"/>
+      <text x="506" y="176" fill="#7c9cff" font-size="10.5" text-anchor="middle" font-family="monospace">隧道</text>
+      <line x1="752" y1="184" x2="826" y2="184" stroke="#7c9cff" stroke-width="2" marker-end="url(#ar)"/>
+      <text x="789" y="176" fill="#7c9cff" font-size="10.5" text-anchor="middle" font-family="monospace">NAT</text>
+
+      <!-- 遥测回路 -->
+      <path d="M650,282 C650,352 400,368 200,340 C140,327 118,300 112,254"
+            fill="none" stroke="#4ade80" stroke-width="1.6" stroke-dasharray="6 5" marker-end="url(#ar2)"/>
+      <text x="430" y="366" fill="#4ade80" font-size="11.5" text-anchor="middle" font-family="monospace">
+        遥测回路：节点每 ~6 秒主动上报 → Worker 聚合 → 浏览器长轮询取回
+      </text>
+    </svg>
+    <figcaption>图 1 · 双向数据流：紫色是用户流量路径，绿色是监控遥测路径。两条路共用同一条隧道，但方向相反。</figcaption>
+  </figure>
+
+  <h3>两条流的分工</h3>
+  <div class="grid2">
+    <div class="box us">
+      <h4>① 用户流量（客户端 → 公网）</h4>
+      <ul>
+        <li>客户端把流量封装成<b>看起来像访问某个域名的 HTTPS</b></li>
+        <li>Cloudflare 任播把请求落到<b>离客户端最近的边缘机房</b></li>
+        <li>边缘通过<b>已建立的反向隧道</b>把流量送回住宅节点</li>
+        <li>住宅节点的代理核心解密后，用<b>家庭宽带的公网 IP</b> 访问目标</li>
+      </ul>
+    </div>
+    <div class="box sv">
+      <h4>② 监控遥测（节点 → 大屏）</h4>
+      <ul>
+        <li>节点上的采集脚本周期性测量<b>各环节的时延、丢包、落点</b></li>
+        <li>每轮把结果<b>合并成一个包</b>主动上报给边缘 Worker</li>
+        <li>Worker 把最新快照存在边缘内存/缓存里</li>
+        <li>浏览器用<b>长轮询</b>取回，秒级刷新大屏</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>为什么遥测要"节点主动推"而不是"大屏去拉"？</b>
+    因为住宅节点在 NAT 后面，没有公网入口，外部无法主动连它；而它主动出去的连接是通的。整条链路能成立，靠的就是这个方向性——所有的"远程控制"都必须搭在"节点主动上报"这趟车上（见 <a href="#c10" style="color:var(--accent)">第 10 章 指令通道</a>）。
+  </div>
+
+  <h3>角色与职责速查</h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>角色</th><th>它负责什么</th><th>它不负责什么</th><th>挂了会怎样</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>用户端客户端</b><br><span class="tag">用户侧</span></td>
+        <td>把本机流量封装、按规则分流、发送到优选 IP</td>
+        <td>不做任何测量与上报</td>
+        <td>只有这一个用户断，其他人不受影响</td>
+      </tr>
+      <tr>
+        <td><b>Cloudflare 边缘</b><br><span class="tag">服务端</span></td>
+        <td>就近接入、伪装成正常站点、Worker 计算、隧道中转</td>
+        <td>不存储用户的浏览内容</td>
+        <td>大面积不可用（系统级故障）</td>
+      </tr>
+      <tr>
+        <td><b>住宅节点</b><br><span class="tag">服务端</span></td>
+        <td>代理核心、隧道客户端、全部采集脚本</td>
+        <td>不主动向外发起控制类请求</td>
+        <td>全员断网 + 大屏数据冻结（最关键的单点）</td>
+      </tr>
+      <tr>
+        <td><b>监控大屏</b><br><span class="tag">服务端</span></td>
+        <td>把边缘上的快照渲染成人能看懂的状态</td>
+        <td>不参与转发，删掉也不影响用户上网</td>
+        <td>只是"看不见"，链路照常工作</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="c3">
+  <span class="anchor" id="c3a"></span>
+  <h2><span class="no">03</span>服务端 · 六步搭建</h2>
+  <p class="lead">从一台能上网的设备，到一条可运维的出口链路，总共六步。每一步都先讲"做什么"，再讲"为什么必须这样"。</p>
+
+  <figure>
+    <svg viewBox="0 0 1000 250" role="img" aria-label="六步搭建流程">
+      <rect width="1000" height="250" fill="#0a0c10"/>
+      <g font-family="monospace" font-size="11.5">
+        <!-- 节点 -->
+        <g>
+          <rect x="18" y="70" width="142" height="110" rx="9" fill="#111722" stroke="#33507d"/>
+          <text x="89" y="94" fill="#7c9cff" font-size="12" font-weight="700" text-anchor="middle">① 准备住宅节点</text>
+          <text x="89" y="118" fill="#a8b0bf" font-size="10.5" text-anchor="middle">常驻设备</text>
+          <text x="89" y="136" fill="#a8b0bf" font-size="10.5" text-anchor="middle">固定内网地址</text>
+          <text x="89" y="154" fill="#a8b0bf" font-size="10.5" text-anchor="middle">关省电策略</text>
+          <text x="89" y="170" fill="#6f7889" font-size="10" text-anchor="middle">解决"在场"</text>
+        </g>
+        <g>
+          <rect x="178" y="70" width="142" height="110" rx="9" fill="#111722" stroke="#33507d"/>
+          <text x="249" y="94" fill="#7c9cff" font-size="12" font-weight="700" text-anchor="middle">② 装代理核心</text>
+          <text x="249" y="118" fill="#a8b0bf" font-size="10.5" text-anchor="middle">入站：伪装协议</text>
+          <text x="249" y="136" fill="#a8b0bf" font-size="10.5" text-anchor="middle">出站：直连公网</text>
+          <text x="249" y="154" fill="#a8b0bf" font-size="10.5" text-anchor="middle">本地统计接口</text>
+          <text x="249" y="170" fill="#6f7889" font-size="10" text-anchor="middle">解决"出口"</text>
+        </g>
+        <g>
+          <rect x="338" y="70" width="142" height="110" rx="9" fill="#111722" stroke="#33507d"/>
+          <text x="409" y="94" fill="#7c9cff" font-size="12" font-weight="700" text-anchor="middle">③ 建隧道</text>
+          <text x="409" y="118" fill="#a8b0bf" font-size="10.5" text-anchor="middle">反向连接边缘</text>
+          <text x="409" y="136" fill="#a8b0bf" font-size="10.5" text-anchor="middle">免公网入口</text>
+          <text x="409" y="154" fill="#a8b0bf" font-size="10.5" text-anchor="middle">免证书维护</text>
+          <text x="409" y="170" fill="#6f7889" font-size="10" text-anchor="middle">解决"可达"</text>
+        </g>
+        <g>
+          <rect x="498" y="70" width="142" height="110" rx="9" fill="#111722" stroke="#33507d"/>
+          <text x="569" y="94" fill="#7c9cff" font-size="12" font-weight="700" text-anchor="middle">④ 部署 Worker</text>
+          <text x="569" y="118" fill="#a8b0bf" font-size="10.5" text-anchor="middle">订阅下发</text>
+          <text x="569" y="136" fill="#a8b0bf" font-size="10.5" text-anchor="middle">遥测聚合</text>
+          <text x="569" y="154" fill="#a8b0bf" font-size="10.5" text-anchor="middle">监控大屏</text>
+          <text x="569" y="170" fill="#6f7889" font-size="10" text-anchor="middle">解决"分发与可视"</text>
+        </g>
+        <g>
+          <rect x="658" y="70" width="142" height="110" rx="9" fill="#111722" stroke="#33507d"/>
+          <text x="729" y="94" fill="#7c9cff" font-size="12" font-weight="700" text-anchor="middle">⑤ 上采集脚本</text>
+          <text x="729" y="118" fill="#a8b0bf" font-size="10.5" text-anchor="middle">看门狗 + 上报</text>
+          <text x="729" y="136" fill="#a8b0bf" font-size="10.5" text-anchor="middle">区域/边缘/节点探测</text>
+          <text x="729" y="154" fill="#a8b0bf" font-size="10.5" text-anchor="middle">单实例锁</text>
+          <text x="729" y="170" fill="#6f7889" font-size="10" text-anchor="middle">解决"自愈与观测"</text>
+        </g>
+        <g>
+          <rect x="818" y="70" width="164" height="110" rx="9" fill="#171a12" stroke="#4a4426"/>
+          <text x="900" y="94" fill="#4ade80" font-size="12" font-weight="700" text-anchor="middle">⑥ 维护用户库</text>
+          <text x="900" y="118" fill="#a8b0bf" font-size="10.5" text-anchor="middle">发订阅、停用、回收</text>
+          <text x="900" y="136" fill="#a8b0bf" font-size="10.5" text-anchor="middle">只在变更时落盘</text>
+          <text x="900" y="154" fill="#a8b0bf" font-size="10.5" text-anchor="middle">变更有据可查</text>
+          <text x="900" y="170" fill="#6f7889" font-size="10" text-anchor="middle">解决"谁能用"</text>
+        </g>
+        <!-- 连接线 -->
+        <g stroke="#2a3648" stroke-width="1.6">
+          <line x1="160" y1="125" x2="176" y2="125" marker-end="url(#ar)"/>
+          <line x1="320" y1="125" x2="336" y2="125" marker-end="url(#ar)"/>
+          <line x1="480" y1="125" x2="496" y2="125" marker-end="url(#ar)"/>
+          <line x1="640" y1="125" x2="656" y2="125" marker-end="url(#ar)"/>
+          <line x1="800" y1="125" x2="816" y2="125" marker-end="url(#ar)"/>
+        </g>
+        <text x="500" y="36" fill="#6f7889" font-size="11" text-anchor="middle">顺序不能颠倒：后一步都依赖前一步已经能跑</text>
+        <text x="500" y="214" fill="#a8b0bf" font-size="11" text-anchor="middle">① ② ③ 在住宅节点上完成 · ④ 在 Cloudflare 上完成 · ⑤ 回到节点 · ⑥ 日常运维</text>
+      </g>
+    </svg>
+    <figcaption>图 2 · 六步搭建顺序。前三步解决"这条链路能不能成立"，后三步解决"能不能被分发、被看见、被管理"。</figcaption>
+  </figure>
+
+  <h3>步骤 ① 准备住宅节点</h3>
+  <ol class="steps">
+    <li>选一台<b>长期通电、接入家庭宽带</b>的设备（旧手机 / 迷你主机 / 软路由都行），确认它的公网出口就是家庭宽带 IP。
+      <span class="why"><b>为什么：</b>出口 IP 的归属由这一台设备决定，选错设备后面全白做。可以用一条命令验证：<code>curl -s https://www.cloudflare.com/cdn-cgi/trace</code> 看返回里的 <code>loc</code> 与 <code>ip</code> 字段，确认地理位置与运营商归属符合预期。</span>
+    </li>
+    <li>把它<b>固定在内网的一个地址上</b>（路由器的 DHCP 静态绑定），并确认内网地址不会因为重连而变。
+      <span class="why"><b>为什么：</b>所有采集脚本、隧道配置、远程诊断命令都写死了内网地址；地址一变，隧道断开、脚本失联，而你人不在现场。</span>
+    </li>
+    <li>关掉会"杀掉后台进程"的系统策略：省电模式、后台限制、自动清理内存。
+      <span class="why"><b>为什么：</b>这套东西要靠常驻进程活着。系统一睡，隧道就断——表现就是"所有人同时上不了网，大屏数据也冻结"。这是住宅节点方案最高频的故障源。</span>
+    </li>
+    <li>准备一个可以远程操作它的通道（同网段的跳板机 / 局域网的 SSH / 调试桥）。
+      <span class="why"><b>为什么：</b>节点在别人家里。没有远程通道，任何"改一个参数"都要变成"上门一次"。</span>
+    </li>
+  </ol>
+
+  <h3>步骤 ② 在节点上安装代理核心</h3>
+  <p>代理核心是这条链路的"发动机"，它同时要做两件事：<b>接住从隧道进来的流量</b>，和<b>把流量从家庭宽带发出去</b>。</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>配置块</th><th>作用</th><th>要点</th></tr></thead>
+    <tbody>
+      <tr><td><code>inbounds</code> 入站</td><td>接收隧道送来的流量</td><td>监听本机端口，协议与客户端一致；按路径拆分成多个入口（见第 4 章）</td></tr>
+      <tr><td><code>outbounds</code> 出站</td><td>把流量发往目标</td><td>默认 <code>freedom</code> 直连——<b>这一条决定了"出口是住宅 IP"</b></td></tr>
+      <tr><td><code>stats</code> / <code>api</code> 统计</td><td>让采集脚本能读到实时流量</td><td>开一个只监听 <code>127.0.0.1</code> 的统计端口；<b>绝不能暴露到公网</b></td></tr>
+      <tr><td><code>log</code> 日志</td><td>审计与排错</td><td>必须开访问日志——流量统计与访问域名统计都是从日志里解析出来的</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="note warn">
+    <b>两个必须守住的纪律：</b>
+    ① 统计接口只绑 <code>127.0.0.1</code>，对外一律不开；② 日志要轮转，否则长时间运行会把磁盘写满——磁盘一满，隧道与代理会一起挂。
+  </div>
+
+  <h3>步骤 ③ 建立隧道（让流量能"回到"节点）</h3>
+  <ol class="steps">
+    <li>在 Cloudflare 侧创建一个命名隧道，拿到一串隧道凭据。
+      <span class="why"><b>为什么：</b>家庭宽带没有公网入口（运营商 NAT），也没法做端口映射。反向隧道让节点主动连出去、由 Cloudflare 记住这条连接，外部流量就能顺着这条已建立的连接回来——<b>不需要任何入站端口</b>。</span>
+    </li>
+    <li>用凭据在节点上启动隧道客户端，并把它配成常驻服务。
+      <span class="why"><b>为什么：</b>隧道是唯一的"回程路"。它断了，用户的代理就全部超时（而监控上报也会一起断，大屏会显示"数据冻结"）。</span>
+    </li>
+    <li>把隧道的入站指向代理核心监听的那个本地端口。
+      <span class="why"><b>为什么：</b>隧道只负责"搬运"，不认识代理协议。真正的鉴权与伪装由代理核心完成——两层各管一段，任何一层换实现都不影响另一层。</span>
+    </li>
+    <li>顺带拿到一个"看起来很正常"的域名与自动证书。
+      <span class="why"><b>为什么：</b>客户端与边缘之间必须是标准 HTTPS：真实域名、有效证书、正常 TLS 指纹。这才是"伪装成正常访问"的基础。</span>
+    </li>
+  </ol>
+
+  <h3>步骤 ④ 部署边缘 Worker</h3>
+  <p>Worker 是这套系统的"前台+控制面"：用户的流量不经过它转发，但<b>订阅分发、遥测聚合、监控页面全在它上面</b>。</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>路由</th><th>方向</th><th>职责</th><th>关键设计</th></tr></thead>
+    <tbody>
+      <tr><td><code>/sub?token=…</code></td><td>用户端 ← 服务端</td><td>按 token 下发节点配置（Clash / v2ray 两种格式）</td><td>未知 token 发临时配置但<b>不入库</b>；展示字段只写缓存不写持久层</td></tr>
+      <tr><td><code>/api/report_traffic</code></td><td>节点 → 服务端</td><td>接收节点每轮上报的遥测</td><td>校验共享密钥；合并策略为<b>逐字段按各自时效合并</b>；响应里回带指令</td></tr>
+      <tr><td><code>/api/live</code></td><td>大屏 ← 服务端</td><td>长轮询：有新数据立刻返回</td><td>比 SSE 兼容性更好；失败重试<b>指数退避</b>，防止打爆配额</td></tr>
+      <tr><td><code>/api/stats_data</code></td><td>大屏 ← 服务端</td><td>全量快照（用户表、流量、历史波形…）</td><td>缓存优先；载荷做减法，避免边缘处理耗时虚高</td></tr>
+      <tr><td><code>/api/manual_scan</code></td><td>大屏 → 节点</td><td>下发"立刻全速扫描一次"的指令</td><td>只允许 POST；写入单键指令，<b>节点确认后才删除</b></td></tr>
+      <tr><td><code>/admin</code></td><td>浏览器</td><td>监控大屏页面本体</td><td>自包含单页；版本号不一致时自动刷新</td></tr>
+      <tr><td><code>/chart.js</code></td><td>浏览器</td><td>图表库本地直出</td><td>内嵌，避免第三方 CDN 抖动影响首屏</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="note">
+    <b>部署纪律（这几条是一次次踩坑换来的）：</b>
+    ① 部署输出<b>绝对不能截断</b>看——曾因只看最后一行，把报错当成成功很久；
+    ② 部署后至少等 <b>20~30 秒</b>再验证线上版本；
+    ③ 判断"是否生效"要比对<b>三处版本号</b>：源码里的、接口返回的、页面内嵌的，三者一致才算成功。
+  </div>
+
+  <h3>步骤 ⑤ 在节点上部署采集脚本</h3>
+  <p>节点要跑的不止代理核心，还有一套"值班系统"。它的五个成员各有分工（详细原理见 <a href="#c8" style="color:var(--accent)">第 8 章</a>）：</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>脚本</th><th>角色</th><th>节奏</th><th>没了会怎样</th></tr></thead>
+    <tbody>
+      <tr><td><code>traffic_daemon</code></td><td>看门狗 + 节拍器</td><td>常驻循环</td><td>没有人保活其它进程，整个值班系统逐步死光</td></tr>
+      <tr><td><code>report_traffic</code></td><td>汇报员：组装并上报遥测</td><td>约 6 秒</td><td>大屏全部数字变成"未测到"</td></tr>
+      <tr><td><code>ping_scheduler</code></td><td>区域测绘员：测各接入点时延/丢包</td><td>60 秒一轮</td><td>时延矩阵空白，质量评分无数据</td></tr>
+      <tr><td><code>edge_probe</code></td><td>边缘探针：测到边缘的单次往返</td><td>15 秒</td><td>时延分布/端到端之和无数据</td></tr>
+      <tr><td><code>node_probe</code></td><td>节点巡检员：逐个探中转节点</td><td>10 秒 1 个</td><td>节点矩阵永远停在"待探测"</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="note bad">
+    <b>三个必须遵守的部署规则：</b>
+    ① <b>改完脚本必须重启进程</b>——脚本是启动时读入内存的，改文件不重启等于没改；
+    ② <b>行尾必须是 LF</b>——CRLF 会让 shell 报语法错误；
+    ③ <b>重启顺序不能错</b>：先杀看门狗（否则它会不断把子进程复活），再杀其余，最后只拉起一个看门狗。
+  </div>
+
+  <h3>步骤 ⑥ 维护用户库（谁能用这条链路）</h3>
+  <ol class="steps">
+    <li>给每个使用者分配一个<b>独立的身份令牌</b>，由令牌派生出属于他的连接标识。
+      <span class="why"><b>为什么：</b>一人一令牌才能做到"停用某个人"而不影响其他人，也才能区分流量归属。<b>令牌与派生标识都不要复用、不要外传</b>。</span>
+    </li>
+    <li>把用户库做成<b>有唯一权威源</b>的数据，其余位置都只是加速缓存。
+      <span class="why"><b>为什么：</b>边缘网络是分布式的，"内存里的列表"在不同机房是不同副本。曾经出现过同一份名单在两个入口显示不同人数、甚至同一个人重复两行——根因就是"没有权威源"（详见 <a href="#c10" style="color:var(--accent)">第 10 章</a>）。</span>
+    </li>
+    <li>把"写"限制在<b>极少的几个动作</b>上：新增、停用、删除、节点回推。日常的每一次"打开页面""拉订阅"都不应该产生写操作。
+      <span class="why"><b>为什么：</b>免费额度的写入配额是按天算的，而读取和上报是高频的。把高频路径上的写全部去掉，是这套系统能长期稳定运行的根基（见 <a href="#c14" style="color:var(--accent)">附录·设计约束</a>）。</span>
+    </li>
+    <li>保留一个"<b>强制同步</b>"的手动入口，用于主人库与边缘不一致时人工对齐。
+      <span class="why"><b>为什么：</b>自动化总有对不上的时候（网络抖动、指令丢失）。有一个可手动触发、可确认结果的通道，排障成本会低一个数量级。</span>
+    </li>
+  </ol>
+</section>
+
+<!-- ============================================================ -->
+<section id="c4">
+  <span class="anchor" id="c4a"></span>
+  <h2><span class="no">04</span>协议与参数：为什么必须是这一套</h2>
+  <p class="lead">这一章解释"为什么参数写成这样"，因为用户端导入失败、连不通，九成问题都出在这几个字段上。</p>
+
+  <h3>4.1 为什么是「TLS + 长连接伪装 + 标准端口」</h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>选择</th><th>解决什么问题</th><th>代价</th></tr></thead>
+    <tbody>
+      <tr><td>走 <b>443</b> 端口</td><td>与正常 HTTPS 不可区分，任何网络环境下都最不容易被单独限制</td><td>与真实网站共享端口，必须靠域名区分</td></tr>
+      <tr><td><b>真实域名 + 有效证书</b></td><td>握手阶段完全合法，不触发证书告警</td><td>需要一个域名并保持解析正确</td></tr>
+      <tr><td><b>HTTP 传输层伪装</b>（把流量切成看似普通的 HTTP 请求/响应）</td><td>流量形态与普通网页访问一致，比早期的长连接方案更难被识别</td><td>配置项更多，参数必须与客户端完全一致</td></tr>
+      <tr><td><b>多路径分流</b>（<code>/kl</code>、<code>/hk</code>…）</td><td>同一条隧道上可以挂多个"入口路径"，便于按接入点区分与排障</td><td>客户端每个路径对应一个配置条目</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>4.2 那个"必须带"的浏览器指纹参数</h3>
+  <div class="note bad">
+    <b>现场结论：客户端配置里如果缺了 <code>client-fingerprint: chrome</code>，表现是<b>全部节点超时</b>——不是变慢，是彻底连不上。</b>
+  </div>
+  <p>原因：Cloudflare 会对 TLS 握手的指纹做检查，非浏览器指纹（例如各种库自带的默认指纹）会被直接拦掉。客户端把指纹伪装成主流浏览器，握手才会被当作正常访问放行。</p>
+  <p><b>排查口诀：</b>"全部节点都超时"→ 先怀疑指纹参数缺失或写错；"个别节点超时"→ 去看那个节点的优选 IP 是否失效。</p>
+
+  <h3>4.3 一条订阅里到底有什么</h3>
+  <p>客户端拿到的订阅是一个"节点列表"，每一项的结构基本相同，差异只在接入地址与路径：</p>
+  <pre><code>vless://&lt;用户标识&gt;@&lt;接入地址&gt;:443
+      ?encryption=none
+      &amp;security=tls
+      &amp;sni=&lt;伪装域名&gt;
+      &amp;fp=chrome                 ← 浏览器指纹，缺了必超时
+      &amp;type=xhttp                ← 传输方式
+      &amp;host=&lt;伪装域名&gt;
+      &amp;path=%2F&lt;路径&gt;            ← 每项不同：/kl /hk /sg …
+      &amp;mode=auto
+      #&lt;显示名&gt;                  ← 命名规则：地区-实测落点-序号</code></pre>
+  <p>两种常见输出格式：<b>Clash 系</b>（YAML，给带图形界面的客户端）与 <b>v2ray 系</b>（一串 <code>vless://</code> 链接的 Base64，给通用客户端）。两者内容等价，只是包装不同。</p>
+
+  <div class="note">
+    <b>命名规则为什么重要：</b>节点名里的"实测落点"不是猜的城市，而是<b>探测时边缘真正返回的机房码</b>。多个接入地址因为任播特性可能落到同一个机房——这时候按城市命名就是在骗人（名字是真的、位置是假的）。所以命名一定要以实测为准。
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="c5">
+  <span class="anchor" id="c5a"></span>
+  <h2><span class="no">05</span>用户端 · 五分钟接入</h2>
+  <p class="lead">用户端只有四个动作：拿到订阅、导入、验证、调优。不需要理解服务端。</p>
+
+  <figure>
+    <svg viewBox="0 0 1000 190" role="img" aria-label="用户端接入四步">
+      <rect width="1000" height="190" fill="#0a0c10"/>
+      <g font-family="monospace" font-size="11.5">
+        <rect x="30" y="52" width="196" height="88" rx="9" fill="#111722" stroke="#33507d"/>
+        <text x="128" y="78" fill="#7c9cff" font-size="12" font-weight="700" text-anchor="middle">① 拿订阅链接</text>
+        <text x="128" y="102" fill="#a8b0bf" font-size="10.5" text-anchor="middle">一串网址，含身份令牌</text>
+        <text x="128" y="122" fill="#6f7889" font-size="10" text-anchor="middle">相当于"你的门禁卡"</text>
+
+        <rect x="268" y="52" width="196" height="88" rx="9" fill="#111722" stroke="#33507d"/>
+        <text x="366" y="78" fill="#7c9cff" font-size="12" font-weight="700" text-anchor="middle">② 导入客户端</text>
+        <text x="366" y="102" fill="#a8b0bf" font-size="10.5" text-anchor="middle">粘贴链接 → 更新订阅</text>
+        <text x="366" y="122" fill="#6f7889" font-size="10" text-anchor="middle">会自动拉到全部节点</text>
+
+        <rect x="506" y="52" width="196" height="88" rx="9" fill="#111722" stroke="#33507d"/>
+        <text x="604" y="78" fill="#7c9cff" font-size="12" font-weight="700" text-anchor="middle">③ 验证连通</text>
+        <text x="604" y="102" fill="#a8b0bf" font-size="10.5" text-anchor="middle">看出口 IP / 归属地</text>
+        <text x="604" y="122" fill="#6f7889" font-size="10" text-anchor="middle">确认"真的是住宅出口"</text>
+
+        <rect x="744" y="52" width="196" height="88" rx="9" fill="#171a12" stroke="#4a4426"/>
+        <text x="842" y="78" fill="#4ade80" font-size="12" font-weight="700" text-anchor="middle">④ 调优</text>
+        <text x="842" y="102" fill="#a8b0bf" font-size="10.5" text-anchor="middle">优选 IP / 就近节点</text>
+        <text x="842" y="122" fill="#6f7889" font-size="10" text-anchor="middle">唯一需要动手的地方</text>
+
+        <g stroke="#2a3648" stroke-width="1.6">
+          <line x1="228" y1="96" x2="264" y2="96" marker-end="url(#ar)"/>
+          <line x1="466" y1="96" x2="502" y2="96" marker-end="url(#ar)"/>
+          <line x1="704" y1="96" x2="740" y2="96" marker-end="url(#ar)"/>
+        </g>
+        <text x="500" y="30" fill="#6f7889" font-size="11" text-anchor="middle">用户端全流程：只有第 ④ 步需要一点技巧，前三步照抄即可</text>
+      </g>
+    </svg>
+    <figcaption>图 3 · 用户端四步。第 ③ 步是唯一能"自证链路是否正常工作"的环节，务必做。</figcaption>
+  </figure>
+
+  <h3>步骤 ① 拿到你的订阅链接</h3>
+  <p>订阅链接通常长这样（下面全部是占位示例，真实值请以管理员给你的为准）：</p>
+  <pre><code>https://&lt;你的入口域名&gt;/sub?token=&lt;你的专属令牌&gt;&amp;type=clash
+https://&lt;你的入口域名&gt;/sub?token=&lt;你的专属令牌&gt;&amp;type=v2ray</code></pre>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>参数</th><th>含义</th><th>注意</th></tr></thead>
+    <tbody>
+      <tr><td><code>token</code></td><td>你的<b>身份令牌</b></td><td>等同于账号密码，<b>不要截图外发</b>；泄露了就让管理员换一个</td></tr>
+      <tr><td><code>type</code></td><td>输出格式</td><td><code>clash</code> 给图形客户端，<code>v2ray</code> 给通用客户端。选错了导入会失败，但可以随时改</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>步骤 ② 导入客户端</h3>
+  <ol class="steps">
+    <li>打开客户端的「订阅 / 配置」页面，新建一个订阅，把链接原样粘贴进去。
+      <span class="why"><b>为什么原样：</b>链接里的 <code>&amp;</code> 和 <code>?</code> 都是语法的一部分，手动"美化"一下就会解析失败。</span>
+    </li>
+    <li>点「更新 / 下载」，等它把节点列表拉下来。
+      <span class="why"><b>这一步实际发生了什么：</b>客户端发了一次普通 HTTPS 请求到边缘。边缘根据 <code>token</code> 找到你的身份，现场生成一份属于你的节点清单返回。<b>所以"更新订阅"是一次鉴权动作，不是下载一个固定文件</b>——管理员改了节点，你更新一下就能拿到最新的。</span>
+    </li>
+    <li>确认列表里出现了节点，命名形如 <code>地区-落点-序号</code>。
+      <span class="why"><b>为什么看名字：</b>名字里的落点是实测的，能帮你判断"哪个节点实际离出口最近"。</span>
+    </li>
+  </ol>
+  <div class="note warn">
+    <b>常见导入失败原因：</b>① 用了 <code>type=v2ray</code> 的链接但客户端只吃 YAML（反过来也一样）；
+    ② 链接被聊天软件自动加了奇怪的换行/空格；③ 令牌已被停用或输错了一个字符。
+  </div>
+
+  <h3>步骤 ③ 验证连通（最重要的一步）</h3>
+  <ol class="steps">
+    <li>连上任意一个节点，然后访问一个能显示出口信息的页面（例如常见的 trace 类接口）。
+      <span class="why"><b>看什么：</b>返回里的 <code>ip</code> 与 <code>loc</code>。如果 <code>loc</code> 是你预期的国家/地区，说明链路成立。</span>
+    </li>
+    <li>把这个 <code>ip</code> 拿去查一下归属类型。
+      <span class="why"><b>为什么要查：</b>这一步才是"验证产品价值"——确认出口是<b>宽带/住宅</b>而不是机房。如果显示为数据中心，说明流量没走预期出口。</span>
+    </li>
+    <li>如果全部节点都超时，先怀疑客户端指纹参数；如果只有个别节点超时，换一个节点。
+      <span class="why"><b>判断依据：</b>"全挂"通常是配置层问题（见第 4 章 4.2），"个别挂"通常是那条路径的优选 IP 失效。</span>
+    </li>
+  </ol>
+
+  <h3>步骤 ④ 分流规则（让该走代理的走代理）</h3>
+  <div class="grid2">
+    <div class="box us">
+      <h4>推荐做法</h4>
+      <ul>
+        <li>只把需要的流量指向代理（规则模式）</li>
+        <li>把国内常用服务直连，减少无谓绕行</li>
+        <li>需要固定出口的场景单独建一条规则</li>
+      </ul>
+    </div>
+    <div class="box sv">
+      <h4>为什么不要全局</h4>
+      <ul>
+        <li>全局会把所有流量压到一条家庭宽带上</li>
+        <li>家庭上行带宽有限，容易互相拖慢</li>
+        <li>节点侧流量统计也会被无关流量淹没</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="c6">
+  <span class="anchor" id="c6a"></span>
+  <h2><span class="no">06</span>优选 IP：用户端唯一需要动手的调优</h2>
+  <p class="lead">同一个域名，在不同网络下会被解析到不同的边缘机房；换一个接入地址，时延可能差一倍。</p>
+
+  <h3>6.1 为什么需要"优选"</h3>
+  <p>边缘网络是<b>任播</b>的：同一个域名在全球有很多接入点，网络会把你的请求送到"它认为最近"的那一个。但"它认为最近"和"实际最快"经常不一致——尤其在跨境场景下，路由策略、运营商互联质量都会让某个接入点明显更快或更慢。</p>
+  <p>所以客户端可以在订阅节点里内置一批<b>候选接入地址</b>，让用户测速后挑最快的用。这就是"优选 IP"的全部含义。</p>
+
+  <figure>
+    <svg viewBox="0 0 1000 240" role="img" aria-label="优选IP原理">
+      <rect width="1000" height="240" fill="#0a0c10"/>
+      <g font-family="monospace" font-size="11.5">
+        <rect x="40" y="88" width="150" height="64" rx="9" fill="#111722" stroke="#33507d"/>
+        <text x="115" y="114" fill="#e6e9ef" font-size="12" text-anchor="middle">用户端</text>
+        <text x="115" y="134" fill="#6f7889" font-size="10" text-anchor="middle">同一台设备、同一时刻</text>
+
+        <rect x="330" y="28" width="150" height="52" rx="8" fill="#0e1621" stroke="#2a3648"/>
+        <text x="405" y="50" fill="#cfe0ff" font-size="11" text-anchor="middle">接入地址 A</text>
+        <text x="405" y="68" fill="#4ade80" font-size="10.5" text-anchor="middle">实测 66 ms ✔</text>
+
+        <rect x="330" y="96" width="150" height="52" rx="8" fill="#0e1621" stroke="#2a3648"/>
+        <text x="405" y="118" fill="#cfe0ff" font-size="11" text-anchor="middle">接入地址 B</text>
+        <text x="405" y="136" fill="#fbbf24" font-size="10.5" text-anchor="middle">实测 99 ms</text>
+
+        <rect x="330" y="164" width="150" height="52" rx="8" fill="#0e1621" stroke="#2a3648"/>
+        <text x="405" y="186" fill="#cfe0ff" font-size="11" text-anchor="middle">接入地址 C</text>
+        <text x="405" y="204" fill="#f87171" font-size="10.5" text-anchor="middle">实测 210 ms ✘</text>
+
+        <rect x="640" y="88" width="150" height="64" rx="9" fill="#141b26" stroke="#33507d"/>
+        <text x="715" y="114" fill="#e6e9ef" font-size="12" text-anchor="middle">边缘网络</text>
+        <text x="715" y="134" fill="#6f7889" font-size="10" text-anchor="middle">任一地址都能到达</text>
+
+        <rect x="842" y="88" width="130" height="64" rx="9" fill="#171a12" stroke="#4a4426"/>
+        <text x="907" y="114" fill="#e6e9ef" font-size="12" text-anchor="middle">住宅节点</text>
+        <text x="907" y="134" fill="#6f7889" font-size="10" text-anchor="middle">出口唯一</text>
+
+        <g stroke="#2a3648" stroke-width="1.5">
+          <line x1="190" y1="112" x2="326" y2="56" marker-end="url(#ar)"/>
+          <line x1="190" y1="120" x2="326" y2="120" marker-end="url(#ar)"/>
+          <line x1="190" y1="128" x2="326" y2="186" marker-end="url(#ar)"/>
+          <line x1="480" y1="56" x2="636" y2="106" marker-end="url(#ar)"/>
+          <line x1="480" y1="120" x2="636" y2="120" marker-end="url(#ar)"/>
+          <line x1="480" y1="186" x2="636" y2="134" marker-end="url(#ar)"/>
+          <line x1="790" y1="120" x2="838" y2="120" marker-end="url(#ar)"/>
+        </g>
+        <text x="500" y="236" fill="#a8b0bf" font-size="11" text-anchor="middle">
+          出口永远只有一条（住宅节点），能优化的只是"第一跳"：选哪个接入地址进去
+        </text>
+      </g>
+    </svg>
+    <figcaption>图 4 · 优选 IP 的本质：出口不可变，能优化的是"接入第一跳"。选对了，整条链路的基线时延就低一截。</figcaption>
+  </figure>
+
+  <h3>6.2 怎么做</h3>
+  <ol class="steps">
+    <li>用客户端的「测速 / 延迟测试」功能，对订阅里所有节点跑一遍。
+      <span class="why"><b>注意：</b>这里测的是"你的设备 → 接入地址"的第一跳，不代表整条链路的最终速度，但它是你能控制的那一段。</span>
+    </li>
+    <li>挑最快的 2~3 个，日常用第一个，卡的时候切第二个。
+      <span class="why"><b>为什么要备选：</b>接入点的质量会随时间波动（跨境线路尤其如此），一个备选能省掉大量现场排障。</span>
+    </li>
+    <li>换网络环境（换运营商、换城市、从 WiFi 切到移动数据）后<b>重新测一次</b>。
+      <span class="why"><b>为什么：</b>"最近"是从你的网络出发算的。你的出发点变了，最优接入点也会变。</span>
+    </li>
+  </ol>
+
+  <div class="note">
+    <b>一个常见误区：</b>把节点名里的"落点"当成"离我近"。落点是<b>出口侧</b>的边缘机房，跟你所在的位置无关。判断快慢永远以你自己的实测为准。
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="c7">
+  <span class="anchor" id="c7a"></span>
+  <h2><span class="no">07</span>服务端 · 节点矩阵与订阅分发</h2>
+  <p class="lead">"节点"在这套系统里有两层含义：用户看到的接入点，和节点侧要逐个巡检的对象。</p>
+
+  <h3>7.1 一张清单驱动三个地方</h3>
+  <p>系统里有一份节点清单，它是<b>唯一来源</b>，同时驱动三件事：</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>消费方</th><th>怎么用这份清单</th></tr></thead>
+    <tbody>
+      <tr><td>订阅下发 <code>/sub</code></td><td>为每个节点生成一条客户端配置，节点名按"地区-实测落点-序号"生成</td></tr>
+      <tr><td>监控大屏的节点矩阵</td><td>渲染成一格一格的卡片，显示实测时延与状态</td></tr>
+      <tr><td>节点侧巡检脚本</td><td>随遥测响应下发到节点，落地成一份清单文件，巡检脚本按顺序逐个探</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="note warn">
+    <b>工程上的取舍：</b>这份清单目前是<b>写在边缘代码里的</b>。好处是"改一处、三处同步"，绝不会出现"订阅里有、大屏上没有"的不一致；代价是<b>增删节点必须改代码并重新部署</b>。理解这一点能省下很多排障时间——当用户问"为什么新节点没出现"，答案通常是"还没部署"。
+  </div>
+
+  <h3>7.2 节点是怎么被巡检的</h3>
+  <ol class="steps">
+    <li>清单随每轮遥测响应下发到节点，节点把它写成一份本地文件。
+      <span class="why"><b>为什么用"响应携带"这种方式：</b>节点在 NAT 后面、外部连不进来，所以"配置下发"只能搭在"节点主动上报"的响应里。这也意味着<b>下发有延迟</b>（最长一个上报周期）。</span>
+    </li>
+    <li>巡检脚本按文件顺序，<b>固定节奏</b>（例如每 10 秒一个）逐个探测，并把"当前探到第几个"写出来。
+      <span class="why"><b>为什么按顺序而不是并发：</b>并发探测会在短时间内产生大量连接，对家庭宽带是明显冲击；顺序探测把负载摊平。而"当前索引"上报给大屏后，大屏才能把"测速中"的高亮严格框在正确的格子上——<b>不按时间戳猜</b>。</span>
+    </li>
+    <li>每轮把探测结果（可达性、时延、实测落点）随遥测一起上报。
+      <span class="why"><b>为什么要带落点：</b>中转节点也可能"名字写着 A 地、实际落在 B 地"。把实测落点显示出来，名字与事实不一致时一眼可见。</span>
+    </li>
+  </ol>
+
+  <div class="note bad">
+    <b>一个踩过的坑（值得记住）：</b>巡检结果去重时如果用"<b>保留第一条</b>"的写法，第一轮填满全部节点后，<b>后续的新结果会全部被丢弃</b>。表现极其迷惑：文件修改时间一直在变，内容却冻结在几小时前——大屏上就是"所有节点都是两小时前的数据"。正确写法是<b>保留最后一条</b>。
+  </div>
+
+  <h3>7.3 跨机房一致性：为什么"内存里的名单"靠不住</h3>
+  <p>边缘计算是分布式的：同一个服务在全球很多机房各跑一份，机房内部还可能同时存在多个实例。<b>写在模块级变量里的数据，只在那个实例里有效。</b></p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>层</th><th>可见范围</th><th>速度</th><th>适合放什么</th></tr></thead>
+    <tbody>
+      <tr><td>实例内存</td><td>单个实例</td><td>最快</td><td>高频只读的派生结果</td></tr>
+      <tr><td>机房缓存</td><td>同一机房所有实例</td><td>快</td><td>遥测快照、展示字段——<b>跨实例但不必跨机房</b></td></tr>
+      <tr><td>全局键值存储</td><td>全球</td><td>较慢、有配额</td><td><b>必须全球一致的权威数据</b>（如用户库）</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>历史上出现过的"同一份用户名单在两个入口显示不同人数""某个人重复两行""删掉的用户还能拉到订阅"，根因都是把"应该全球一致"的数据放在了"只在一个机房有效"的层里。修法是把权威数据提到全局键值存储，内存与缓存降级为纯加速层。</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="c8">
+  <span class="anchor" id="c8a"></span>
+  <h2><span class="no">08</span>服务端 · 监控：五条采集链路</h2>
+  <p class="lead">监控不是"顺便加的功能"，它决定了出问题时你花 5 分钟还是 5 小时定位。这里讲每条链路测什么、多久测一次、为什么是这个频率。</p>
+
+  <figure>
+    <svg viewBox="0 0 1000 330" role="img" aria-label="五条采集链路">
+      <rect width="1000" height="330" fill="#0a0c10"/>
+      <g font-family="monospace" font-size="11">
+        <!-- 节点侧 -->
+        <rect x="24" y="40" width="200" height="252" rx="10" fill="#12160f" stroke="#4a4426"/>
+        <text x="124" y="64" fill="#e6e9ef" font-size="12" font-weight="700" text-anchor="middle">住宅节点（采集侧）</text>
+
+        <rect x="40" y="80" width="168" height="40" rx="7" fill="#0f1310" stroke="#2a3648"/>
+        <text x="124" y="98" fill="#cfe0ff" font-size="10.5" text-anchor="middle">① 遥测上报</text>
+        <text x="124" y="113" fill="#6f7889" font-size="9.5" text-anchor="middle">电量/温度/网速/连接数</text>
+
+        <rect x="40" y="126" width="168" height="40" rx="7" fill="#0f1310" stroke="#2a3648"/>
+        <text x="124" y="144" fill="#cfe0ff" font-size="10.5" text-anchor="middle">② 区域时延/丢包</text>
+        <text x="124" y="159" fill="#6f7889" font-size="9.5" text-anchor="middle">每个接入点 15 次采样</text>
+
+        <rect x="40" y="172" width="168" height="40" rx="7" fill="#0f1310" stroke="#2a3648"/>
+        <text x="124" y="190" fill="#cfe0ff" font-size="10.5" text-anchor="middle">③ 边缘往返 RTT</text>
+        <text x="124" y="205" fill="#6f7889" font-size="9.5" text-anchor="middle">单次 TCP 握手</text>
+
+        <rect x="40" y="218" width="168" height="40" rx="7" fill="#0f1310" stroke="#2a3648"/>
+        <text x="124" y="236" fill="#cfe0ff" font-size="10.5" text-anchor="middle">④ 节点巡检</text>
+        <text x="124" y="251" fill="#6f7889" font-size="9.5" text-anchor="middle">逐个探测 + 落点</text>
+
+        <rect x="40" y="258" width="168" height="26" rx="7" fill="#0f1310" stroke="#2a3648"/>
+        <text x="124" y="276" fill="#cfe0ff" font-size="10.5" text-anchor="middle">⑤ 手动全速扫描</text>
+
+        <!-- 边缘 -->
+        <rect x="392" y="96" width="216" height="140" rx="10" fill="#111722" stroke="#33507d"/>
+        <text x="500" y="122" fill="#e6e9ef" font-size="12" font-weight="700" text-anchor="middle">边缘 Worker</text>
+        <text x="500" y="146" fill="#a8b0bf" font-size="10.5" text-anchor="middle">合并成一份最新快照</text>
+        <text x="500" y="168" fill="#a8b0bf" font-size="10.5" text-anchor="middle">逐字段按各自时效合并</text>
+        <text x="500" y="190" fill="#6f7889" font-size="10" text-anchor="middle">实例内存 + 机房缓存</text>
+        <text x="500" y="212" fill="#6f7889" font-size="10" text-anchor="middle">权威数据才进全局存储</text>
+
+        <!-- 大屏 -->
+        <rect x="776" y="96" width="196" height="140" rx="10" fill="#111722" stroke="#33507d"/>
+        <text x="874" y="122" fill="#e6e9ef" font-size="12" font-weight="700" text-anchor="middle">监控大屏</text>
+        <text x="874" y="146" fill="#a8b0bf" font-size="10.5" text-anchor="middle">长轮询（秒级）</text>
+        <text x="874" y="168" fill="#a8b0bf" font-size="10.5" text-anchor="middle">+ 全量轮询（60 秒）</text>
+        <text x="874" y="190" fill="#6f7889" font-size="10" text-anchor="middle">每格数据可追溯到</text>
+        <text x="874" y="212" fill="#6f7889" font-size="10" text-anchor="middle">"哪条链路、什么时候测的"</text>
+
+        <g stroke="#4ade80" stroke-width="1.5" stroke-dasharray="5 4">
+          <line x1="212" y1="100" x2="388" y2="140" marker-end="url(#ar2)"/>
+          <line x1="212" y1="146" x2="388" y2="160" marker-end="url(#ar2)"/>
+          <line x1="212" y1="192" x2="388" y2="180" marker-end="url(#ar2)"/>
+          <line x1="212" y1="238" x2="388" y2="200" marker-end="url(#ar2)"/>
+          <line x1="212" y1="271" x2="388" y2="220" marker-end="url(#ar2)"/>
+        </g>
+        <g stroke="#7c9cff" stroke-width="1.6">
+          <line x1="612" y1="140" x2="772" y2="140" marker-end="url(#ar)"/>
+          <line x1="612" y1="190" x2="772" y2="190" marker-end="url(#ar)"/>
+        </g>
+        <text x="692" y="132" fill="#7c9cff" font-size="10" text-anchor="middle">推送</text>
+        <text x="692" y="208" fill="#7c9cff" font-size="10" text-anchor="middle">拉取</text>
+
+        <text x="124" y="312" fill="#6f7889" font-size="10" text-anchor="middle">全部合并进同一个包上报</text>
+      </g>
+    </svg>
+    <figcaption>图 5 · 五条采集链路全部汇入同一条上报通道，在边缘合成一份快照，再供大屏读取。</figcaption>
+  </figure>
+
+  <h3>8.1 五条链路各自在回答什么问题</h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>链路</th><th>回答的问题</th><th>频率</th><th>为什么是这个频率</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>① 遥测上报</b></td>
+        <td>"节点本身还好吗"（电量、温度、充电、WiFi、在线时长、连接数、累计流量）</td>
+        <td>约 6 秒</td>
+        <td>这是整个监控体系的<b>心跳</b>。太快浪费家庭带宽与配额，太慢则"断开告警"会明显滞后。6 秒是"及时"和"省"的平衡点</td>
+      </tr>
+      <tr>
+        <td><b>② 区域时延/丢包</b></td>
+        <td>"我的流量从哪个接入点进去最快、稳不稳"</td>
+        <td>60 秒一轮</td>
+        <td>时延是慢变量，一分钟内的变化有限；而每个点要采多次才能抵抗抖动，频繁测没有收益只有开销</td>
+      </tr>
+      <tr>
+        <td><b>③ 边缘往返 RTT</b></td>
+        <td>"节点到边缘这一段网络现在怎么样"</td>
+        <td>15 秒</td>
+        <td>这段是链路的"腰部"，变化比区域时延快，但比心跳慢。15 秒能画出有意义的分布，又不至于产生大量请求</td>
+      </tr>
+      <tr>
+        <td><b>④ 节点巡检</b></td>
+        <td>"每个中转节点此刻通不通、多快、实际落在哪"</td>
+        <td>10 秒 1 个</td>
+        <td>节点数量多，只能轮流。固定节奏（而不是并发）把带宽冲击摊平，也让大屏的"测速中"高亮能按顺序推进</td>
+      </tr>
+      <tr>
+        <td><b>⑤ 手动全速扫描</b></td>
+        <td>"我现在就要一份最新的完整结果"</td>
+        <td>按需触发</td>
+        <td>排障时不想等一分钟。做法是<b>去掉区域之间的间隔、背靠背连续测</b>，但<b>每个点的采样次数一次不减</b>——快可以，但不能用"少测几次"换速度</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>8.2 三条"口径"纪律（这是监控可信度的全部）</h3>
+  <ol class="steps">
+    <li><b>同一个数字必须只有一种口径。</b>例如"握手时延"，要么统一用单次 TCP 往返，要么统一用 TCP+TLS 两次往返，<b>不能混着比</b>。
+      <span class="why"><b>为什么：</b>混口径会让某一条路径天然"少一次往返"，看起来永远最快。曾经出现过"某个地区明显优于其它地区"，实际只是它的测量方式少算了半程。</span>
+    </li>
+    <li><b>无效样本要丢弃，并且丢弃规则要写死。</b>例如低于 10ms 的样本一律视为无效（通常意味着流量走了本机回环或缓存，不代表真实网络）。
+      <span class="why"><b>为什么：</b>不丢这些样本，"最优值"会被它们永久污染，而且会掩盖真实的网络劣化。</span>
+    </li>
+    <li><b>测不到就显示未测到。</b>不做任何"兜底填充"。
+      <span class="why"><b>为什么这条是红线：</b>一旦允许"猜一个值填上"，监控就从"事实"退化成"叙事"。真实故障会被填充的数字盖住，排障方向直接跑偏。<b>宁可显示空白，也不显示假数。</b></span>
+    </li>
+  </ol>
+  <div class="note bad">
+    <b>反面教材（本项目的真实教训）：</b>探测失败时会话曾经"回填"过一批时间戳，把"从未测到"伪装成"10~50 秒前刚测过"。结果是大屏长期显示绿色的骗人状态，直到有人逐行读脚本才发现。这类"善意的兜底"是监控系统里最危险的东西。
+  </div>
+
+  <h3>8.3 心跳与"数据年龄"</h3>
+  <p>每条数据都带时间戳，大屏据此计算<b>数据年龄</b>（距离它被真正测出来过了多久），并按颜色分级：</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>颜色</th><th>含义</th><th>你该做什么</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tag ok">绿</span> 新鲜</td><td>数据在一个正常周期内</td><td>什么都不用做</td></tr>
+      <tr><td><span class="tag warn">黄</span> 偏旧</td><td>超过正常周期，但还没到"疑似中断"</td><td>留意一下，可能是网络短暂波动</td></tr>
+      <tr><td><span class="tag bad">红</span> 异常</td><td>从未测到，或远超正常周期</td><td>按第 12 章排错；红色专留给"未测到/连不上"，不因"数据久"而变红</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="c9">
+  <span class="anchor" id="c9a"></span>
+  <h2><span class="no">09</span>数据流全解析：节点 → Worker → 大屏</h2>
+  <p class="lead">这一章解释"一个数字从被测量出来，到大屏上显示"，中间经过了什么。理解了它，排错就是按环节二分。</p>
+
+  <figure>
+    <svg viewBox="0 0 1000 300" role="img" aria-label="数据流时序">
+      <rect width="1000" height="300" fill="#0a0c10"/>
+      <g font-family="monospace" font-size="10.5">
+        <!-- 泳道 -->
+        <line x1="150" y1="46" x2="150" y2="272" stroke="#232833"/>
+        <line x1="470" y1="46" x2="470" y2="272" stroke="#232833"/>
+        <line x1="800" y1="46" x2="800" y2="272" stroke="#232833"/>
+        <text x="150" y="34" fill="#e6e9ef" font-size="11.5" font-weight="700" text-anchor="middle">住宅节点</text>
+        <text x="470" y="34" fill="#e6e9ef" font-size="11.5" font-weight="700" text-anchor="middle">边缘 Worker</text>
+        <text x="800" y="34" fill="#e6e9ef" font-size="11.5" font-weight="700" text-anchor="middle">浏览器大屏</text>
+
+        <!-- 步骤 -->
+        <text x="60" y="72" fill="#6f7889" font-size="10">①测量</text>
+        <line x1="150" y1="80" x2="150" y2="96" stroke="#4ade80" stroke-width="2"/>
+        <text x="158" y="92" fill="#a8b0bf">各脚本按各自节奏采样，结果落本地文件</text>
+
+        <text x="60" y="122" fill="#6f7889" font-size="10">②组装</text>
+        <line x1="150" y1="130" x2="150" y2="146" stroke="#4ade80" stroke-width="2"/>
+        <text x="158" y="142" fill="#a8b0bf">合并成一个包（遥测+时延+节点+流量+指令确认）</text>
+
+        <text x="60" y="172" fill="#6f7889" font-size="10">③上报</text>
+        <line x1="150" y1="180" x2="466" y2="180" stroke="#4ade80" stroke-width="1.6" marker-end="url(#ar2)"/>
+        <text x="308" y="174" fill="#4ade80" text-anchor="middle">POST（带共享密钥）</text>
+
+        <text x="380" y="206" fill="#6f7889" font-size="10">④合并</text>
+        <line x1="470" y1="214" x2="470" y2="228" stroke="#7c9cff" stroke-width="2"/>
+        <text x="478" y="226" fill="#a8b0bf">逐字段按各自时效合并进快照（并写机房缓存）</text>
+
+        <text x="560" y="252" fill="#6f7889" font-size="10">⑤下发指令</text>
+        <line x1="466" y1="258" x2="154" y2="258" stroke="#7c9cff" stroke-width="1.6" marker-end="url(#ar)"/>
+        <text x="308" y="252" fill="#7c9cff" text-anchor="middle">响应里带回：待执行指令 + 最新节点清单</text>
+
+        <line x1="470" y1="120" x2="796" y2="120" stroke="#7c9cff" stroke-width="1.6" marker-end="url(#ar)"/>
+        <text x="632" y="114" fill="#7c9cff" text-anchor="middle">长轮询：有新数据立刻返回</text>
+
+        <line x1="796" y1="160" x2="474" y2="160" stroke="#7c9cff" stroke-width="1.6" marker-end="url(#ar)"/>
+        <text x="632" y="154" fill="#7c9cff" text-anchor="middle">立即重新挂起（几乎不产生空转）</text>
+
+        <text x="806" y="98" fill="#a8b0bf">渲染（每格独立 try/catch 隔离）</text>
+      </g>
+    </svg>
+    <figcaption>图 6 · 一轮完整的数据往返。注意 ⑤：控制指令是"搭在响应里"回到节点的——这是 NAT 后设备唯一可行的远程控制方式。</figcaption>
+  </figure>
+
+  <h3>9.1 上报包里到底有什么</h3>
+  <pre><code>{
+  "telemetry": { 电量, 温度, 充电状态, WiFi 名称/信号/协商速率,
+                 系统在线时长, 并发连接数, 累计上下行字节 },
+  "pings"     : { 各接入点当前最优时延 },
+  "jitters"   : { 各接入点抖动 },
+  "pingTimes" : { 各接入点的【真实测量时刻】 },   ← 大屏算"数据年龄"的基准
+  "losses"    : { 各接入点丢包率 },
+  "colos"     : { 各接入点【实测落点机房码】 },   ← 不是猜的城市
+  "edgeRtt"   : 节点→边缘的单次往返,
+  "nodeStatus": [ 每个节点的可达性/时延/落点 ],
+  "nodeIdx"   : 巡检当前探到第几个（用于大屏高亮）,
+  "userTraffics": [ 每个使用者的累计流量 ],
+  "history15m": [ 吞吐波形采样点 ],
+  "domain"    : [ 访问域名统计 ],
+  "scanAck"   : 手动扫描指令的确认回执
+}</code></pre>
+
+  <h3>9.2 合并策略：为什么是"逐字段"而不是"整包"</h3>
+  <div class="grid2">
+    <div class="box sv">
+      <h4>错误做法：整包取舍</h4>
+      <p>用"这包比上包新吗"来决定整包替换。结果：新包里某个字段恰好缺失，就把上一包里的好数据一起冲掉了。</p>
+    </div>
+    <div class="box us">
+      <h4>正确做法：逐字段按时效</h4>
+      <p>每个字段各自带时间戳，谁新用谁。某个字段这轮没上报，就保留它上一次的真实值，直到自己过期。</p>
+    </div>
+  </div>
+
+  <h3>9.3 一条容易被忽视的硬约束</h3>
+  <div class="note bad">
+    <b>边缘函数在返回响应之后，未完成的异步工作会被取消。</b>
+    所以"顺手起一个异步写缓存"这种写法是不安全的——必须 <code>await</code>。表现是"数据时有时无""刷新一下就有了，等一下又没了"，非常难查。
+  </div>
+
+  <h3>9.4 长轮询为什么比"定时刷新"好</h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>方案</th><th>数据延迟</th><th>请求量</th><th>结论</th></tr></thead>
+    <tbody>
+      <tr><td>每 2 秒定时拉</td><td>平均 1 秒</td><td>很高（每天每标签页上万次）</td><td>白耗配额，且数据"一顿一顿"</td></tr>
+      <tr><td>长轮询</td><td>接近实时</td><td>只在有数据时才产生一次往返</td><td><b>本项目的选择</b></td></tr>
+      <tr><td>服务端推送（SSE/WebSocket）</td><td>实时</td><td>最低</td><td>兼容性与复杂度代价更高，本项目选了长轮询</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="note">
+    <b>重试必须退避。</b>长轮询失败后如果固定 200ms 重试，遇到边缘异常时单标签页能打出几十万请求/天。正确做法是指数退避（1s→2s→4s…封顶），成功即复位。
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="c10">
+  <span class="anchor" id="c10a"></span>
+  <h2><span class="no">10</span>状态三层与指令通道</h2>
+  <p class="lead">这一章是整套系统的"控制论"：数据放哪、怎么保持一致、怎么给一台在 NAT 后面的设备下命令。</p>
+
+  <h3>10.1 状态分三层，各司其职</h3>
+  <figure>
+    <svg viewBox="0 0 1000 250" role="img" aria-label="状态三层">
+      <rect width="1000" height="250" fill="#0a0c10"/>
+      <g font-family="monospace" font-size="11">
+        <rect x="90" y="30" width="820" height="52" rx="9" fill="#101418" stroke="#2a3648"/>
+        <text x="112" y="52" fill="#fbbf24" font-size="11.5" font-weight="700">全局存储（全球一致 · 有配额 · 最慢）</text>
+        <text x="112" y="71" fill="#a8b0bf" font-size="10.5">只放必须全球一致的东西：用户库、待执行指令</text>
+        <text x="880" y="62" fill="#fbbf24" font-size="10" text-anchor="end">写入只发生在"有真实变更"时</text>
+
+        <rect x="60" y="96" width="880" height="52" rx="9" fill="#111722" stroke="#33507d"/>
+        <text x="82" y="118" fill="#7c9cff" font-size="11.5" font-weight="700">机房缓存（同机房多实例共享 · 较快）</text>
+        <text x="82" y="137" fill="#a8b0bf" font-size="10.5">遥测快照、展示字段、派生结果 —— "一个请求写、另一个请求读"的状态一律放这里</text>
+        <text x="920" y="128" fill="#7c9cff" font-size="10" text-anchor="end">写入必须 await</text>
+
+        <rect x="30" y="162" width="940" height="52" rx="9" fill="#141b26" stroke="#33507d"/>
+        <text x="52" y="184" fill="#4ade80" font-size="11.5" font-weight="700">实例内存（单实例 · 最快 · 随时消失）</text>
+        <text x="52" y="203" fill="#a8b0bf" font-size="10.5">只做"加速层"：读到了就快点返回，读不到就去下一层 —— 绝不放"唯一副本"</text>
+        <text x="950" y="194" fill="#4ade80" font-size="10" text-anchor="end">冷启动即空</text>
+
+        <text x="500" y="238" fill="#6f7889" font-size="10.5" text-anchor="middle">
+          读取顺序：实例内存 → 机房缓存 → 全局存储；写入位置由"谁必须看见"决定
+        </text>
+      </g>
+    </svg>
+    <figcaption>图 7 · 三层状态。判断标准只有一条：<b>这份数据"谁"必须看见？</b>只有一个人（实例）→ 内存；同机房所有请求 → 缓存；全球所有人 → 全局存储。</figcaption>
+  </figure>
+
+  <h3>10.2 把写入压到极限的四种手法</h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>手法</th><th>做法</th><th>效果</th></tr></thead>
+    <tbody>
+      <tr><td>结构性隔离</td><td>把"写"收敛到极少数几个函数，其它路径根本不具备写能力</td><td>不可能"顺手写一下"</td></tr>
+      <tr><td>变更熔断</td><td>写入前先比较内容哈希，没实质变化就跳过</td><td>重复回推同一份名单 → 0 次写入</td></tr>
+      <tr><td>读取边缘缓存</td><td>读取时带一个短 TTL 的边缘缓存</td><td>压力测试 140 次请求 → 存储读取新增 0</td></tr>
+      <tr><td>写入预算保险丝</td><td>单实例每天写入次数封顶，超额直接拒绝并告警</td><td>将来代码改错也不会打爆配额</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>10.3 指令通道：怎么给一台"连不进来"的设备下命令</h3>
+  <figure>
+    <svg viewBox="0 0 1000 300" role="img" aria-label="指令通道时序">
+      <rect width="1000" height="300" fill="#0a0c10"/>
+      <g font-family="monospace" font-size="10.5">
+        <rect x="30" y="40" width="150" height="52" rx="9" fill="#111722" stroke="#33507d"/>
+        <text x="105" y="62" fill="#e6e9ef" font-size="11.5" text-anchor="middle">管理员</text>
+        <text x="105" y="80" fill="#6f7889" font-size="10" text-anchor="middle">点「手动刷新」</text>
+
+        <rect x="250" y="40" width="180" height="52" rx="9" fill="#111722" stroke="#33507d"/>
+        <text x="340" y="62" fill="#e6e9ef" font-size="11.5" text-anchor="middle">边缘 Worker</text>
+        <text x="340" y="80" fill="#6f7889" font-size="10" text-anchor="middle">写"待执行指令"（单个键）</text>
+
+        <rect x="500" y="40" width="180" height="52" rx="9" fill="#171a12" stroke="#4a4426"/>
+        <text x="590" y="62" fill="#e6e9ef" font-size="11.5" text-anchor="middle">住宅节点</text>
+        <text x="590" y="80" fill="#6f7889" font-size="10" text-anchor="middle">下一轮上报时取走</text>
+
+        <rect x="750" y="40" width="200" height="52" rx="9" fill="#141b26" stroke="#33507d"/>
+        <text x="850" y="62" fill="#e6e9ef" font-size="11.5" text-anchor="middle">执行 + 回执</text>
+        <text x="850" y="80" fill="#6f7889" font-size="10" text-anchor="middle">全速扫描并逐个落盘上报</text>
+
+        <g stroke="#7c9cff" stroke-width="1.6">
+          <line x1="180" y1="66" x2="246" y2="66" marker-end="url(#ar)"/>
+          <line x1="430" y1="66" x2="496" y2="66" marker-end="url(#ar)"/>
+          <line x1="680" y1="66" x2="746" y2="66" marker-end="url(#ar)"/>
+        </g>
+
+        <!-- 回执删除 -->
+        <path d="M850,100 C850,150 590,160 590,150 C590,140 420,130 340,110"
+              fill="none" stroke="#4ade80" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#ar2)"/>
+        <text x="600" y="176" fill="#4ade80" text-anchor="middle">回执：我已执行（带指令 ID）→ 此时才删除指令键</text>
+
+        <rect x="120" y="206" width="760" height="70" rx="9" fill="#1f1212" stroke="#3a1f1f"/>
+        <text x="140" y="228" fill="#f87171" font-size="11" font-weight="700">为什么必须"回执后才删"：</text>
+        <text x="140" y="248" fill="#a8b0bf" font-size="10.5">早期实现是"读取即删除"。只要那次响应在网络上丢了（跨境抖动很常见），指令就永久消失，</text>
+        <text x="140" y="265" fill="#a8b0bf" font-size="10.5">管理员看到的是"点了没反应"，却完全无法判断是没下发、没收到，还是没执行。</text>
+      </g>
+    </svg>
+    <figcaption>图 8 · 指令通道：写单键 → 节点取走 → 执行 → 回执 → 才删除。带 ID 的回执让"是否真的执行了"可判定。</figcaption>
+  </figure>
+
+  <h3>10.4 为什么"节点主动汇报"这件事本身就是设计</h3>
+  <ul>
+    <li><b>不引入入站端口</b>：住宅网络普遍没有公网入口，任何"服务端主动连节点"的方案都需要端口映射或额外穿透。</li>
+    <li><b>不需要公网 IP 与 DDNS</b>：节点每次主动连出，边缘记住连接，地址变化无影响。</li>
+    <li><b>天然抗扫描</b>：外界扫不到任何管理端口。</li>
+    <li><b>代价是"延迟下发"</b>：所有远程操作最长要等一个上报周期。设计上必须接受这个延迟，并把"指令是否被取走/执行"显式展示出来。</li>
+  </ul>
+</section>
+
+<!-- ============================================================ -->
+<section id="c11">
+  <span class="anchor" id="c11a"></span>
+  <h2><span class="no">11</span>大屏：渲染工程学与自愈</h2>
+  <p class="lead">大屏是"给人看的事实"。它的难点不在画图，而在<b>一个坏掉的部件不能拖垮整页</b>，以及<b>页面版本必须能自动追上服务端</b>。</p>
+
+  <h3>11.1 三个必须做到的工程点</h3>
+  <ol class="steps">
+    <li><b>每个渲染器独立隔离。</b>任何一个渲染函数抛异常，只能影响它自己那一块。
+      <span class="why"><b>为什么：</b>真实教训——一个已被删除的函数仍被调用，抛出的引用错误把它<b>后面所有</b>渲染一起带走，表现为"新鲜度、健康卡、评分、波形全变成 <code>--</code>"。用户看到的是"整页坏了"，实际只有一个函数坏了。所以现在每个渲染器都包在独立的 try/catch 里，错误还会写进隐藏元素，方便事后自查。</span>
+    </li>
+    <li><b>页面版本可自证、可自动追平。</b>服务端每次部署生成新版本号，页面内嵌自己的版本号；两者不一致时页面自动重载。
+      <span class="why"><b>为什么：</b>否则会出现"用户看到的还是旧界面、你却在看新代码"的鬼故事——排障时最烧时间的一类问题。注意：<b>太旧的页面无法自我更新</b>（它里面还没有这段自更新逻辑），必须手动关掉标签页重开一次。</span>
+    </li>
+    <li><b>前端只写"唯一来源"。</b>同一个指标在整页只允许出现一次、只允许有一个写入点。
+      <span class="why"><b>为什么：</b>早期同一个数值在多张卡上重复展示，某些卡有真数据、某些卡是写死的旧值，于是"同一页自相矛盾"。删掉重复展示之后，"看起来不对"的地方立刻减少一大半。</span>
+    </li>
+  </ol>
+
+  <h3>11.2 首屏纪律：宁可空着</h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>位置</th><th>错误做法</th><th>正确做法</th></tr></thead>
+    <tbody>
+      <tr><td>数值型指标</td><td>HTML 里写死一个好看的数字当占位</td><td>写 <code>--</code>，等真实数据到达再填</td></tr>
+      <tr><td>时间型字段</td><td>初始化成"刚刚"</td><td>初始化成 0，前端渲染为"未测到"</td></tr>
+      <tr><td>状态徽标</td><td>默认显示"全部正常/极优"</td><td>默认显示"等待数据"，只有真实测到才给结论</td></tr>
+      <tr><td>榜单/累计值</td><td>预置一段"历史基数"让曲线好看</td><td>只认真实累计；没有就是 0</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="note warn">
+    <b>为什么这条要反复强调：</b>占位假值在"一切正常"的时候看起来无害，但恰恰是在出故障的时候最致命——接口全挂时页面依然显示着漂亮的数字，你会以为服务是好的。<b>假数据的成本不是"不准确"，而是"让故障不可见"。</b>
+  </div>
+
+  <h3>11.3 采集频率的"双模"设计</h3>
+  <p>大屏提供两档：默认「1 分钟采集」与「2 秒极速」。默认档是给日常挂机看的，极速档是排障时用的。关键在于<b>极速档必须由人显式开启</b>，而不是默认行为——否则每个打开的标签页都会持续产生高频请求，把配额吃光。</p>
+  <div class="note">
+    <b>一个实现细节：</b>极速档下的"槽位对齐抓取"要按墙上时钟对齐到 10 秒边界，而不是"每 10 秒一次"。前者不会随时间漂移，后者会因为每次请求耗时而慢慢跑偏。
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="c12">
+  <span class="anchor" id="c12a"></span>
+  <h2><span class="no">12</span>排错手册（按现象查）</h2>
+  <p class="lead">排错的本质是"二分"：先确定问题在用户端、边缘，还是住宅节点，再往下切。下表按<b>你眼睛看到的现象</b>组织。</p>
+
+  <h3>12.1 用户端现象</h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>现象</th><th>最可能的原因</th><th>怎么确认</th><th>怎么修</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>全部节点超时</b></td>
+        <td>客户端缺少/写错浏览器指纹参数</td>
+        <td>看配置里有没有指纹字段；换一个客户端试试</td>
+        <td>补上指纹参数并重新导入订阅</td>
+      </tr>
+      <tr>
+        <td><b>只有个别节点超时</b></td>
+        <td>该节点的接入地址已失效</td>
+        <td>对该节点单独测速；大屏上看它的矩阵格子</td>
+        <td>换用其它节点；若大面积失效则更新订阅</td>
+      </tr>
+      <tr>
+        <td><b>能连但很慢</b></td>
+        <td>接入第一跳选得不好</td>
+        <td>测速对比几个节点</td>
+        <td>见第 6 章：换最快的接入地址</td>
+      </tr>
+      <tr>
+        <td><b>更新订阅失败</b></td>
+        <td>格式参数不匹配 / 令牌停用 / 链接被改</td>
+        <td>用浏览器直接打开订阅链接看返回</td>
+        <td>改 <code>type</code> 参数；找管理员确认令牌状态</td>
+      </tr>
+      <tr>
+        <td><b>能上网但出口不是预期地区</b></td>
+        <td>分流规则没生效，流量走了直连</td>
+        <td>看客户端当前命中的规则</td>
+        <td>调整分流规则，让目标流量走代理</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>12.2 服务端现象</h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>现象</th><th>先查什么</th><th>最可能的原因</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>大屏所有数字冻结</b></td>
+        <td>节点上"上报脚本"是否在跑；隧道是否存活</td>
+        <td>节点侧进程被系统杀掉，或隧道断开。看"数据年龄"是几秒还是几十分钟</td>
+      </tr>
+      <tr>
+        <td><b>时延矩阵空白 / 全是未测到</b></td>
+        <td>区域测绘脚本是否在跑；落盘文件是否在更新</td>
+        <td>脚本死了，或单实例锁残留导致新实例起不来</td>
+      </tr>
+      <tr>
+        <td><b>节点矩阵数据明明是旧的，文件时间却在变</b></td>
+        <td>结果去重逻辑</td>
+        <td><b>去重写成了"保留第一条"</b>→ 新结果被全丢。改为保留最后一条</td>
+      </tr>
+      <tr>
+        <td><b>同一份用户名单在不同入口不一样</b></td>
+        <td>权威数据放在哪一层</td>
+        <td>放在实例内存/机房缓存里，缺少全球权威源（见 7.3）</td>
+      </tr>
+      <tr>
+        <td><b>页面反复自动刷新</b></td>
+        <td>三处版本号是否一致</td>
+        <td>版本注入失败、或页面与接口版本长期不一致</td>
+      </tr>
+      <tr>
+        <td><b>告警横幅一直挂着</b></td>
+        <td>节点上报时间戳</td>
+        <td>节点真断了（先修链路）；或时间戳被错误地初始化成 0 之外的值</td>
+      </tr>
+      <tr>
+        <td><b>点"手动刷新"没反应</b></td>
+        <td>指令键是否被写、节点是否取走、是否回执</td>
+        <td>指令通道断了；或指令"读取即删"导致丢单（见 10.3）</td>
+      </tr>
+      <tr>
+        <td><b>图表空白但其它卡片正常</b></td>
+        <td>该图表的数据源接口</td>
+        <td>取数失败。注意：<b>删掉画布元素会让取数函数抛错并中断整页渲染</b>，所以"不想要的图表"要用隐藏而不是删除</td>
+      </tr>
+      <tr>
+        <td><b>内存/CPU 异常升高、探测频率翻倍</b></td>
+        <td>实际在跑的进程数量</td>
+        <td>看门狗与手工重启同时判断"进程不在"，各拉起一份 → 同一脚本跑 2~3 份。<b>用单实例锁</b>修</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>12.3 部署与验证类问题</h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>现象</th><th>原因</th><th>正确做法</th></tr></thead>
+    <tbody>
+      <tr><td>以为部署成功了，其实没有</td><td>部署输出被截断，只看了最后一行</td><td><b>永远看完整输出</b></td></tr>
+      <tr><td>部署后查线上还是旧版本</td><td>边缘生效有延迟</td><td>等 <b>20~30 秒</b>再查</td></tr>
+      <tr><td>不确定到底生效没有</td><td>只看了一处版本号</td><td>比对<b>三处</b>：源码 / 接口 / 页面内嵌</td></tr>
+      <tr><td>改了节点脚本但行为没变</td><td>进程启动时已把脚本读进内存</td><td>改完必须<b>重启进程</b></td></tr>
+      <tr><td>脚本在电脑上能跑，传到节点就报语法错误</td><td>行尾是 CRLF</td><td>写文件时用 <b>LF</b></td></tr>
+      <tr><td>重启后服务没起来</td><td>杀进程顺序不对，看门狗把子进程又拉起来了</td><td>先杀看门狗，再杀其余，最后只拉起一个</td></tr>
+      <tr><td>数进程数量误判"有重复进程"</td><td>模糊匹配匹配到了自己那条命令行</td><td>用进程列表精确判断，不要用模糊匹配</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="c13">
+  <span class="anchor" id="c13a"></span>
+  <h2><span class="no">13</span>命令速查与检查清单</h2>
+  <p class="lead">下面所有命令里的域名、令牌、密钥、地址都用占位符表示，实际使用时替换成你自己的。</p>
+
+  <h3>13.1 用户端</h3>
+  <pre><code># 拉取订阅（浏览器直接打开也能看返回是否正常）
+curl -s "https://&lt;入口域名&gt;/sub?token=&lt;你的令牌&gt;&amp;type=v2ray" | head -c 200
+
+# 验证出口（连上代理后执行；看 loc 与 ip）
+curl -s https://www.cloudflare.com/cdn-cgi/trace | grep -E "^(ip|loc)="</code></pre>
+
+  <h3>13.2 服务端 · 边缘</h3>
+  <pre><code># 部署（务必看完整输出）
+python cf_deploy.py &lt;部署令牌&gt;
+
+# 语法检查
+node --check worker_deploy.js
+
+# 冒烟测试：三个都必须 200
+curl -s -o /dev/null -w "%{http_code}\n" "https://&lt;入口域名&gt;/api/stats_data?pwd=&lt;管理口令&gt;"
+curl -s -o /dev/null -w "%{http_code}\n" "https://&lt;入口域名&gt;/api/live?pwd=&lt;管理口令&gt;&amp;since="
+curl -s -o /dev/null -w "%{http_code}\n" "https://&lt;入口域名&gt;/admin?pwd=&lt;管理口令&gt;"
+
+# 版本一致性：三处必须相同
+grep -o "const BUILD_ID = '[^']*'" worker_deploy.js
+curl -s "https://&lt;入口域名&gt;/api/live?pwd=&lt;管理口令&gt;&amp;since=" | grep -o '"buildId":"[^"]*"'</code></pre>
+
+  <h3>13.3 服务端 · 住宅节点</h3>
+  <pre><code># 完整重启（顺序在脚本里已固定，别单独手工杀）
+sh /data/local/tmp/run_daemon.sh
+
+# 确认进程都在（用精确的进程列表，不要用模糊匹配）
+ps -A -o PID,PPID,ARGS | grep -E "xray|cloudflared|ping_scheduler|node_probe|traffic_daemon|edge_probe"
+
+# 看数据是否在更新（文件修改时间应该一直在变）
+ls -l /data/local/tmp/last_pings.txt /data/local/tmp/last_ping_times.txt /data/local/tmp/last_losses.txt
+
+# 看本轮上报节奏（有没有出现"跳一轮"的长周期）
+tail -5 /data/local/tmp/timing.log</code></pre>
+
+  <h3>13.4 上线前检查清单</h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>#</th><th>检查项</th><th>通过标准</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>代码语法</td><td><code>node --check</code> 零错误</td></tr>
+      <tr><td>2</td><td>接口冒烟</td><td>三个端点全部 200</td></tr>
+      <tr><td>3</td><td>版本一致</td><td>源码 / 接口 / 页面三处 BUILD_ID 相同</td></tr>
+      <tr><td>4</td><td>数据流动</td><td>节点上报时间戳在 10 秒内</td></tr>
+      <tr><td>5</td><td>关键指标非空</td><td>时延 / 丢包 / 落点 / 节点列表都有真实值</td></tr>
+      <tr><td>6</td><td>页面无渲染错误</td><td>隐藏错误探针为空</td></tr>
+      <tr><td>7</td><td>配额正常</td><td>当日写入是个位数</td></tr>
+      <tr><td>8</td><td>回滚点存在</td><td>改动前的文件已备份</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="c14">
+  <span class="anchor" id="c14a"></span>
+  <h2><span class="no">14</span>附录：文件地图 · 约定 · 设计约束</h2>
+
+  <h3>14.1 文件地图（按职责分组）</h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>文件</th><th>在哪运行</th><th>职责</th></tr></thead>
+    <tbody>
+      <tr><td><code>worker_deploy.js</code></td><td>边缘</td><td><b>全部服务端逻辑</b>：订阅、遥测聚合、接口、监控大屏页面（HTML/CSS/JS 全内嵌）</td></tr>
+      <tr><td><code>cf_deploy.py</code></td><td>本机</td><td>部署器：注入版本号、自动备份、失败自动回滚</td></tr>
+      <tr><td><code>run_daemon.sh</code></td><td>节点</td><td>完整重启入口（顺序固定）</td></tr>
+      <tr><td><code>traffic_daemon.sh</code></td><td>节点</td><td>看门狗 + 上报节拍器</td></tr>
+      <tr><td><code>report_traffic.sh</code></td><td>节点</td><td>组装并上报遥测；接收响应里的指令与节点清单</td></tr>
+      <tr><td><code>ping_scheduler.sh</code></td><td>节点</td><td>区域时延/丢包测绘（每区多次采样）</td></tr>
+      <tr><td><code>edge_probe.sh</code></td><td>节点</td><td>节点→边缘的单次往返测量</td></tr>
+      <tr><td><code>node_probe.sh</code></td><td>节点</td><td>逐个巡检中转节点</td></tr>
+      <tr><td><code>fast_scan.sh</code></td><td>节点</td><td>手动触发的全速扫描（独立进程，不干扰常规时序）</td></tr>
+      <tr><td><code>*.bak_*</code></td><td>本机/节点</td><td>回滚点，按时间命名</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>14.2 项目里已经形成的约定（照做就不会重犯老错误）</h3>
+  <ol class="steps">
+    <li><b>一个指标只展示一次、只写一个来源。</b>发现重复展示就删掉重复的那一份。</li>
+    <li><b>测不到就留空。</b>不做兜底填充、不做"看起来合理"的估计。</li>
+    <li><b>凡"一个请求写、另一个请求读"的状态，放机房缓存并 await 写入。</b>权威数据放全局存储。</li>
+    <li><b>高频路径上不产生写入。</b>写只发生在"有真实变更"时。</li>
+    <li><b>频率是容量的一部分。</b>加任何周期性动作前，先算它一天会产生多少次请求/多少流量。</li>
+    <li><b>口径唯一定义在采集侧。</b>展示侧不做任何换算，避免两边算法漂移。</li>
+    <li><b>远程控制搭在"节点上报的响应"里</b>，并要求回执。</li>
+    <li><b>改节点脚本必须重启进程；写脚本必须用 LF。</b></li>
+    <li><b>部署看完整输出、等 30 秒、比三处版本号。</b></li>
+    <li><b>动手前先备份，且知道怎么回滚。</b></li>
+  </ol>
+
+  <h3>14.3 四条硬约束（设计的天花板）</h3>
+  <div class="grid2">
+    <div class="box sv">
+      <h4>① 免费额度</h4>
+      <p>边缘的持久键值存储有每日读写配额（读取宽裕、<b>写入很紧</b>）。整套状态分层设计都是为了不碰这条线。</p>
+    </div>
+    <div class="box sv">
+      <h4>② 家庭带宽与电量</h4>
+      <p>所有探测/心跳共享同一条家庭上行。<b>能合并的上报必须合并</b>，能降频的必须降频；节点还常是电池设备。</p>
+    </div>
+    <div class="box us">
+      <h4>③ 分布式一致性</h4>
+      <p>边缘是分布式的，没有"全局内存"。跨机房要一致，就必须有一个全球权威源。</p>
+    </div>
+    <div class="box us">
+      <h4>④ 人的判断力</h4>
+      <p>监控的价值在于"让人能相信它"。一旦出现一次假数据，整块屏的信任就没了——所以宁可空着。</p>
+    </div>
+  </div>
+
+  <h3>14.4 一句话总览</h3>
+  <div class="note ok">
+    <b>用户端</b>只做四件事：拿订阅、导入、验证出口、优选接入点。<br>
+    <b>服务端</b>是三台"机器"的协作：<b>边缘</b>负责分发与聚合，<b>住宅节点</b>负责出口与全部测量，<b>大屏</b>负责把事实呈现给人。<br>
+    三者之间只有两条通道：<b>节点每几秒一次的主动上报</b>，和<b>浏览器对边缘的长轮询</b>。所有功能——包括远程控制——都建立在这两条通道之上。
+  </div>
+</section>
+
+<footer>
+  本文档为工程教程，全部域名、IP、令牌、密钥均为占位示例。<br>
+  文档内所有结论均来自对项目源码、采集脚本与线上运行数据的逐项核对；不含任何真实凭据。
+</footer>
+
+</div>
+</body>
+</html>

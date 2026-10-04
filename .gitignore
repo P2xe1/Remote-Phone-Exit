@@ -1,0 +1,50 @@
+# ============================================================================
+#  绝不提交的东西 —— 这些含真实凭据或运行数据
+# ============================================================================
+
+# --- 配置：真实值只放本地 ---
+.env
+.env.*
+!.env.example
+config.json
+config.yml
+config_multi.json
+cf_cfg.local.py
+.cf_token
+tunnel_creds.json
+phone_active_config.json
+
+# --- 用户数据与运行状态 ---
+users.json
+users_backup.json
+users_snapshot_*.json
+stats_data_live.json
+history_15m.txt
+user_traffic_base.txt
+
+# --- 部署/运行时备份 ---
+*.bak
+*.bak_*
+*.backup
+*.orig
+*~
+
+# --- 会话记录与调试产物 ---
+SESSION_TRANSCRIPT*.jsonl
+_payload*.json
+_edge_*.json
+_*.png
+_*.html
+_*.py
+_*.sh
+!tools/check_secrets.py
+
+# --- 编辑器 / 系统 ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
