@@ -55,7 +55,8 @@ io.open("cf_candidates_ok.txt", "w", encoding="utf-8", newline="\n").write("\n".
 print("[OK] cf_candidates_ok.txt")
 
 # ---------- 用可用 IP 重新生成 Clash 配置 ----------
-UUID = "${VLESS_UUID}"
+# 【2026-10-05】这一处原来也写死了 UUID，脱敏后成了 ${VLESS_UUID} 占位符
+#   （Python 不会替换），会产出无效配置。改为复用文件顶部已读到的配置。
 PATH = "/kl"
 L = []
 L.append("# Cloudflare 节点优选测速配置 (已剔除无法路由到隧道的 %d 个死 IP)" % len(bad))

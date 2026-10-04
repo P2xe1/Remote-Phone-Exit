@@ -26,10 +26,6 @@ HOST = cfg("TUNNEL_HOST", required=True)
 PORT = 443
 PATH = "/kl"
 
-HOST = "${TUNNEL_HOST}"
-PORT = 443
-PATH = "/kl"
-
 # Cloudflare 面向客户站点的 anycast 网段 (优选IP 通常出自这些段)
 RANGES = [
     ("104.16.0.0/13", 90),      # 104.16-23  最常用

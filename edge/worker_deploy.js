@@ -1934,7 +1934,7 @@ export default {
       } catch (e) {}
       if (hostProbeAlive === null) {
         try {
-          const probe = await fetch(`https://${TUNNEL_HOST}/kl`, { method: 'HEAD', signal: AbortSignal.timeout(1500) });
+          const probe = await fetch(`https://${_cfg('TUNNEL_HOST', 'vpn.example.com')}/kl`, { method: 'HEAD', signal: AbortSignal.timeout(1500) });
           // Xray 在线时返回 403/400；隧道断开返回 502/504/530
           hostProbeAlive = !(probe.status >= 500);
         } catch (pErr) {
