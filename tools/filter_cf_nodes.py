@@ -1,15 +1,31 @@
 # -*- coding: utf-8 -*-
 """用 TLS 握手 + SNI 验证筛掉无法路由到隧道的死 IP, 只保留可用的。
-   判据: 与 IP:443 完成 TLS 握手且证书对 ${TUNNEL_HOST} 有效 => 该 IP 确实服务于你的隧道。
-   (注: 这里只验证"可达且路由正确", 国内的延迟排名仍需你朋友实测)"""
+
+    判据: 与 IP:443 完成 TLS 握手且证书对你的隧道域名有效
+          => 该 IP 确实服务于你的隧道。
+    (注: 这里只验证"可达且路由正确", 实际的延迟排名仍需你在目标网络里实测)
+
+    域名从 .env 读取，不在代码里写死。
+"""
 import concurrent.futures as cf
 import io
+import os
 import socket
 import ssl
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+try:
+    from tools.load_config import cfg          # 从仓库根运行
+except ImportError:
+    from load_config import cfg                # 从 tools/ 里运行
+
 sys.stdout.reconfigure(encoding="utf-8")
-HOST = "${TUNNEL_HOST}"
+
+# 【2026-10-05】原来这里写死了域名（注释里的那份还漏了脱敏）。
+#   现在统一从 .env 读 TUNNEL_HOST。
+HOST = cfg("TUNNEL_HOST", required=True)
+
 ips = [l.strip() for l in io.open("cf_candidates.txt", encoding="utf-8") if l.strip()]
 print(f"待测: {len(ips)} 个")
 
@@ -39,7 +55,7 @@ io.open("cf_candidates_ok.txt", "w", encoding="utf-8", newline="\n").write("\n".
 print("[OK] cf_candidates_ok.txt")
 
 # ---------- 用可用 IP 重新生成 Clash 配置 ----------
-UUID = "${USER_UUID}"
+UUID = "${VLESS_UUID}"
 PATH = "/kl"
 L = []
 L.append("# Cloudflare 节点优选测速配置 (已剔除无法路由到隧道的 %d 个死 IP)" % len(bad))

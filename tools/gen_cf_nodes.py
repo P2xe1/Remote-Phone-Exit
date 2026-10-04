@@ -1,14 +1,31 @@
 # -*- coding: utf-8 -*-
 """生成 Cloudflare 优选候选 IP + 可直接导入 mihomo/Clash.Meta 的测速配置
-   参数取自手机真实配置: VLESS + xhttp, 域名 ${TUNNEL_HOST}, 端口 443"""
+
+    参数一律从 .env 读取（VLESS + xhttp）。代码里不写死域名或 UUID ——
+    既避免泄露，也避免"改了配置却忘了改脚本"。
+"""
 import io
 import ipaddress
+import os
 import random
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+try:
+    from tools.load_config import cfg          # 从仓库根运行
+except ImportError:
+    from load_config import cfg                # 从 tools/ 里运行
+
 sys.stdout.reconfigure(encoding="utf-8")
 
-UUID = "${USER_UUID}"
+# 【2026-10-05】原来这里是写死的明文，脱敏时被换成 ${VLESS_UUID} 占位符，
+#   而 Python 不会替换它 —— 脚本会直接产出无效配置，且很难看出原因。
+#   现在改为读 .env；缺了就在启动时明确报错。
+UUID = cfg("VLESS_UUID", required=True)
+HOST = cfg("TUNNEL_HOST", required=True)
+PORT = 443
+PATH = "/kl"
+
 HOST = "${TUNNEL_HOST}"
 PORT = 443
 PATH = "/kl"
