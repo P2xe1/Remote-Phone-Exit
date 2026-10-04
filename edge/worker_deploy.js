@@ -3483,8 +3483,8 @@ rules:
                 <div style="color:#444;font-size:12px;padding:6px;">等待数据…</div>
               </div>
               <div style="font-size:11px;color:#5a5a5a;margin-top:11px;line-height:1.7;border-top:1px solid #1a1a1a;padding-top:9px;">
-                <b style="color:#777;">判据：</b>手机每 5 秒调用 xray 的活动连接列表（<code style="color:#666;">statsgetallonlineusers</code>），随每次上报带上。
-                <b style="color:#777;">"在线"= 此刻确实有连接</b>，与有没有流量无关 —— 挂着不下载也算在线。
+                <b style="color:#777;">怎么判定：</b>手机每 5 秒读一次连接核心的活动连接列表，随每次上报带上来。
+                <b style="color:#777;">「在线」= 此刻确实连着</b>，与有没有流量无关 —— 挂着不下载也算在线。
               </div>
             </div>
 
@@ -4180,6 +4180,13 @@ rules:
       return Math.floor(h / 24) + ' \u5929\u524d';
     }
 
+    function _fmtClock(sec) {
+      if (!sec || sec <= 0) return '';
+      var d = new Date(sec * 1000);
+      var p = function (n) { return (n < 10 ? '0' : '') + n; };
+      return p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+    }
+
     function _fmtBytes(b) {
       b = Number(b) || 0;
       if (b < 1024) return b + ' B';
@@ -4199,13 +4206,12 @@ rules:
       _lastConnUsers = users;
 
       var counts = { online: 0, recent: 0, idle: 0, long: 0, never: 0 };
-      var fromXray = 0, freshCnt = 0;
+      var freshCnt = 0;
 
       var cards = users.map(function (u) {
         var st = u.connState || 'never';
         if (!_CONN_META[st]) st = 'never';
         counts[st]++;
-        if (u.connFromXray) fromXray++;
         if (u.onlineListFresh) freshCnt++;
 
         var meta = _CONN_META[st];
@@ -4231,9 +4237,13 @@ rules:
           + meta.icon + ' ' + meta.label + '</span>'
           + '</div>'
           + '<div style="font-size:11px;color:#777;margin-bottom:4px;">' + sub + '</div>'
-          + '<div style="display:flex;justify-content:space-between;font-size:10px;color:#555;font-family:monospace;">'
+          + '<div style="display:flex;justify-content:space-between;font-size:10px;color:#555;">'
           + '<span>\u7d2f\u8ba1 ' + _fmtBytes(u.totalTraffic) + '</span>'
-          + '<span>' + (u.connFromXray ? 'xray\u6743\u5a01' : (u.onlineListFresh ? '\u540d\u5355\u65e0\u6b64\u4eba' : '\u540d\u5355\u672a\u66f4\u65b0')) + '</span>'
+          // 【2026-10-04 修正】这里原来显示"名单无此人 / 名单未更新 / xray权威"——
+          //   那是给开发看的技术依据, 对使用者是纯粹的噪音(每个人不在线时都挂着
+          //   一句"名单无此人", 看起来像报错)。改为显示最后一次在线的具体时刻,
+          //   与中间那行的"多久之前"互为补充; 查不到就留空, 不编造。
+          + '<span>' + (_fmtClock(u.lastActive) || '\u2014') + '</span>'
           + '</div></div>';
       });
 
@@ -4251,9 +4261,16 @@ rules:
 
       if (srcEl) {
         var total = users.length;
-        srcEl.innerText = total
-          ? ('xray \u540d\u5355\u5224\u5b9a ' + fromXray + '/' + total + ' \u4eba \u00b7 \u540d\u5355\u65b0\u9c9c ' + freshCnt + '/' + total)
-          : '';
+        if (!total) {
+          srcEl.innerText = '';
+        } else if (freshCnt === 0) {
+          // 名单没在更新 -> 必须说出来, 否则用户会把"全部离线"当成真的
+          srcEl.innerText = '\u26a0 \u8fde\u63a5\u6570\u636e\u672a\u66f4\u65b0\uff0c\u72b6\u6001\u53ef\u80fd\u4e0d\u51c6';
+          srcEl.style.color = '#eab308';
+        } else {
+          srcEl.innerText = '\u5b9e\u65f6\u5224\u5b9a \u00b7 ' + freshCnt + '/' + total + ' \u4eba\u6570\u636e\u65b0\u9c9c';
+          srcEl.style.color = '#666';
+        }
       }
     }
 
