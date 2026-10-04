@@ -3,6 +3,20 @@
 // ==========================================
 // 页面构建号: 每次部署变化。前端发现自己的版本与它对不上就自动重载,
 // 避免"我改了但你的浏览器还跑着旧代码"这种情况。
+// 【日界线时区】今日流量 / 15 分钟 / 当日峰值 都按这个时区切分。
+//   必须与手机端一致（手机从 /api/phone_xray_config 拿同一个值），
+//   否则「当日」的边界两边不同，数字会对不上。
+//   ⚠ 这里必须是普通常量：Worker 模块顶层【没有 env 对象】
+//     （env 只作为 fetch(request, env) 的形参存在）。写成 _cfg('DAY_TZ', '') 会
+//     直接 Uncaught ReferenceError，整个 Worker 拒绝部署（实测错误码 10021）。
+//   要改时区就改这一处；导出到公开仓库时它会变成可配置项（.env 的 DAY_TZ）。
+// 【导出修复】日界线时区：今日流量 / 15 分钟窗口 / 当日峰值 按它切分。
+//   必须与手机端一致（手机从 /api/phone_xray_config 拿同一个值），
+//   否则「当日」的边界两边不同，数字会对不上。
+//   支持 IANA 名称（Etc/GMT-8）或 UTC 偏移（+08:00）；要改就在 .env 设 DAY_TZ。
+//   做成函数是必须的：_CFG 在文件靠后处才初始化，
+//   模块加载期直接读它会被拒绝（TDZ）。
+function _dayTz() { return _cfg('DAY_TZ', 'UTC') || 'UTC'; }
 const BUILD_ID = 'b20261004-193956';
 // 【2026-10-04 T8.8】Chart.js 源码由 cf_deploy.py 部署时注入(JSON 转义, 安全)。
 // 未注入时为 null, /chart.js 返回 404, 前端回退 CDN。
@@ -139,6 +153,11 @@ function generatePhoneXrayConfig(userStore) {
   }
 
   return {
+    // 【2026-10-05】把日界线时区随配置一起下发 —— 手机端据此切分"当日峰值"。
+    //   为什么放这里: 手机本来就定期拉这份配置, 不用再加一个接口;
+    //   两边取同一个值, "当日"的边界才不会各算各的。
+    //   xray 会忽略这个自定义字段（已实测 -test 通过）。
+    "dayTz": _dayTz(),
     "log": { "loglevel": "warning" },
     "dns": { "servers": ["8.8.8.8", "1.1.1.1", "localhost"] },
     "api": { "tag": "api", "services": ["StatsService", "HandlerService"] },
@@ -1113,8 +1132,8 @@ export default {
           }
 
           const now = new Date();
-          const nowStr = now.toLocaleTimeString('zh-CN', { timeZone: 'UTC' });
-          const todayDateStr = now.toLocaleDateString('zh-CN', { timeZone: 'UTC' }).replace(/\//g, '-');
+          const nowStr = now.toLocaleTimeString('zh-CN', { timeZone: _dayTz() });
+          const todayDateStr = now.toLocaleDateString('zh-CN', { timeZone: _dayTz() }).replace(/\//g, '-');
 
           // 1. 优先更新各用户增量累加器（仅当包含有效 body.stat 数组时）
           if (Array.isArray(body.stat)) {
@@ -1137,7 +1156,7 @@ export default {
             const dayOfWeek = now.getDay() || 7;
             const mondayDate = new Date(now);
             mondayDate.setDate(now.getDate() - dayOfWeek + 1);
-            const mondayStr = mondayDate.toLocaleDateString('zh-CN', { timeZone: 'UTC' }).replace(/\//g, '-');
+            const mondayStr = mondayDate.toLocaleDateString('zh-CN', { timeZone: _dayTz() }).replace(/\//g, '-');
 
             // 【2026-10-04 真实性修复】这里原本有一个 HISTORICAL_BASE:
             //     const HISTORICAL_BASE = { 'USER_TOKEN_24': 1015110466 };  // 1.01 GB
@@ -1436,7 +1455,11 @@ export default {
           //   Worker 侧会话累加器, 只显示 24 MB —— 数据是真的, 但不是"总消耗"。
           //   修法: 缺字段时读一次共享缓存快照(浏览器读的是同一份)兜底; 三个字段共用。
           let _prevSnap = null;
-          if (!body.userTraffics || !body.history15m || !body.nodeStatus || !body.nodeStatus.length) {
+          // 【2026-10-05】bwPeak（总带宽峰值）也纳入这里的兜底触发条件：
+          //   它与 history15m 一样属于"按需/变更时才发"的字段，
+          //   手机某轮没带时若不读共享快照，这个键会被整个丢掉（JSON.stringify 丢 undefined）。
+          if (!body.userTraffics || !body.history15m || !body.bwPeak
+              || !body.nodeStatus || !body.nodeStatus.length) {
             try { _prevSnap = await cacheGetJson('stats_latest'); } catch (e) {}
           }
 
@@ -1491,6 +1514,14 @@ export default {
             history15m: body.history15m
               || (globalMemoryStats ? globalMemoryStats.history15m : null)
               || (_prevSnap && _prevSnap.history15m) || [],
+            // 【2026-10-05 新增】总带宽峰值（15 分钟窗口 / 当日）。
+            //   手机负责统计（见 report_traffic.sh 的 BW_PEAK 段），Worker 只透传。
+            //   兜底链与 history15m 一致：手机某轮没带上时依次用
+            //   isolate 内存 -> 共享快照 -> 上一份快照，避免这个键被抹掉后
+            //   大屏上的峰值突然变回 0。
+            bwPeak: body.bwPeak
+              || (globalMemoryStats ? globalMemoryStats.bwPeak : null)
+              || (_prevSnap && _prevSnap.bwPeak) || null,
             conns: body.conns !== undefined ? body.conns : (globalMemoryStats ? globalMemoryStats.conns : 0),
             // 【2026-10-04 修复】每用户累计流量是 12 小时才随重载荷发一次,
             //   必须用共享快照兜底, 否则中间那些上报会把这个键抹掉(见上方注释)。
@@ -1756,6 +1787,9 @@ export default {
         telemetry: { battery: {}, wifi: {} },
         buildId: BUILD_ID,
         history15m: [],
+        // 【2026-10-05】冷启动没有峰值统计 —— 如实留 null，前端显示"未测到"，
+        //   不编造 0 以外的任何数（0 会让人误以为"测过且峰值是 0"）。
+        bwPeak: null,
         // 【2026-10-04 修复 T1.4】原来 timestamp=serverNow, 会让"没有任何数据"的
         //   冷启动状态显示成"刚刚/0 秒前"(伪装新鲜度)。现改为 0: 前端按
         //   "未测到"渲染, 收到第一份真实上报后自动变成真实年龄。
@@ -1827,6 +1861,8 @@ export default {
         if (s.activeNode) payload.activeNode = s.activeNode;
         if (s.telemetry) payload.telemetry = s.telemetry;
         if (s.history15m && s.history15m.length > 0) payload.history15m = s.history15m;
+        // 【2026-10-05 新增】总带宽峰值（15 分钟窗口 / 当日）透传给大屏
+        if (s.bwPeak) payload.bwPeak = s.bwPeak;
         payload.phoneMaster = s.phoneMaster || phoneMasterInfo || null;
         // 【2026-10-04 T4.4】只信快照里的指令, 不再回退 isolate 内存旧指令;
         // 只要它的 id 已在确认记录里, 就说明处理完了, 不能再显示成"待取走"。
@@ -2171,7 +2207,7 @@ export default {
       if (!user.transient) {
         try {
           await touchUser(token, {
-            lastSeen: new Date().toLocaleString('zh-CN', { timeZone: 'UTC' }),
+            lastSeen: new Date().toLocaleString('zh-CN', { timeZone: _dayTz() }),
             lastIp: request.headers.get('cf-connecting-ip') || '-',
             userAgent: request.headers.get('user-agent') || '-',
             pullCount: (user.pullCount || 0) + 1
@@ -2390,7 +2426,7 @@ rules:
             if (!token) token = Math.random().toString(36).substring(2, 10);
             const newUser = {
               name, token, enabled: true,
-              createdAt: new Date().toLocaleString('zh-CN', { timeZone: 'UTC' }),
+              createdAt: new Date().toLocaleString('zh-CN', { timeZone: _dayTz() }),
               lastSeen: '从未', lastIp: '-', userAgent: '-', pullCount: 0
             };
             userStore[token] = newUser;
@@ -3339,20 +3375,20 @@ rules:
             <div class="grid-metrics">
               <!-- 指标 1：实时上传带宽与负荷（量程严格 150 Mbps） -->
               <div class="card">
-                <div class="card-title">实时上行带宽负荷 (Max 150M)</div>
+                <div class="card-title">实时总带宽负荷 (上行+下行 · Max 150M)</div>
                 <div class="gauge-wrap">
                   <canvas id="gaugeChart" class="gauge-canvas"></canvas>
                   <div class="gauge-num-overlay">
                     <div class="gauge-val" id="gaugeVal">0.00 Mbps</div>
-                    <div class="gauge-limit">量程上限 150.0 Mbps</div>
+                    <div class="gauge-limit">量程上限 150.0 Mbps（上行+下行合计）</div>
                   </div>
                 </div>
                 <!-- 【2026-10-04】原来这张卡只有半圆仪表, 与同排更高的卡并排时下方一大片空白。
                      补三个真实速率指标(与"总流量吞吐统计"的累计值不同: 这里全是瞬时速率)。 -->
                 <div class="health-strip" style="margin-top:12px;">
-                  <div class="health-item"><div class="health-k">当前上行</div><div class="health-v" id="curUp">--</div></div>
-                  <div class="health-item"><div class="health-k">当前下行</div><div class="health-v" id="curDown">--</div></div>
-                  <div class="health-item"><div class="health-k">近 15 分钟峰值(上行)</div><div class="health-v" id="peakUp">--</div></div>
+                  <div class="health-item"><div class="health-k">总计上下行流量</div><div class="health-v" id="bwTotalBytes">--</div></div>
+                  <div class="health-item"><div class="health-k">15 分钟峰值</div><div class="health-v" id="bwPeak15m">--</div></div>
+                  <div class="health-item"><div class="health-k">一天峰值</div><div class="health-v" id="bwPeakDay">--</div></div>
                 </div>
               </div>
 
@@ -3839,6 +3875,49 @@ rules:
               const k = 1024, sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
               const i = Math.floor(Math.log(bytes) / Math.log(k));
               return (bytes / Math.pow(k, i)).toFixed(2) + ' ' + sizes[i];
+            }
+            // ============================================================
+            // 【2026-10-05 新增】「实时总带宽负荷」面板的三个指标格
+            //   总计上下行流量 / 15 分钟峰值 / 一天峰值
+            //
+            // 口径来源（都是真实值，没有估算）:
+            //   · 总计上下行流量 = downBytes + upBytes
+            //     （xray 各入站累计字节，与"总流量吞吐统计"同源）
+            //   · 两个峰值 = payload.bwPeak，由【手机端】每 30 秒统计一次后上报
+            //     （15 分钟窗口 = history 最近 30 个采样点；当日峰值按
+            //       DAY_TZ 零点重置，与流量榜同口径）
+            //
+            // 为什么峰值不用浏览器自己算:
+            //   原来那个"近 15 分钟峰值"读的是 window._peakUpMbps，
+            //   只统计当前浏览器会话 —— 刷新页面就归零，并不是真的 15 分钟。
+            //   放手机端算，刷新/换浏览器/换台电脑看都不丢。
+            // ============================================================
+            function applyBwPanel(d) {
+              // 不传参时用最近一次完整 stats 的缓存 —— /api/live 推的是精简快照，
+              // 里面没有 downBytes/upBytes/bwPeak，只能靠缓存补齐。
+              if (!d) d = window.__lastFullStats || null;
+              if (!d) return;
+              // ① 总计上下行流量
+              var tbEl = document.getElementById('bwTotalBytes');
+              if (tbEl) {
+                var tot = (Number(d.downBytes) || 0) + (Number(d.upBytes) || 0);
+                tbEl.innerText = (tot > 0) ? formatBytes(tot) : '未测到';
+              }
+              // ② 两个峰值（手机端统计）
+              var bp = d.bwPeak || null;
+              var p15 = document.getElementById('bwPeak15m');
+              var pdy = document.getElementById('bwPeakDay');
+              if (p15) {
+                p15.innerText = (bp && typeof bp.total15m === 'number')
+                  ? bp.total15m.toFixed(2) + ' Mbps' : '未测到';
+              }
+              if (pdy) {
+                var txt = (bp && typeof bp.day === 'number')
+                  ? bp.day.toFixed(2) + ' Mbps' : '未测到';
+                // 标注统计日（跨零点时能一眼看出是新的一天）
+                if (bp && bp.dayKey) txt += ' · ' + bp.dayKey.slice(5);
+                pdy.innerText = txt;
+              }
             }
             function formatRate(bytesPerSec) {
               if (bytesPerSec < 1024) return bytesPerSec.toFixed(0) + ' B/s';
@@ -4532,30 +4611,27 @@ rules:
                 }
               }
               if (typeof m.up === 'number' && m.up !== null) {
+                // 【2026-10-05 用户要求】口径改为【上行+下行合计】总带宽。
+                //   原来这里只取 m.up（上行），卡片却叫"带宽负荷"，名不副实。
+                var _bwDown = (typeof m.down === 'number' && m.down !== null) ? Number(m.down) : 0;
+                var _bwTotal = Number(m.up) + _bwDown;
                 var gv = document.getElementById('gaugeVal');
-                if (gv) gv.innerText = Number(m.up).toFixed(2) + ' Mbps';
+                if (gv) gv.innerText = _bwTotal.toFixed(2) + ' Mbps';
                 try {
-                  var v = Math.min(150, Number(m.up));
+                  var v = Math.min(150, _bwTotal);
                   gaugeChart.data.datasets[0].data = [v, Math.max(0, 150 - v)];
                   if (v > 120) gaugeChart.data.datasets[0].backgroundColor[0] = '#ef4444';
                   else if (v > 80) gaugeChart.data.datasets[0].backgroundColor[0] = '#22c55e';
                   else gaugeChart.data.datasets[0].backgroundColor[0] = '#ffffff';
                   gaugeChart.update('none');
                 } catch (e) {}
-                // 【修复】SSE 推送路径同步更新 curUp / curDown / peakUp 三个瞬时速率格
+                // 总计流量 / 两个峰值：峰值来自手机端真实统计（不用浏览器会话的临时值）
+                // ⚠ /api/live 推的是【精简快照】(只有 up/down/pings 等), 不含
+                //   downBytes/upBytes/bwPeak。所以这里不传参, 让 applyBwPanel
+                //   读最近一次完整 stats 的缓存 —— 推送路径到得比轮询快(6秒 vs 60秒),
+                //   不这样做的话这四项要等轮询才更新。
                 try {
-                  var cu = document.getElementById('curUp');
-                  if (cu) cu.innerText = Number(m.up).toFixed(2) + ' Mbps';
-                  if (typeof m.down === 'number' && m.down !== null) {
-                    var cd = document.getElementById('curDown');
-                    if (cd) cd.innerText = Number(m.down).toFixed(2) + ' Mbps';
-                  }
-                  // 跨推送维护会话峰值：只升不降，轮询路径可继续覆盖（取较大值）
-                  if (!window._peakUpMbps || Number(m.up) > window._peakUpMbps) {
-                    window._peakUpMbps = Number(m.up);
-                  }
-                  var pk = document.getElementById('peakUp');
-                  if (pk) pk.innerText = window._peakUpMbps.toFixed(2) + ' Mbps';
+                  applyBwPanel();
                 } catch (e) {}
               }
               // 【2026-10-03 关键修复】这里必须同时刷新 6 个区域的延迟数字与抖动。
@@ -4691,6 +4767,9 @@ rules:
                 const fetchElapsed = Math.max(1, Math.round(performance.now() - fetchStart));
                 if (res.ok) {
                   const d = await res.json();
+                  // 【2026-10-05】缓存最近一次完整 stats：/api/live 的 6 秒推送里
+                  //   没有 downBytes/upBytes/bwPeak，applyBwPanel 要从这里取。
+                  window.__lastFullStats = d;
                   lastSuccessTimestamp = Date.now();
                   noteDataAge(d.serverTime, d.timestamp);   // 记录真实数据年龄
                   updateFreshnessTicker();
@@ -5186,32 +5265,21 @@ rules:
                       liveChart.update('none');
                     }
 
-                    // 【P2 修复】原实现取 max(下行,上行), 但卡片标题写的是"上行带宽" —— 名不副实。
-                    // 现在如实显示上行速率; 下行速率由下方堆叠面积图完整呈现。
-                    // 【2026-10-04 修复 T8.7】统一口径: 优先 liveRate(两次上报间的
-                    //   真实字节差), 只有它缺失时才退回 history15m 的采样点,
+                    // 【2026-10-05 用户要求】口径改为【上行+下行合计】总带宽。
+                    //   原来这里只显示上行（标题却叫"带宽负荷"），名不副实。
+                    //   【2026-10-04 修复 T8.7】仍统一优先 liveRate（两次上报间的
+                    //   真实字节差），只有它缺失时才退回 history15m 的采样点，
                     //   避免两条数据源交替覆盖导致仪表盘数值跳变。
                     const lr = d.liveRate;
-                    const activeMbps = (lr && typeof lr.up === 'number' && lr.up !== null)
-                      ? Number(lr.up)
-                      : (Number(lastPt.up) || 0);
+                    const rateUp = (lr && typeof lr.up === 'number' && lr.up !== null)
+                      ? Number(lr.up) : (Number(lastPt.up) || 0);
+                    const rateDown = (lr && typeof lr.down === 'number' && lr.down !== null)
+                      ? Number(lr.down) : (Number(lastPt.down) || 0);
+                    const activeMbps = rateUp + rateDown;
                     const gValEl = document.getElementById('gaugeVal');
                     if (gValEl) gValEl.innerText = activeMbps.toFixed(2) + ' Mbps';
-                    // 【2026-10-04】同卡补瞬时上行/下行与 15 分钟上行峰值(全部取自真实采样点)
-                    try {
-                      var curDownMbps = (lr && typeof lr.down === 'number' && lr.down !== null)
-                        ? Number(lr.down) : (Number(lastPt.down) || 0);
-                      var upSeries = (liveChart.data.datasets[1].data || []).map(Number).filter(function (x) { return isFinite(x); });
-                      var histPeak = upSeries.length ? Math.max.apply(null, upSeries) : 0;
-                      // 与 SSE 路径共享会话峰值，只升不降
-                      if (!window._peakUpMbps || histPeak > window._peakUpMbps) window._peakUpMbps = histPeak;
-                      var cu = document.getElementById('curUp');
-                      if (cu) cu.innerText = activeMbps.toFixed(2) + ' Mbps';
-                      var cd = document.getElementById('curDown');
-                      if (cd) cd.innerText = curDownMbps.toFixed(2) + ' Mbps';
-                      var pk = document.getElementById('peakUp');
-                      if (pk) pk.innerText = (window._peakUpMbps || 0).toFixed(2) + ' Mbps';
-                    } catch (e) {}
+                    // 总计流量与两个峰值（峰值取自手机端真实统计，见 applyBwPanel）
+                    try { applyBwPanel(d); } catch (e) {}
                     gaugeChart.data.datasets[0].data = [activeMbps, Math.max(0, 150 - activeMbps)];
                     if (activeMbps > 120) {
                       gaugeChart.data.datasets[0].backgroundColor[0] = '#ef4444';

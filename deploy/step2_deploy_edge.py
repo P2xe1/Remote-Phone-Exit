@@ -133,6 +133,31 @@ def main():
         return 1
     ok('节点地址已填充：%d 个（无残留占位符）' % n_used)
 
+    # ---- 1.5 运行期配置占位符 ----
+    # 【2026-10-05 新增】源码里有一批 ${XXX} 占位符需要在【构建期】就填掉：
+    #   它们在 JS 里是普通字符串（不是模板插值），不填就会当成字面文本，
+    #   运行起来表现很怪（例如探活打到 "${TUNNEL_HOST}" 这种不存在的域名）。
+    #   这些与下面写进 bindings 的键不同：bindings 是运行期 env，
+    #   这里是构建期直接替换进源码。
+    BUILD_SUBS = {
+        'DAY_TZ': cfg('DAY_TZ', '') or 'Asia/Shanghai',
+        'TUNNEL_HOST': cfg('TUNNEL_HOST', ''),
+        'WORKER_HOST': cfg('WORKER_HOST', ''),
+    }
+    for k, v in BUILD_SUBS.items():
+        if not v:
+            continue
+        raw, n = re.subn(r'\$\{%s\}' % re.escape(k), v, raw)
+        if n:
+            ok('已注入 %s（%d 处）' % (k, n))
+    # 注完还留着占位符 -> 中止，绝不把带占位符的源码传上去
+    left = sorted(set(re.findall(r'\$\{([A-Z_][A-Z0-9_]*)\}', raw)))
+    left = [k for k in left if not k.startswith('NODE_')]
+    if left:
+        bad('源码里还有没注入的占位符: %s' % ', '.join(left[:8]))
+        print('      请在上面的 BUILD_SUBS 里补上，或从 .env 填好对应值')
+        return 1
+
     # ---- 2. BUILD_ID ----
     newid = 'b' + time.strftime('%Y%m%d-%H%M%S')
     raw2, n = re.subn(r"const BUILD_ID = '[^']*';", "const BUILD_ID = '%s';" % newid, raw, count=1)

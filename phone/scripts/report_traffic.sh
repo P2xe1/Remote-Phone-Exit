@@ -476,6 +476,62 @@ if [ $((NOW - LAST_HIST)) -ge 30 ]; then
   TIME_STR=$(date +"%H:%M:%S")
   echo "$TIME_STR,$D_MBPS,$U_MBPS,$ACTIVE_CONNS" >> "$HIST_FILE"
   tail -n 30 "$HIST_FILE" > /data/local/tmp/hist.tmp 2>/dev/null && mv /data/local/tmp/hist.tmp "$HIST_FILE"
+
+  # ========================================================
+  # 【2026-10-05 新增】总带宽峰值统计（15 分钟窗口 + 当日峰值）
+  # ========================================================
+  # 口径（注意是【上行+下行合计】，与原来只看上行的口径不同）:
+  #   · 总带宽      = 上行 Mbps + 下行 Mbps（两次上报之间的真实字节差算出）
+  #   · 15 分钟峰值 = history_15m.txt 最近 30 个采样点的总带宽最大值
+  #                   （采样间隔 30 秒 x 30 点 = 正好覆盖 15 分钟）
+  #   · 当日峰值    = 当日观察到的总带宽最大值；日界线与流量榜一致
+  #                   （${DAY_TZ} 零点，与 Worker 的 todayDateStr 同口径）
+  #
+  # 为什么放手机端算: 大屏原来那个"15 分钟峰值"其实只统计【当前浏览器会话】,
+  #   刷新页面就归零, 并不是真的 15 分钟。放这里算, 刷新/换浏览器都不丢。
+  # 放在 30 秒块内: 15 分钟峰值只在新采样点到来时才可能变化,
+  #   没必要每 6 秒（本脚本被调用的周期）重算一次。
+  BW_PEAK_FILE="/data/local/tmp/bw_peak.txt"
+  BW_15M=$(awk -F',' '
+    NF >= 3 { d = $2 + 0; u = $3 + 0; t = d + u; if (t > mx) mx = t; }
+    END { printf "%.2f", mx + 0 }' "$HIST_FILE" 2>/dev/null)
+  [ -z "$BW_15M" ] && BW_15M=0
+
+  # 时区不再写死：从 Worker 下发的 xray 配置里取 dayTz（见 generatePhoneXrayConfig）。
+  #   这样手机与 Worker 的日界线永远同一个值；取不到就退回设备本地时区。
+  BW_DAY_TZ=$(grep -o '"dayTz"[[:space:]]*:[[:space:]]*"[^"]*"' /data/local/tmp/config.json 2>/dev/null \
+              | sed 's/.*"\([^"]*\)"$/\1/')
+  if [ -n "$BW_DAY_TZ" ]; then
+    BW_DAY_KEY=$(TZ="$BW_DAY_TZ" date +%Y-%m-%d 2>/dev/null)
+  else
+    BW_DAY_KEY=$(date +%Y-%m-%d 2>/dev/null)
+  fi
+  [ -z "$BW_DAY_KEY" ] && BW_DAY_KEY="unknown"
+
+  BW_PREV_KEY=""
+  BW_PREV_PEAK=0
+  if [ -f "$BW_PEAK_FILE" ]; then
+    BW_PREV_KEY=$(awk 'NR==1{print $1}' "$BW_PEAK_FILE" 2>/dev/null)
+    BW_PREV_PEAK=$(awk 'NR==1{printf "%.2f", $2+0}' "$BW_PEAK_FILE" 2>/dev/null)
+  fi
+  [ -z "$BW_PREV_PEAK" ] && BW_PREV_PEAK=0
+
+  # 同一天 -> 接着累计；跨日/首次 -> 从 0 重新开始
+  if [ "$BW_PREV_KEY" = "$BW_DAY_KEY" ]; then
+    BW_DAY_PEAK="$BW_PREV_PEAK"
+  else
+    BW_DAY_PEAK=0
+  fi
+  # 保证不变式: 日峰值 >= 15 分钟峰值（15 分钟窗口可能跨过零点）
+  if awk -v a="$BW_15M" -v b="$BW_DAY_PEAK" 'BEGIN{exit !(a > b)}'; then
+    BW_DAY_PEAK="$BW_15M"
+  fi
+  # 只在峰值真的变大（或换了天）时落盘，减少写次数
+  if [ "$BW_PREV_KEY" != "$BW_DAY_KEY" ] \
+     || awk -v a="$BW_DAY_PEAK" -v b="$BW_PREV_PEAK" 'BEGIN{exit !(a > b)}'; then
+    echo "$BW_DAY_KEY $BW_DAY_PEAK" > "$BW_PEAK_FILE" 2>/dev/null
+  fi
+  BW_PEAK_JSON="\"bwPeak\":{\"total15m\":$BW_15M,\"day\":$BW_DAY_PEAK,\"dayKey\":\"$BW_DAY_KEY\"},"
 fi
 
 # 格式化 15 分钟历史波次为 JSON (严格剥除任何 \r 防止破坏 JSON 语法)
@@ -638,7 +694,10 @@ if [ -n "$RAW" ]; then
   #   未确认前会持续补发(修复指令在网络丢失时被永久吞掉的问题)。
   SCAN_ACK_JSON=""
   [ -s /data/local/tmp/scan_req ] && SCAN_ACK_JSON="\"scanAck\":\"$(cat /data/local/tmp/scan_req)\","
-  echo "{$TELEMETRY_JSON $MASTER_JSON $SCAN_ACK_JSON $ONLINE_USERS_JSON $PINGS_JSON $USER_TRAFFICS_JSON $HISTORY_JSON $DOMAIN_JSON $NODE_STATUS_JSON $NODE_IDX_JSON \"conns\": $ACTIVE_CONNS, $STRIPPED_RAW" > /data/local/tmp/traffic_payload.json
+  # 【2026-10-05】总带宽峰值（15 分钟窗口 / 当日）。在 30 秒采样块里算出，
+  #   这里只负责带上；块没跑到时变量为空，用空串兜底（不编造数字）。
+  [ -z "$BW_PEAK_JSON" ] && BW_PEAK_JSON=""
+  echo "{$TELEMETRY_JSON $MASTER_JSON $SCAN_ACK_JSON $ONLINE_USERS_JSON $PINGS_JSON $USER_TRAFFICS_JSON $HISTORY_JSON $BW_PEAK_JSON $DOMAIN_JSON $NODE_STATUS_JSON $NODE_IDX_JSON \"conns\": $ACTIVE_CONNS, $STRIPPED_RAW" > /data/local/tmp/traffic_payload.json
   PAYLOAD_BYTES=$(wc -c < /data/local/tmp/traffic_payload.json 2>/dev/null)
   [ -z "$PAYLOAD_BYTES" ] && PAYLOAD_BYTES=0
   echo "$HEAVY_STATE $PAYLOAD_BYTES $(date +%s)" > /data/local/tmp/last_payload_size.txt
