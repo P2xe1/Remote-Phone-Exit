@@ -2913,10 +2913,6 @@ rules:
 
             /* ---------- 时延分布直方图 ---------- */
             /* ---------- 新增② 时延分布直方图 ---------- */
-            .hist-wrap { display: flex; align-items: flex-end; gap: 3px; height: 96px; padding-top: 6px; }
-            .hist-bar { flex: 1 1 0; min-width: 3px; background: var(--md-sys-color-primary); border-radius: 2px 2px 0 0; position: relative; transition: height .4s; }
-            .hist-bar > span { position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%); font-size: 9px; color: var(--md-sys-color-on-surface-variant); font-family: var(--md-sys-font-mono); white-space: nowrap; }
-            .hist-axis { display: flex; justify-content: space-between; font-size: var(--md-sys-typescale-label-small); color: var(--md-sys-color-on-surface-variant); font-family: var(--md-sys-font-mono); margin-top: 18px; }
 
 
             /* ---------- 用户表: 桌面表格 / 手机卡片 ---------- */
@@ -2974,7 +2970,6 @@ rules:
 
               /* 表格与用户区 */
               .health-strip { grid-template-columns: 1fr 1fr; }
-              .hist-wrap { height: 74px; }
             }
 
             @media (max-width: 420px) {
@@ -3047,11 +3042,8 @@ rules:
               /* 9/10px 小字在深色底上读不清 -> 统一提到 11px */
             .pipe-label, .pipe-desc,
               .hw-title, .hw-sub, .health-k, .node-chip, .metric-sub,
-              .card-title .tag, td::before, .hist-axis, th, td { font-size: 11px !important; }
               [style*="font-size:9px"], [style*="font-size: 9px"],
               [style*="font-size:10px"], [style*="font-size: 10px"] { font-size: 11px !important; }
-              .hist-bar > span { display: none; }
-              .hist-bar { min-width: 5px; }
             }
 
             /* --- 6. 手机端: 接入质量标题行允许换行(否则"实测落点/正在测速"被裁掉);
@@ -3210,6 +3202,11 @@ rules:
                     <button id="btnFreq2s" class="freq-btn" onclick="setPollingInterval(2000)">⚡ 2秒极速</button>
                     <button id="btnFreq60s" class="freq-btn active" onclick="setPollingInterval(60000)">🍃 1分钟采集 (默认)</button>
                   </div>
+                  <!-- 【2026-10-05】原挂在这张「时延分布」卡上。那张卡已按要求整体删除，
+                       但它是「让手机立刻全速扫描」的唯一入口，所以移到这里。 -->
+                  <button type="button" onclick="manualScan()" id="btnManualScan"
+                    title="命令手机立刻做一次全速扫描: 6 个锚点背靠背连续测(每区 15 次采样, 与周期扫描同口径), 去掉 10 秒间隔, 每测完一个立即上报。约 31 秒完成。"
+                    style="padding:5px 12px;background:#141414;color:#ddd;border:1px solid #2a2a2a;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">⚡ 手动刷新</button>
                   <!-- 数据时效: 显示"数据本身"的真实年龄 (服务端 serverTime - 手机最近上报时刻) -->
                   <div style="display:flex;align-items:center;gap:6px;background:#0d0d0d;border:1px solid #222;border-radius:6px;padding:3px 9px;">
                     <div class="live-dot" id="liveDot"></div>
@@ -3303,17 +3300,8 @@ rules:
                  对侧那张卡已按用户要求删除, 这里改为整行单卡;
                  "⚡ 手动刷新"按钮原挂在已删除的锚点行标题上, 现挪到本卡标题右侧)。 -->
             <!-- ======================================================== -->
-            <div class="card" style="margin-bottom:14px;">
-              <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-                <span>本机 ↔ CF 边缘 时延分布 <span class="tag" id="histTag">--</span></span>
-                <button type="button" onclick="manualScan()" id="btnManualScan"
-                  title="命令手机立刻做一次全速扫描: 6 个锚点背靠背连续测(每区 15 次采样, 与周期扫描同口径), 去掉 10 秒间隔, 每测完一个立即上报。约 31 秒完成。"
-                  style="padding:5px 12px;background:#141414;color:#ddd;border:1px solid #2a2a2a;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;white-space:nowrap;flex-shrink:0;">⚡ 手动刷新</button>
-              </div>
-              <div class="hist-wrap" id="histWrap"></div>
-              <div class="hist-axis" id="histAxis"></div>
-            </div>
-
+            <!-- 【2026-10-05】原 1.5「本机 ↔ CF 边缘 时延分布」整个板块已按要求删除。
+                 数据层(edgeRtt / edgeRttHist)保留 —— 「流水线分段」仍在用它算第 3 段时延。 -->
             <!-- ======================================================== -->
             <!-- 2. 关键指标面板 -->
             <!-- ======================================================== -->
@@ -3703,45 +3691,6 @@ rules:
                 //   ticker 只负责刷新年龄, 不碰高亮。
               } catch (e) {}
             }, 1000);
-
-
-            // ==========================================================
-            // 【2026-10-04 新增②】本机 ↔ CF 边缘 时延分布直方图
-            //   中位数只给一个数, 看不出"抖得厉害不厉害"。这里用服务端下发的真实历史
-            //   样本(edgeRttHist, 每次实测有变化才追加一个)画 12 桶直方图, 并在标签上
-            //   写 P50/P90 —— 全部来自真实样本, 不做任何拟合或平滑。
-            // ==========================================================
-            function renderHistogram(d) {
-              var wrap = document.getElementById('histWrap');
-              var axis = document.getElementById('histAxis');
-              var tag = document.getElementById('histTag');
-              if (!wrap) return;
-              var s = (d.edgeRttHist || []).filter(function (x) { return typeof x === 'number' && x >= 10; });
-              if (s.length < 3) {
-                wrap.innerHTML = '<div style="color:var(--md-sys-color-outline);font-size:12px;align-self:center;">真实样本不足(' + s.length + '/3), 不画分布…</div>';
-                if (axis) axis.innerHTML = '';
-                if (tag) tag.innerText = '样本 ' + s.length;
-                return;
-              }
-              var sorted = s.slice().sort(function (a, b) { return a - b; });
-              var min = sorted[0], max = sorted[sorted.length - 1];
-              var p50 = sorted[Math.floor((sorted.length - 1) * 0.5)];
-              var p90 = sorted[Math.floor((sorted.length - 1) * 0.9)];
-              var bins = 12, span = Math.max(1, max - min), w = span / bins;
-              var cnt = new Array(bins);
-              for (var z = 0; z < bins; z++) cnt[z] = 0;
-              sorted.forEach(function (v) { var i = Math.min(bins - 1, Math.floor((v - min) / w)); cnt[i]++; });
-              var top = Math.max.apply(null, cnt);
-              var html = '';
-              for (var i = 0; i < bins; i++) {
-                var h = Math.round(cnt[i] / top * 100);
-                html += '<div class="hist-bar" style="height:' + Math.max(2, h) + '%;" title="'
-                     + Math.round(min + i * w) + '–' + Math.round(min + (i + 1) * w) + ' ms：' + cnt[i] + ' 个样本"></div>';
-              }
-              wrap.innerHTML = html;
-              if (axis) axis.innerHTML = '<span>' + min + ' ms</span><span>样本 ' + s.length + ' 个</span><span>' + max + ' ms</span>';
-              if (tag) tag.innerText = 'P50 ' + p50 + ' · P90 ' + p90 + ' ms';
-            }
 
 
             // ==========================================================
@@ -4554,7 +4503,25 @@ rules:
                 try {
                   var v = Math.min(150, Number(m.up));
                   gaugeChart.data.datasets[0].data = [v, Math.max(0, 150 - v)];
+                  if (v > 120) gaugeChart.data.datasets[0].backgroundColor[0] = '#ef4444';
+                  else if (v > 80) gaugeChart.data.datasets[0].backgroundColor[0] = '#22c55e';
+                  else gaugeChart.data.datasets[0].backgroundColor[0] = '#ffffff';
                   gaugeChart.update('none');
+                } catch (e) {}
+                // 【修复】SSE 推送路径同步更新 curUp / curDown / peakUp 三个瞬时速率格
+                try {
+                  var cu = document.getElementById('curUp');
+                  if (cu) cu.innerText = Number(m.up).toFixed(2) + ' Mbps';
+                  if (typeof m.down === 'number' && m.down !== null) {
+                    var cd = document.getElementById('curDown');
+                    if (cd) cd.innerText = Number(m.down).toFixed(2) + ' Mbps';
+                  }
+                  // 跨推送维护会话峰值：只升不降，轮询路径可继续覆盖（取较大值）
+                  if (!window._peakUpMbps || Number(m.up) > window._peakUpMbps) {
+                    window._peakUpMbps = Number(m.up);
+                  }
+                  var pk = document.getElementById('peakUp');
+                  if (pk) pk.innerText = window._peakUpMbps.toFixed(2) + ' Mbps';
                 } catch (e) {}
               }
               // 【2026-10-03 关键修复】这里必须同时刷新 6 个区域的延迟数字与抖动。
@@ -5039,7 +5006,6 @@ rules:
                       } catch (e2) {}
                     }
                   }
-                  _safeRender('时延分布', function () { renderHistogram(d); });
                   _safeRender('流水线标签', function () { renderPipelineTags(d); });
                   _safeRender('顶栏真值', function () { renderHeaderFacts(d); });
 
@@ -5202,13 +5168,15 @@ rules:
                       var curDownMbps = (lr && typeof lr.down === 'number' && lr.down !== null)
                         ? Number(lr.down) : (Number(lastPt.down) || 0);
                       var upSeries = (liveChart.data.datasets[1].data || []).map(Number).filter(function (x) { return isFinite(x); });
-                      var peakUp = upSeries.length ? Math.max.apply(null, upSeries) : 0;
+                      var histPeak = upSeries.length ? Math.max.apply(null, upSeries) : 0;
+                      // 与 SSE 路径共享会话峰值，只升不降
+                      if (!window._peakUpMbps || histPeak > window._peakUpMbps) window._peakUpMbps = histPeak;
                       var cu = document.getElementById('curUp');
                       if (cu) cu.innerText = activeMbps.toFixed(2) + ' Mbps';
                       var cd = document.getElementById('curDown');
                       if (cd) cd.innerText = curDownMbps.toFixed(2) + ' Mbps';
                       var pk = document.getElementById('peakUp');
-                      if (pk) pk.innerText = peakUp.toFixed(2) + ' Mbps';
+                      if (pk) pk.innerText = (window._peakUpMbps || 0).toFixed(2) + ' Mbps';
                     } catch (e) {}
                     gaugeChart.data.datasets[0].data = [activeMbps, Math.max(0, 150 - activeMbps)];
                     if (activeMbps > 120) {
