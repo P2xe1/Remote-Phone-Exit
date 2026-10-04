@@ -46,7 +46,7 @@ def gql(payload):
 def main():
     try:
         data = gql({"query": QUERY, "variables": {"acc": ACC_ID, "start": START}})
-    except urllib.error.HTPOP5rror as e:
+    except urllib.error.HTTPError as e:
         print("HTTP", e.code, e.read().decode())
         return 1
 

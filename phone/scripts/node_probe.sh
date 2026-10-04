@@ -30,12 +30,32 @@ echo $$ > "$_LOCK/pid"
 #   锁的清理交给"PID 存活检查": 实例被杀后锁残留, 下次启动发现
 #   锁内 PID 已不存在就会清锁重建, 无需 trap。
 # ============================================================
-# 节点连通性探测 (2026-10-03)
-#   每 10 秒探 1 个节点, 同一节点连探 2 次(抗抖动)
-#   判据: HTTP 400/403/404 => 请求成功到达隧道, Xray 正常响应 => 连通
-#         000 / 超时        => 不通
-#   2 次都失败 => 立即标红, 不等整轮, 直接进下一个节点
-#   独立进程运行, 不与 ping_scheduler 的 10 秒槽位争时序
+# 节点【入口可达性】探测 (2026-10-03, 口径澄清 2026-10-05)
+#
+# ⚠ 口径边界 —— 这个探测能证明什么、不能证明什么:
+#   【能证明】该节点 IP 上 TCP 443 可连、TLS 握手能完成、
+#             且请求确实到达了我们的入站(有 HTTP 响应回来)。
+#   【不能证明】代理业务真的可用 —— 本探测不做 VLESS 鉴权,
+#             也不访问任何目标网站, 所以它无法证明"能从这条链路出去"。
+#   要做业务级验证, 请用 deploy/step4_verify.py 的真实代理验收。
+#
+# 判据: HTTP 400/403/404 => 请求成功到达隧道, 入站正常响应 => 入口可达
+#       000 / 超时        => 不可达
+#   为什么收到 4xx 也算"到达": 裸 HTTP 请求打到 VLESS 入站会被拒,
+#   "被拒"本身就证明链路通到了我们的服务。这也是实测可复现的判据。
+#
+# 关于 curl -k（跳过证书校验）:
+#   本探测用 --resolve 把域名强行指到【单个节点 IP】, 此时证书链必然
+#   与该 SNI 不完全匹配。若不跳过校验, 所有节点都会失败 —— 所以 -k
+#   在这里是有意且必要的。正式的证书检查属于验收环节, 不在本探测内。
+#
+# 时间字段口径:
+#   上报的 rtt 取自 curl 的 %{time_connect} = 【TCP 建连耗时(TCP 1×RTT)】,
+#   不是端到端代理延迟, 也不含 TLS 握手与应用层往返。
+#
+# 节奏: 每 10 秒探 1 个节点, 同一节点连探多个样本(抗抖动);
+#       2 次都失败 => 立即标红, 不等整轮, 直接进下一个节点。
+#       独立进程运行, 不与 ping_scheduler 的 10 秒槽位争时序。
 # ============================================================
 NODES_FILE="/data/local/tmp/nodes.txt"          # 由 report_traffic.sh 从 Worker 下发
 STATUS_FILE="/data/local/tmp/node_status.txt"   # 上报给 Worker 的结果
@@ -105,6 +125,7 @@ while true; do
     : > /data/local/tmp/_np_samples.tmp
     K=1
     while [ $K -le "$N_SAMPLE" ]; do
+      # %{time_connect} = TCP 建连耗时(TCP 1×RTT); -k 见文件头说明(必要)
       OUT=$(/system/bin/curl -k --connect-timeout 2 -m 3 \
             --resolve "$HOST:443:$NIP" -o /dev/null -s \
             -w "%{http_code} %{time_connect}" "https://$HOST$NPATH" 2>/dev/null)
@@ -147,7 +168,10 @@ while true; do
   fi
 
   NOWS=$(date +%s)
-  # 记录: ip path ok 时刻 rtt毫秒  (ok=1 连通, ok=0 不通; rtt=0 表示未测到)
+  # 记录: ip path ok 时刻 rtt毫秒
+  #   ok=1 => 入口可达(TCP+TLS 通, 且入站有响应); ok=0 => 不可达
+  #   rtt  => TCP 建连耗时(TCP 1×RTT)的"最低 3 样本中位数", 单位毫秒
+  #   ⚠ ok=1 不等于"代理业务可用", 见文件头口径边界
   if [ "$OK" -gt 0 ]; then
     echo "$NIP_ORIG|$NPATH|1|$NOWS|$RTT|$NCOLO" >> "$STATUS_FILE"
   else
@@ -179,12 +203,12 @@ while true; do
   #   远低于 8%(12 Mbps) 预算。
   # ============================================================
   FAST_LEFT_FILE="/data/local/tmp/node_fast_left"
-  SPOP6_TS=$(ls -l /data/local/tmp/scan_req 2>/dev/null | awk '{print $6$7$8}' | tr -d ':')
-  [ -z "$SPOP6_TS" ] && SPOP6_TS="none"
+  SCAN_TS=$(ls -l /data/local/tmp/scan_req 2>/dev/null | awk '{print $6$7$8}' | tr -d ':')
+  [ -z "$SCAN_TS" ] && SCAN_TS="none"
   LAST_FULL=$(cat /data/local/tmp/node_full_at 2>/dev/null)
   [ -z "$LAST_FULL" ] && LAST_FULL="none"
-  if [ "$SPOP6_TS" != "none" ] && [ "$SPOP6_TS" != "$LAST_FULL" ]; then
-    echo "$SPOP6_TS" > /data/local/tmp/node_full_at
+  if [ "$SCAN_TS" != "none" ] && [ "$SCAN_TS" != "$LAST_FULL" ]; then
+    echo "$SCAN_TS" > /data/local/tmp/node_full_at
     echo "$TOTAL" > "$FAST_LEFT_FILE"     # 整轮提速: 还剩 TOTAL 个节点
   fi
   FAST_LEFT=$(cat "$FAST_LEFT_FILE" 2>/dev/null)

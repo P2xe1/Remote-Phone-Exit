@@ -1,0 +1,50 @@
+# cloudflared 隧道配置（运行文件名必须是 config.yml）
+#
+# ⚠ 设备上的运行路径固定是 /data/local/tmp/config.yml
+#   run_daemon.sh 里写的是:
+#     cloudflared_native tunnel --config /data/local/tmp/config.yml ... run
+#   文件名不一致 = 隧道起不来（而且日志里只会说找不到配置）。
+#
+# 这个文件里【必须】有下面两行，否则 cloudflared 不知道该连哪条隧道：
+#   tunnel:           你的隧道 ID（在 Cloudflare 控制台创建隧道时得到）
+#   credentials-file: 隧道凭据 JSON 的路径（同样在创建隧道时下载）
+#
+# 部署脚本会把 ${TUNNEL_HOST} 替换成你在 .env 里填的值；
+# 但 tunnel / credentials-file 属于【隧道身份】，需要你自己填 —— 见下方说明。
+
+tunnel: ${TUNNEL_ID}
+credentials-file: /data/local/tmp/tunnel_creds.json
+
+ingress:
+  # 每个 region 路径对应手机上一个 Xray 入站端口。
+  # 端口必须与 Worker 里 generatePhoneXrayConfig() 生成的配置一致：
+  #   /kl -> 8081, /hk -> 8082, /sg -> 8083, /tw -> 8084, /jp -> 8085
+  - hostname: ${TUNNEL_HOST}
+    path: /kl
+    service: http://127.0.0.1:8081
+    originRequest:
+      http2Origin: true
+  - hostname: ${TUNNEL_HOST}
+    path: /hk
+    service: http://127.0.0.1:8082
+    originRequest:
+      http2Origin: true
+  - hostname: ${TUNNEL_HOST}
+    path: /sg
+    service: http://127.0.0.1:8083
+    originRequest:
+      http2Origin: true
+  - hostname: ${TUNNEL_HOST}
+    path: /tw
+    service: http://127.0.0.1:8084
+    originRequest:
+      http2Origin: true
+  - hostname: ${TUNNEL_HOST}
+    path: /jp
+    service: http://127.0.0.1:8085
+    originRequest:
+      http2Origin: true
+  # 无 path 的兜底入口 -> 8080（Worker 生成的 proxy-in 入站）
+  - hostname: ${TUNNEL_HOST}
+    service: http://127.0.0.1:8080
+  - service: http_status:404

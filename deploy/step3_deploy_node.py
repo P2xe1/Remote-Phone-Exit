@@ -15,6 +15,7 @@ step3_deploy_node.py —— 第 3 步：把 8 个脚本 + 配置推到节点设�
 """
 import io
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -98,12 +99,56 @@ def main():
             f.write(txt)
         rc, out, err = adb_run(adb, serial, ['push', tmp, '%s/%s' % (REMOTE, fn)], timeout=120)
         if rc != 0:
-            bad('推送 %s 失败: %s' % (fn, err[:200]))
+            bad('推送 %s 失败: %s' % (fn, (err or '')[:200]))
             return 1
         ok('已推送 %s' % fn)
 
-    # ---- 2. 生成配置文件 ----
+    # ---- 1.5 确保可执行权限 ----
+    # 【2026-10-05 修复 B9】run_daemon.sh 里是 `nohup /data/local/tmp/traffic_daemon.sh`，
+    #   直接执行该文件、不经过 sh。adb push 不保证带执行位，而部署流程也没 chmod ——
+    #   新设备上守护进程会启动失败（老设备因为之前手工设过权限，看不出来）。
+    #   这里统一补权限；同时把 run_daemon.sh 自身也纳入（它由 step3 用 sh 调用，
+    #   但手工执行时同样需要执行位）。
+    allsh = ' '.join('%s/%s' % (REMOTE, fn) for fn in scripts)
+    rc, out, err = adb_run(adb, serial,
+                           ['shell', 'chmod 755 %s' % allsh], timeout=60)
+    if rc != 0:
+        bad('设置脚本执行权限失败: %s' % (err or '')[:200])
+        return 1
+    # 复查：用 test -x 确认关键脚本真的可执行（比解析 ls -l 可靠）
+    rc, out, err = adb_run(adb, serial, ['shell',
+        'for f in %s/traffic_daemon.sh %s/run_daemon.sh %s/ping_scheduler.sh %s/sync_worker.sh; '
+        'do if [ -x "$f" ]; then echo "OK $f"; else echo "NOEXEC $f"; fi; done'
+        % (REMOTE, REMOTE, REMOTE, REMOTE)], timeout=30)
+    listing = (out or '')
+    for l in listing.split('\n'):
+        if l.strip():
+            log('  ' + l.strip())
+    if 'NOEXEC' in listing:
+        bad('仍有脚本没有执行权限，设备上会启动失败（已中止，不会继续重启）')
+        return 1
+    if 'OK' not in listing:
+        bad('无法确认脚本执行权限，已中止（避免推送成功但起不来）')
+        return 1
+    ok('脚本执行权限已确认（chmod 755 + test -x 复查）')
+
+    # ---- 2. 生成并推送配置文件 ----
+    # 【2026-10-05 修复 B5】原来用 `real = fn[:-len('.example')]` 推断运行文件名，
+    #   于是把 phone_active_config.json / termux_config.yml 推上去了 ——
+    #   而设备实际读的是 config.json 与 config.yml。结果：
+    #   新设备缺启动所需配置；老设备继续跑旧配置（推送成功 ≠ 新配置生效）。
+    #   现在改成【显式映射】：源样例名 -> 设备上的运行文件名。
     cfg_dir = os.path.join(ROOT, 'phone', 'config')
+
+    # 运行文件名映射。None = 不在本步推送。
+    CFG_MAP = {
+        'config.yml.example': 'config.yml',            # cloudflared 隧道配置
+        'config.json.example': None,                   # 见下方说明：由手机自行拉取
+        'termux_config.yml.example': None,             # 历史参考，不推送
+        'phone_config.json.example': None,             # 历史参考，不推送
+        'phone_active_config.json.example': None,      # 历史参考，不推送
+    }
+
     subs = {
         '${WORKER_HOST}': cfg('WORKER_HOST', ''),
         '${TUNNEL_HOST}': cfg('TUNNEL_HOST', ''),
@@ -112,19 +157,60 @@ def main():
         '${VLESS_UUID}': cfg('VLESS_UUID', ''),
         '${PHONE_SERIAL}': serial,
     }
-    for fn in sorted(os.listdir(cfg_dir)) if os.path.isdir(cfg_dir) else []:
+
+    if not os.path.isdir(cfg_dir):
+        bad('找不到 %s —— 无法生成设备配置' % cfg_dir)
+        return 1
+
+    pushed_cfg = []
+    for fn in sorted(os.listdir(cfg_dir)):
         if not fn.endswith('.example'):
             continue
-        real = fn[:-len('.example')]
+        if fn not in CFG_MAP:
+            bad('配置样例 %s 没有映射到运行文件名，已中止（避免推错名字）' % fn)
+            print('      请在 step3_deploy_node.py 的 CFG_MAP 里补上它的目标名')
+            return 1
+        real = CFG_MAP[fn]
+        if real is None:
+            log('跳过 %s（历史参考，不作为运行配置）' % fn)
+            continue
         with io.open(os.path.join(cfg_dir, fn), encoding='utf-8', errors='replace') as f:
             txt = f.read()
-        for k, v in subs.items():
-            txt = txt.replace(k, v or k)
+
+        # 【修复 B7】把没填上的占位符直接判为失败。
+        #   原来只做 `v or k` 的兜底替换 —— 配置没配全就把 ${XXX} 原样推上去，
+        #   设备上 xray/cloudflared 起不来，而且报错很难懂。
+        left_ph = sorted(set(re.findall(r'\$\{([A-Z_]+)\}', txt)))
+        if left_ph:
+            for k in left_ph:
+                txt = txt.replace('${%s}' % k, subs.get('${%s}' % k, '') or '')
+        still = sorted(set(re.findall(r'\$\{([A-Z_]+)\}', txt)))
+        if still:
+            bad('%s 里还有没填上的占位符: %s' % (fn, ', '.join(still)))
+            print('      请先在 .env 里补上这些值，再重跑本步（否则设备起不来）')
+            return 1
+
         tmp = os.path.join(os.environ.get('TEMP', '.'), real)
         with io.open(tmp, 'w', encoding='utf-8', newline='\n') as f:
             f.write(txt)
         rc, out, err = adb_run(adb, serial, ['push', tmp, '%s/%s' % (REMOTE, real)], timeout=120)
-        ok('已推送配置 %s' % real if rc == 0 else '配置 %s 推送失败' % real)
+        # 【修复 B10】推送失败必须立即中止 —— 原来只打印一行就继续重启，
+        #   结果是"在缺少新配置/仍是旧配置"的状态下重启，部署结果不可信。
+        if rc != 0:
+            bad('推送配置 %s 失败，已中止（不会继续重启）: %s' % (real, (err or '')[:200]))
+            return 1
+        ok('已推送配置 %s -> %s' % (fn, real))
+        pushed_cfg.append(real)
+
+    if not pushed_cfg:
+        log('本步没有需要推送的配置文件')
+
+    # 【说明】xray 的 config.json 不在这里推：
+    #   手机上的 xray 配置是【运行时从 Worker 拉的】（/api/phone_xray_config），
+    #   由 sync_worker.sh 校验通过后写入 /data/local/tmp/config.json。
+    #   这样改用户库后不用重新部署。样例 config.json.example 仅作格式参考。
+    log('xray 的 config.json 由手机运行时从 %s/api/phone_xray_config 拉取'
+        % (cfg('WORKER_HOST', '<WORKER_HOST>') or '<WORKER_HOST>'))
 
     # ---- 3. 完整重启 ----
     log('在设备上完整重启（会先杀旧进程再拉起）...')

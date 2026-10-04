@@ -12,7 +12,8 @@
   "api": {
     "tag": "api",
     "services": [
-      "StatsService"
+      "StatsService",
+      "HandlerService"
     ]
   },
   "stats": {},
@@ -20,7 +21,8 @@
     "levels": {
       "0": {
         "statsUserUplink": true,
-        "statsUserDownlink": true
+        "statsUserDownlink": true,
+        "statsUserOnline": true
       }
     },
     "system": {
@@ -48,35 +50,29 @@
       "settings": {
         "clients": [
           {
-            "id": "${USER_UUID}",
+            "id": "00000000-0000-4000-8000-000000000001",
             "email": "shared_legacy",
             "level": 0
           },
           {
-            "id": "${USER_UUID}",
+            "id": "<<USER_TOKEN_1 的 UUID>>",
             "email": "user_USER_TOKEN_1",
             "level": 0
           },
           {
-            "id": "${VLESS_UUID}",
+            "id": "<<USER_TOKEN_2 的 UUID>>",
             "email": "user_USER_TOKEN_2",
-            "level": 0
-          },
-          {
-            "id": "${USER_UUID}",
-            "email": "user_USER_TOKEN_3",
-            "level": 0
-          },
-          {
-            "id": "${USER_UUID}",
-            "email": "user_USER_TOKEN_4",
             "level": 0
           }
         ],
         "decryption": "none"
       },
       "streamSettings": {
-        "network": "ws"
+        "network": "xhttp",
+        "xhttpSettings": {
+          "path": "/",
+          "mode": "auto"
+        }
       }
     },
     {
@@ -87,37 +83,28 @@
       "settings": {
         "clients": [
           {
-            "id": "${USER_UUID}",
+            "id": "00000000-0000-4000-8000-000000000001",
             "email": "shared_legacy",
             "level": 0
           },
           {
-            "id": "${USER_UUID}",
-            "email": "user_USER_TOKEN_5",
+            "id": "<<USER_TOKEN_1 的 UUID>>",
+            "email": "user_USER_TOKEN_1",
             "level": 0
           },
           {
-            "id": "${VLESS_UUID}",
-            "email": "user_USER_TOKEN_6",
-            "level": 0
-          },
-          {
-            "id": "${USER_UUID}",
-            "email": "user_USER_TOKEN_7",
-            "level": 0
-          },
-          {
-            "id": "${USER_UUID}",
-            "email": "user_USER_TOKEN_8",
+            "id": "<<USER_TOKEN_2 的 UUID>>",
+            "email": "user_USER_TOKEN_2",
             "level": 0
           }
         ],
         "decryption": "none"
       },
       "streamSettings": {
-        "network": "ws",
-        "wsSettings": {
-          "path": "/kl"
+        "network": "xhttp",
+        "xhttpSettings": {
+          "path": "/kl",
+          "mode": "auto"
         }
       }
     },
@@ -129,37 +116,28 @@
       "settings": {
         "clients": [
           {
-            "id": "${USER_UUID}",
+            "id": "00000000-0000-4000-8000-000000000001",
             "email": "shared_legacy",
             "level": 0
           },
           {
-            "id": "${USER_UUID}",
-            "email": "user_USER_TOKEN_9",
+            "id": "<<USER_TOKEN_1 的 UUID>>",
+            "email": "user_USER_TOKEN_1",
             "level": 0
           },
           {
-            "id": "${VLESS_UUID}",
-            "email": "user_USER_TOKEN_10",
-            "level": 0
-          },
-          {
-            "id": "${USER_UUID}",
-            "email": "user_USER_TOKEN_11",
-            "level": 0
-          },
-          {
-            "id": "${USER_UUID}",
-            "email": "user_USER_TOKEN_12",
+            "id": "<<USER_TOKEN_2 的 UUID>>",
+            "email": "user_USER_TOKEN_2",
             "level": 0
           }
         ],
         "decryption": "none"
       },
       "streamSettings": {
-        "network": "ws",
-        "wsSettings": {
-          "path": "/hk"
+        "network": "xhttp",
+        "xhttpSettings": {
+          "path": "/hk",
+          "mode": "auto"
         }
       }
     },
@@ -171,37 +149,28 @@
       "settings": {
         "clients": [
           {
-            "id": "${USER_UUID}",
+            "id": "00000000-0000-4000-8000-000000000001",
             "email": "shared_legacy",
             "level": 0
           },
           {
-            "id": "${USER_UUID}",
-            "email": "user_USER_TOKEN_13",
+            "id": "<<USER_TOKEN_1 的 UUID>>",
+            "email": "user_USER_TOKEN_1",
             "level": 0
           },
           {
-            "id": "${VLESS_UUID}",
-            "email": "user_USER_TOKEN_14",
-            "level": 0
-          },
-          {
-            "id": "${USER_UUID}",
-            "email": "user_USER_TOKEN_15",
-            "level": 0
-          },
-          {
-            "id": "${USER_UUID}",
-            "email": "user_USER_TOKEN_16",
+            "id": "<<USER_TOKEN_2 的 UUID>>",
+            "email": "user_USER_TOKEN_2",
             "level": 0
           }
         ],
         "decryption": "none"
       },
       "streamSettings": {
-        "network": "ws",
-        "wsSettings": {
-          "path": "/sg"
+        "network": "xhttp",
+        "xhttpSettings": {
+          "path": "/sg",
+          "mode": "auto"
         }
       }
     },
@@ -213,37 +182,28 @@
       "settings": {
         "clients": [
           {
-            "id": "${USER_UUID}",
+            "id": "00000000-0000-4000-8000-000000000001",
             "email": "shared_legacy",
             "level": 0
           },
           {
-            "id": "${USER_UUID}",
-            "email": "user_USER_TOKEN_17",
+            "id": "<<USER_TOKEN_1 的 UUID>>",
+            "email": "user_USER_TOKEN_1",
             "level": 0
           },
           {
-            "id": "${VLESS_UUID}",
-            "email": "user_USER_TOKEN_18",
-            "level": 0
-          },
-          {
-            "id": "${USER_UUID}",
-            "email": "user_USER_TOKEN_19",
-            "level": 0
-          },
-          {
-            "id": "${USER_UUID}",
-            "email": "user_USER_TOKEN_20",
+            "id": "<<USER_TOKEN_2 的 UUID>>",
+            "email": "user_USER_TOKEN_2",
             "level": 0
           }
         ],
         "decryption": "none"
       },
       "streamSettings": {
-        "network": "ws",
-        "wsSettings": {
-          "path": "/tw"
+        "network": "xhttp",
+        "xhttpSettings": {
+          "path": "/tw",
+          "mode": "auto"
         }
       }
     },
@@ -255,37 +215,28 @@
       "settings": {
         "clients": [
           {
-            "id": "${USER_UUID}",
+            "id": "00000000-0000-4000-8000-000000000001",
             "email": "shared_legacy",
             "level": 0
           },
           {
-            "id": "${USER_UUID}",
-            "email": "user_USER_TOKEN_21",
+            "id": "<<USER_TOKEN_1 的 UUID>>",
+            "email": "user_USER_TOKEN_1",
             "level": 0
           },
           {
-            "id": "${VLESS_UUID}",
-            "email": "user_USER_TOKEN_22",
-            "level": 0
-          },
-          {
-            "id": "${USER_UUID}",
-            "email": "user_USER_TOKEN_23",
-            "level": 0
-          },
-          {
-            "id": "${USER_UUID}",
-            "email": "user_USER_TOKEN_24",
+            "id": "<<USER_TOKEN_2 的 UUID>>",
+            "email": "user_USER_TOKEN_2",
             "level": 0
           }
         ],
         "decryption": "none"
       },
       "streamSettings": {
-        "network": "ws",
-        "wsSettings": {
-          "path": "/jp"
+        "network": "xhttp",
+        "xhttpSettings": {
+          "path": "/jp",
+          "mode": "auto"
         }
       }
     }

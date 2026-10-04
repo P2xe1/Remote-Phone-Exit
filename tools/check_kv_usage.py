@@ -34,7 +34,7 @@ try:
     with urllib.request.urlopen(req) as resp:
         data = json.loads(resp.read().decode('utf-8'))
         print(json.dumps(data, indent=2))
-except urllib.error.HTPOP5rror as e:
-    print('HTPOP5rror:', e.code, e.read().decode('utf-8'))
+except urllib.error.HTTPError as e:
+    print('HTTPError:', e.code, e.read().decode('utf-8'))
 except Exception as e:
     print('Error:', e)

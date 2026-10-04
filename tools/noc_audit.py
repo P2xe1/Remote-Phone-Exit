@@ -34,7 +34,7 @@ def api(path, method="GET", body=None):
     try:
         with urllib.request.urlopen(req, timeout=40) as r:
             return r.status, json.loads(r.read().decode())
-    except urllib.error.HTPOP5rror as e:
+    except urllib.error.HTTPError as e:
         raw = e.read().decode(errors="replace")
         try:
             return e.code, json.loads(raw)

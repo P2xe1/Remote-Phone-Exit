@@ -21,7 +21,7 @@ LAST_LOSSES_FILE="/data/local/tmp/last_losses.txt"
 # 【RTT 修复】手机 ↔ CF 边缘 的真实单次 RTT(TCP time_connect), 单值文件
 EDGE_RTT_FILE="/data/local/tmp/last_edge_rtt.txt"
 FLAG="/data/local/tmp/scan_req"
-SPOP6_START_TS=$(date +%s)   # 【2026-10-04 T6.6】记录启动时刻, 用于判断是否有新指令在扫描期间到达
+SCAN_START_TS=$(date +%s)   # 【2026-10-04 T6.6】记录启动时刻, 用于判断是否有新指令在扫描期间到达
 
 # 测一个锚点: 15 次 TCP+TLS 握手, 取中位数 + 丢包率
 # 输出: "<中位ms> <失败数> <成功数>"
@@ -107,12 +107,12 @@ flush_state() {
   echo "$J1 $J2 $J3 $J4 $J5 $J6" > "$LAST_JITTERS_FILE.tmp" && mv "$LAST_JITTERS_FILE.tmp" "$LAST_JITTERS_FILE"
   echo "$T1 $T2 $T3 $T4 $T5 $T6" > "$LAST_TIMES_FILE.tmp" && mv "$LAST_TIMES_FILE.tmp" "$LAST_TIMES_FILE"
   echo "$L1 $L2 $L3 $L4 $L5 $L6" > "$LAST_LOSSES_FILE.tmp" && mv "$LAST_LOSSES_FILE.tmp" "$LAST_LOSSES_FILE"
-  echo "\"pings\":{\"kl\":$P1,\"gz\":$P2,\"sg\":$P3,\"hk\":$P4,\"jp\":$P5,\"tw\":$P6,\"egress\":${PGW:-0}},\"jitters\":{\"kl\":$J1,\"gz\":$J2,\"sg\":$J3,\"hk\":$J4,\"jp\":$J5,\"tw\":$J6},\"pingTimes\":{\"kl\":$T1,\"gz\":$T2,\"sg\":$T3,\"hk\":$T4,\"jp\":$T5,\"tw\":$T6},\"losses\":{\"kl\":$L1,\"gz\":$L2,\"sg\":$L3,\"hk\":$L4,\"jp\":$L5,\"tw\":$L6},\"edgeRtt\":${P_EDGE_RTT:-0},\"scanning\":\"$SPOP6_LABEL\",\"activeSlot\":-1,\"activeNode\":\"\"," > "$PING_CACHE.tmp" && mv "$PING_CACHE.tmp" "$PING_CACHE"
+  echo "\"pings\":{\"kl\":$P1,\"gz\":$P2,\"sg\":$P3,\"hk\":$P4,\"jp\":$P5,\"tw\":$P6,\"egress\":${PGW:-0}},\"jitters\":{\"kl\":$J1,\"gz\":$J2,\"sg\":$J3,\"hk\":$J4,\"jp\":$J5,\"tw\":$J6},\"pingTimes\":{\"kl\":$T1,\"gz\":$T2,\"sg\":$T3,\"hk\":$T4,\"jp\":$T5,\"tw\":$T6},\"losses\":{\"kl\":$L1,\"gz\":$L2,\"sg\":$L3,\"hk\":$L4,\"jp\":$L5,\"tw\":$L6},\"edgeRtt\":${P_EDGE_RTT:-0},\"scanning\":\"$SCAN_LABEL\",\"activeSlot\":-1,\"activeNode\":\"\"," > "$PING_CACHE.tmp" && mv "$PING_CACHE.tmp" "$PING_CACHE"
 }
 
 read_state
 PGW=0
-SPOP6_LABEL=""
+SCAN_LABEL=""
 # 【RTT 修复】初值取自持久化文件: 守住上一轮的 edgeRtt, 手动刷新不会把它清成 0
 P_EDGE_RTT=$(cat "$EDGE_RTT_FILE" 2>/dev/null)
 P_EDGE_RTT=$(awk -v v="$P_EDGE_RTT" 'BEGIN{print (v>0?int(v):0)}')
@@ -130,7 +130,7 @@ for SPEC in \
   IP=$(echo "$SPEC" | cut -d'|' -f2)
   URL=$(echo "$SPEC" | cut -d'|' -f3)
   HN=$(echo "$SPEC" | cut -d'|' -f4)
-  SPOP6_LABEL="$K"
+  SCAN_LABEL="$K"
   NOWS=$(date +%s)
   M=$(fast_measure "$URL" "$HN" "$IP")
   MED=$(echo "$M" | awk '{print $1+0}')
@@ -195,7 +195,7 @@ done
 P_EDGE_RTT=$(measure_edge_rtt)
 echo "$P_EDGE_RTT" > "$EDGE_RTT_FILE.tmp" && mv "$EDGE_RTT_FILE.tmp" "$EDGE_RTT_FILE"
 
-SPOP6_LABEL=""
+SCAN_LABEL=""
 flush_state
 
 # 【2026-10-04 修复 T6.6】原来无条件 rm -f 删除指令标记: 快扫的 ~21 秒窗口内
@@ -204,7 +204,7 @@ flush_state
 #   保留标记让 scheduler 下一轮再跑一轮; 否则(本脚本消费掉的)才删除。
 if [ -f "$FLAG" ]; then
   F_MT=$(date -r "$FLAG" +%s 2>/dev/null)
-  if [ -z "$F_MT" ] || [ "$F_MT" -lt "$SPOP6_START_TS" ]; then
+  if [ -z "$F_MT" ] || [ "$F_MT" -lt "$SCAN_START_TS" ]; then
     rm -f "$FLAG"
   fi
 fi

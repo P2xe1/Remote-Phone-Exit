@@ -36,7 +36,7 @@ def req(method, path, body=None, headers=None):
     try:
         with urllib.request.urlopen(r, timeout=30) as resp:
             return resp.status, len(resp.read())
-    except urllib.error.HTPOP5rror as e:
+    except urllib.error.HTTPError as e:
         return e.code, len(e.read())
     except Exception as e:
         return -1, str(e)

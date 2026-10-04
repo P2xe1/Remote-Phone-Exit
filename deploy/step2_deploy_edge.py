@@ -111,11 +111,27 @@ def main():
     if n_sub == 0:
         bad('源码里没找到 ${NODE_xx_IP} 占位符（节点清单可能已被改过）')
         return 1
-    left = len(re.findall(r'server:\s*"\$\{NODE_\d+_IP\}"', raw))
-    ok('节点地址已填充：%d 个（剩余未填 %d 个）' % (n_used, left))
-    if n_used == 0:
-        bad('一个地址都没填上：请检查 .env 里的 NODE_01_IP … 是否已配置')
+
+    # 【2026-10-05 修复 D21】逐个核对还有哪些占位符没填上。
+    #   原实现只判"一个都没填"(n_used == 0)，于是"填了一部分"会被放过 ——
+    #   部署出去的订阅里会混进不可用地址，表现为"部分节点正常、部分永远连不上"，
+    #   而且很难查（看起来配置是对的）。
+    #   现在：只要有占位符残留就中止，并把缺哪几个写得清清楚楚。
+    missing_idx = sorted(set(int(m) for m in
+                             re.findall(r'server:\s*"\$\{NODE_(\d+)_IP\}"', raw)))
+    if missing_idx:
+        bad('还有 %d 个节点地址没填上，已中止部署（避免下发不可用地址）：' % len(missing_idx))
+        print('      缺: %s' % ', '.join('NODE_%02d_IP' % i for i in missing_idx[:20]))
+        if len(missing_idx) > 20:
+            print('      ... 共 %d 个' % len(missing_idx))
+        print()
+        print('   两种改法，任选其一：')
+        print('     · 补齐 .env 里这些键，然后重跑本步')
+        print('     · 确实只用更少节点 —— 那就从 edge/worker_deploy.js 的 RAW_NODES 里')
+        print('       删掉对应行，并同步调整 buildNodeDisplayNames 里的索引区间分组，')
+        print('       不要只填空一部分')
         return 1
+    ok('节点地址已填充：%d 个（无残留占位符）' % n_used)
 
     # ---- 2. BUILD_ID ----
     newid = 'b' + time.strftime('%Y%m%d-%H%M%S')
@@ -165,12 +181,44 @@ def main():
 
     merged = [b for b in bindings if b.get('name') != 'SUB_DB']
     merged.append({'type': 'kv_namespace', 'name': 'SUB_DB', 'namespace_id': ns})
-    # 运行时凭据作为明文变量注入（也可改在控制台用 Secrets 覆盖）
+
+    # ---- 运行时凭据：本地有值就【以本地为准】 ----
+    # 【2026-10-05 修复 D22】原实现是 `if v and not any(同名已存在)` ——
+    #   于是"远端已有同名绑定"时永远不会用本地值更新。后果很隐蔽：
+    #   你在 .env 里改了域名/密码/同步密钥，重新部署却还是旧值，
+    #   而手机端如果已经按新值配置，两端就永久不一致。
+    #   现在的规则：
+    #     · 本地有值  -> 覆盖远端同名绑定（或新增）
+    #     · 本地没值  -> 保留远端已有值，绝不写空值上去把它抹掉
+    updated, kept = [], []
     for k in ('ADMIN_PASSWORD', 'SYNC_SECRET', 'WORKER_HOST', 'TUNNEL_HOST', 'VLESS_UUID'):
         v = cfg(k)
-        if v and not any(b.get('name') == k for b in merged):
-            merged.append({'type': 'plain_text', 'name': k, 'text': v})
+        hit = None
+        for b in merged:
+            if b.get('name') == k:
+                hit = b
+                break
+        if v:
+            if hit is not None:
+                hit['type'] = 'plain_text'
+                hit['text'] = v
+                hit.pop('namespace_id', None)
+                hit.pop('id', None)
+                updated.append(k)
+            else:
+                merged.append({'type': 'plain_text', 'name': k, 'text': v})
+                updated.append(k)
+        elif hit is not None:
+            kept.append(k)
+        else:
+            bad('缺少必填配置 %s —— 继续部署会让 Worker 用占位口令运行' % k)
+            return 1
+
     ok('本次部署绑定: %s' % [b.get('name') for b in merged])
+    if updated:
+        ok('按本地配置【写入/更新】: %s' % ', '.join(updated))
+    if kept:
+        log('本地未配置、保留远端原值: %s' % ', '.join(kept))
 
     metadata = {'main_module': 'worker.js', 'bindings': merged}
 

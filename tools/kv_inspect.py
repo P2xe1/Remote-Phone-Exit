@@ -31,7 +31,7 @@ def req(url, raw=False):
         with urllib.request.urlopen(r, timeout=30) as resp:
             body = resp.read()
             return resp.status, (body if raw else json.loads(body.decode()))
-    except urllib.error.HTPOP5rror as e:
+    except urllib.error.HTTPError as e:
         body = e.read().decode(errors="replace")
         try:
             return e.code, json.loads(body)

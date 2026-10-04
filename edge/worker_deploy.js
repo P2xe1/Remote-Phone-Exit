@@ -51,18 +51,46 @@ function buildCfTestYaml(host, uuid) {
 }
 
 
-const ADMIN_PASSWORD = (env.ADMIN_PASSWORD || "CHANGE_ME");
-const SYNC_SECRET = (env.SYNC_SECRET || "CHANGE_ME");
+// 【导出修复】运行时配置：由 Worker 的环境变量(bindings)提供。
+//   为什么不能写成顶层 `env.X`：env 只是 fetch(request, env) 的参数，
+//   模块顶层没有它，会在加载阶段抛 ReferenceError。
+//   _CFG 指向它，并留一个可在测试中注入的入口（见 __setCfg）。
+let _CFG = (typeof globalThis !== 'undefined' && globalThis.__WORKER_ENV) || {};
+function __setCfg(e) { _CFG = e || {}; }
+function _cfg(key, fallback) {
+  const v = _CFG && _CFG[key];
+  return (v === undefined || v === null || v === '') ? fallback : v;
+}
+
+// 【导出修复】管理页模板里引用的设备/隧道变量。
+//   原实现写死了真实机型与系统版本，脱敏后成了未定义变量 ——
+//   模板字符串在服务端求值时就会抛 ReferenceError，整页打不开。
+//   这里给出中性默认值；运行时可用同名环境变量覆盖。
+const TUNNEL_ID_PREFIX = _cfg('TUNNEL_ID_PREFIX', '--------');
+const DEVICE_NAME = _cfg('DEVICE_NAME', '未上报');
+const SOC = _cfg('SOC', '未上报');
+const CARRIER = _cfg('CARRIER', '未上报');
+const DEVICE_BRAND = _cfg('DEVICE_BRAND', '未上报');
+const DEVICE_MODEL = _cfg('DEVICE_MODEL', '未上报');
+const DEVICE_CODENAME = _cfg('DEVICE_CODENAME', '未上报');
+const ANDROID_VER = _cfg('ANDROID_VER', '未上报');
+const ADMIN_PASSWORD = _cfg('ADMIN_PASSWORD', 'CHANGE_ME');
+const SYNC_SECRET = _cfg('SYNC_SECRET', 'CHANGE_ME');
+// 【导出修复】WORKER_HOST 同样是运行时配置：缓存键与探活地址都要用它。
+//   必须定义在 _cfg 之后 —— 顶层模板字符串求值时它要已经可用。
+const WORKER_HOST = _cfg('WORKER_HOST', 'worker.example.com');
 const NOTICE_NAME = "※请优先选择低延迟接入点※";
 
 // 辅助函数：根据 Token 确定性生成用户专属 UUID (保证与手机端一致)
 function tokenToUUID(token) {
-  if (!token) return '${USER_UUID}';
+  // 【导出修复】下面是固定用户的 UUID 映射。原值已脱敏，
+  //   这里给的是【格式合法且互不相同】的占位值 —— 能跑，但请换成你自己的。
+  if (!token) return '00000000-0000-4000-8000-000000000000';
   const fixedMap = {
-    'USER_TOKEN_1': '${USER_UUID}',
-    'USER_TOKEN_2': `env.VLESS_UUID`,
-    'USER_TOKEN_3': '${USER_UUID}',
-    'USER_TOKEN_4': '${USER_UUID}'
+    'USER_TOKEN_1': '00000000-0000-4000-8000-000000000011',
+    'USER_TOKEN_2': _cfg('VLESS_UUID', '00000000-0000-0000-0000-000000000000'),
+    'USER_TOKEN_3': '00000000-0000-4000-8000-000000000013',
+    'USER_TOKEN_4': '00000000-0000-4000-8000-000000000014'
   };
   if (fixedMap[token]) return fixedMap[token];
 
@@ -94,7 +122,10 @@ function getUserStoreVersion(userStore) {
 // 辅助函数：动态编译生成与手机 Xray 运行架构 100% 匹配的完整 JSON 配置
 function generatePhoneXrayConfig(userStore) {
   const clients = [
-    { "id": "${USER_UUID}", "email": "shared_legacy", "level": 0 }
+    // 【导出修复】shared_legacy 是历史共享用户的兼容位，其流量会被
+    //   归属到某个现有用户。全新部署用不到它，可以整行删掉。
+    //   这里给出一个合法且中立的占位 UUID（务必换成你自己的，或删掉本行）。
+    { "id": "00000000-0000-4000-8000-000000000001", "email": "shared_legacy", "level": 0 }
   ];
   for (const token in userStore) {
     const u = userStore[token];
@@ -373,7 +404,7 @@ function buildNodeDisplayNames(coloByIp) {
 // 读本机房共享快照里的实测落点(ip -> colo)。读不到就返回空对象, 由兜底逻辑补。
 async function getNodeColoMap() {
   try {
-    const r = await caches.default.match(new URL(`https://env.WORKER_HOST/internal_cache/stats_latest`));
+    const r = await caches.default.match(new URL(`https://${WORKER_HOST}/internal_cache/stats_latest`));
     if (r) {
       const s = await r.json();
       const m = {};
@@ -399,7 +430,7 @@ async function getNodeColoMap() {
 // 规则: 凡是"一个请求写、另一个请求读"的状态, 一律走下面这两个函数。
 //       Cache API 在同一机房内所有 isolate 间共享, 免费且无操作次数限制。
 // ================================================================
-const CACHE_ORIGIN = `https://env.WORKER_HOST/internal_cache/`;
+const CACHE_ORIGIN = `https://${WORKER_HOST}/internal_cache/`;
 
 async function cacheGetJson(name) {
   try {
@@ -460,7 +491,7 @@ const DEFAULT_USERS = {
 // 存储: 独立 Cache API key(免费无限量, 【不占 KV 额度】), 刻意与遥测快照分开 ——
 //   手机上报与本接口都会"读-改-写", 共用一个 key 会互相覆盖丢样本。
 // ==========================================================
-const CLIENT_RTT_KEY = `https://env.WORKER_HOST/internal_cache/client_rtt`;
+const CLIENT_RTT_KEY = `https://${WORKER_HOST}/internal_cache/client_rtt`;
 const CLIENT_RTT_MAX_SAMPLES = 20;   // 每个机房保留最近 20 个真实样本
 const CLIENT_RTT_MAX_COLOS = 12;     // 最多保留 12 个机房, 防止无限增长
 
@@ -508,7 +539,7 @@ async function readLiveSnapshot() {
   // (标签显示"5秒前 -> 9秒前 -> 13秒前"一直变大)。Cache API 是同机房共享的, 能跨 isolate。
   let s = null;
   try {
-    const r = await caches.default.match(new URL(`https://env.WORKER_HOST/internal_cache/stats_latest`));
+    const r = await caches.default.match(new URL(`https://${WORKER_HOST}/internal_cache/stats_latest`));
     if (r) s = await r.json();
   } catch (e) {}
   if (!s) s = globalMemoryStats;
@@ -561,7 +592,7 @@ async function readLiveSnapshot() {
 //   用户库只存在 Cache API + isolate 内存里, 而 Cloudflare 的
 //   缓存是【按机房独立】的。手机推 users.json 只会推到一个机房,
 //   其它机房永远学不到 → 实测同一天两个入口列表不同:
-//     env.WORKER_HOST          7 人 (含 用户F)
+//     _cfg('WORKER_HOST', '')          7 人 (含 用户F)
 //     my-worker.example-pixel...      6 人 (缺 用户F, 且 用户D 重复)
 //
 // 【新实现】
@@ -577,7 +608,7 @@ const USERS_MEM_TTL = 120000;    // 毫秒: isolate 内存缓存 (120 秒)
 // Cache API 条目有效期(秒) —— 同时决定"单机房最多陈旧多久"。
 // 已确认: 某些机房看到用户增删改延迟 2 分钟是可接受的。
 const USERS_CACHE_TTL = 120;
-const USERS_CACHE_KEY = `https://env.WORKER_HOST/internal_cache/users_master_store`;
+const USERS_CACHE_KEY = `https://${WORKER_HOST}/internal_cache/users_master_store`;
 
 // KV 写入预算 (兜底保险丝)
 // 主控手段是结构性的: 写入只发生在【成员变更】(增/减/禁用/删除)时。
@@ -728,7 +759,7 @@ async function getUserStoreChangedAt() {
   const now = Date.now();
   if (userStoreChangedAt && (now - userStoreChangedAtAt) < 60000) return userStoreChangedAt;
   try {
-    const r = await caches.default.match(new URL(`https://env.WORKER_HOST/internal_cache/users_changed_at`));
+    const r = await caches.default.match(new URL(`https://${WORKER_HOST}/internal_cache/users_changed_at`));
     if (r) {
       const v = parseInt(await r.text(), 10);
       if (v > 0) { userStoreChangedAt = v; userStoreChangedAtAt = now; return v; }
@@ -852,7 +883,7 @@ async function saveCachedUsers(usersMap) {
     userStoreChangedAt = Date.now();
     userStoreChangedAtAt = Date.now();
     try {
-      await caches.default.put(new URL(`https://env.WORKER_HOST/internal_cache/users_changed_at`),
+      await caches.default.put(new URL(`https://${WORKER_HOST}/internal_cache/users_changed_at`),
         new Response(String(userStoreChangedAt), {
           // 【2026-10-04 T4.2】30 天 -> 60 秒, 避免徽标长期读旧值
           headers: { 'Content-Type': 'text/plain', 'Cache-Control': 'public, max-age=60' }
@@ -987,7 +1018,7 @@ export default {
 
     // -------------------------------------------------------------
     // Cloudflare 节点优选测速配置 (供国内朋友导入 mihomo/Clash.Meta 实测)
-    //   访问 https://env.WORKER_HOST/cf 即可拿到最新的候选节点配置
+    //   访问 https://_cfg('WORKER_HOST', '')/cf 即可拿到最新的候选节点配置
     // -------------------------------------------------------------
     // -------------------------------------------------------------
     // 手动刷新: 大屏按钮 -> 这里记一个 flag -> 手机下次上报(约6秒)拿到
@@ -1020,8 +1051,8 @@ export default {
 
     if (url.pathname === '/cf' || url.pathname === '/cf_test.yaml') {
       // 【脱敏版】按当前配置动态生成，代码里不存任何地址
-      const _cfYaml = buildCfTestYaml(env.TUNNEL_HOST || 'vpn.example.com',
-                                     env.VLESS_UUID || '00000000-0000-0000-0000-000000000000');
+      const _cfYaml = buildCfTestYaml(_cfg('TUNNEL_HOST', '') || 'vpn.example.com',
+                                     _cfg('VLESS_UUID', '') || '00000000-0000-0000-0000-000000000000');
       return new Response(_cfYaml, {
         headers: {
           'Content-Type': 'text/yaml; charset=utf-8',
@@ -1050,7 +1081,7 @@ export default {
           if (!globalMemoryStats) {
             try {
               const cache = caches.default;
-              const cacheKey = new URL(`https://env.WORKER_HOST/internal_cache/stats_latest`);
+              const cacheKey = new URL(`https://${WORKER_HOST}/internal_cache/stats_latest`);
               const cachedRes = await cache.match(cacheKey);
               if (cachedRes) {
                 globalMemoryStats = await cachedRes.json();
@@ -1061,7 +1092,7 @@ export default {
           if (Object.keys(userAccumulators).length === 0) {
             try {
               const cache = caches.default;
-              const cacheKey = new URL(`https://env.WORKER_HOST/internal_cache/stats_latest`);
+              const cacheKey = new URL(`https://${WORKER_HOST}/internal_cache/stats_latest`);
               const cachedRes = await cache.match(cacheKey);
               if (cachedRes) {
                 const parsed = await cachedRes.json();
@@ -1536,7 +1567,7 @@ export default {
           //   max-age=86400 —— 同机房陈旧快照上限被放大到 24 小时(与"5 分钟内才接受"
           //   的判据冲突)。现只保留一次 put, max-age=300。
           try {
-            await caches.default.put(new URL(`https://env.WORKER_HOST/internal_cache/stats_latest`),
+            await caches.default.put(new URL(`https://${WORKER_HOST}/internal_cache/stats_latest`),
               new Response(JSON.stringify(globalMemoryStats), {
                 headers: {
                   'Content-Type': 'application/json',
@@ -1712,7 +1743,7 @@ export default {
         // 【2026-10-03 修复】这里原本伪造了一整套"看起来合理"的假数据:
         //   pings(186/140/213...假延迟) · jitters(恒 4ms) · losses(恒 0)
         //   pingTimes(伪造成 10~50 秒前 => 大屏显示"看起来是新鲜的")
-        //   telemetry(假电量 88% · 假 WiFi ${WIFI_SSID} · 假 uptime)
+        //   telemetry(假电量 88% · 假 WiFi \${WIFI_SSID} · 假 uptime)
         // 手机一断线, 整个大屏就会展示这些假数据。现在全部如实留空:
         // 没有数据就显示 "--" / "未测到", 绝不编造。
         pings: {},
@@ -1752,7 +1783,7 @@ export default {
       if (!s || memAge > 1500) {
         try {
           const cache = caches.default;
-          const cacheKey = new URL(`https://env.WORKER_HOST/internal_cache/stats_latest`);
+          const cacheKey = new URL(`https://${WORKER_HOST}/internal_cache/stats_latest`);
           const cachedRes = await cache.match(cacheKey);
           if (cachedRes) {
             const parsed = await cachedRes.json();
@@ -1886,13 +1917,13 @@ export default {
       
       let isHostAlive = isFresh && isXrayLive;
 
-      // 双重物理回路验证：主动探测 https://env.TUNNEL_HOST/kl
+      // 双重物理回路验证：主动探测 https://_cfg('TUNNEL_HOST', '')/kl
       // 【2026-10-04 修复 T7.1】原实现每个 /api/stats_data 请求都同步做一次
       //   HEAD 探活(1.5s 超时): 大屏每轮询一次就打一次隧道到手机, 响应被
       //   阻塞最多 1.5s+, 2 秒模式还会放大, 且探活抖动会误判"离线"闪红。
       //   现在把探活结果写进本机房 Cache API(20 秒有效期):
       //   同一机房所有 isolate 共享, 每 20 秒最多真探一次, 其余请求零开销。
-      const HOST_PROBE_URL = new URL(`https://env.WORKER_HOST/internal_cache/host_probe`);
+      const HOST_PROBE_URL = new URL(`https://${WORKER_HOST}/internal_cache/host_probe`);
       let hostProbeAlive = null;
       try {
         const pc = await caches.default.match(HOST_PROBE_URL);
@@ -1903,7 +1934,7 @@ export default {
       } catch (e) {}
       if (hostProbeAlive === null) {
         try {
-          const probe = await fetch(`https://env.TUNNEL_HOST/kl`, { method: 'HEAD', signal: AbortSignal.timeout(1500) });
+          const probe = await fetch(`https://${TUNNEL_HOST}/kl`, { method: 'HEAD', signal: AbortSignal.timeout(1500) });
           // Xray 在线时返回 403/400；隧道断开返回 502/504/530
           hostProbeAlive = !(probe.status >= 500);
         } catch (pErr) {
@@ -2149,7 +2180,7 @@ export default {
       }
 
       const uuid = tokenToUUID(token);
-      const host = "env.TUNNEL_HOST";
+      const host = _cfg('TUNNEL_HOST', 'vpn.example.com');
       // 【2026-10-04 用户要求】节点名全线统一: 节点所在地-<实测落点三位码>-<序号>
       const _coloMap = await getNodeColoMap();
       const DISPLAY_NAMES = buildNodeDisplayNames(_coloMap);
@@ -3233,7 +3264,7 @@ rules:
                 <div class="pipe-node" data-step="②">
                   <div class="pipe-label">ANYCAST EDGE</div>
                   <div class="pipe-title">Cloudflare 边缘</div>
-                  <div class="pipe-desc">env.WORKER_HOST</div>
+                  <div class="pipe-desc">${WORKER_HOST}</div>
                   <div class="pipe-tag edge" id="pipeColoTag">实测落点 --</div>
                 </div>
                 <div class="pipe-arrow">
@@ -3248,7 +3279,7 @@ rules:
                 </div>
                 <div class="pipe-arrow">
                   <div class="hop-arrow">➔</div>
-                  <div class="hop-badge" id="pipeArgoPhone" title="手机 curl 到 env.TUNNEL_HOST 的 time_connect（TCP 1×RTT，与浏览器侧同口径）">-- ms</div>
+                  <div class="hop-badge" id="pipeArgoPhone" title="手机 curl 到 ${TUNNEL_HOST} 的 time_connect（TCP 1×RTT，与浏览器侧同口径）">-- ms</div>
                 </div>
                 <div class="pipe-node hardware-node" data-step="④">
                   <div class="pipe-label">MOBILE HOST NODE</div>
@@ -3562,7 +3593,7 @@ rules:
 
             // 真实物理网络探测函数 (发起真实 HTTPS 探测，浏览器测量完成 TCP 握手 + TLS 协商的往返耗时，杜绝任何模拟散列或随机数)
             // 【2026-10-03 删除】原 pingNodeIp 用 <img src='https://IP/favicon.ico'> 探测:
-            //   ① SNI 是 IP 字面量而非 env.TUNNEL_HOST => 测的不是「连你的节点」, 方法论错误
+            //   ① SNI 是 IP 字面量而非 ${TUNNEL_HOST} => 测的不是「连你的节点」, 方法论错误
             //      (浏览器无法指定 SNI, 这是硬限制)
             //   ② img.onerror 会被当成「完成」并立刻结算 => 握手失败被记成「很快」,
             //      导致【最差的节点显示成最快】
@@ -3778,7 +3809,7 @@ rules:
               manualScanBusy = true;
               if (btn) { btn.disabled = true; btn.innerText = '⚡ 已下发…'; }
               try {
-                const r = await fetch(window.location.origin + '/api/manual_scan?pwd=' + (env.ADMIN_PASSWORD || "CHANGE_ME"), {
+                const r = await fetch(window.location.origin + '/api/manual_scan?pwd=' + window.__CFG.ADMIN_PASSWORD, {
                   method: 'POST', cache: 'no-store'
                 });
                 const j = await r.json();
@@ -4396,7 +4427,7 @@ rules:
               const badge = document.getElementById('phoneSyncBadge');
               if (btn) { btn.disabled = true; btn.innerText = '⟳ 下发中…'; }
               try {
-                const r = await fetch(window.location.origin + '/api/phone_sync?pwd=' + (env.ADMIN_PASSWORD || "CHANGE_ME"), {
+                const r = await fetch(window.location.origin + '/api/phone_sync?pwd=' + window.__CFG.ADMIN_PASSWORD, {
                   method: 'POST', cache: 'no-store'
                 });
                 const j = await r.json();
@@ -4426,6 +4457,9 @@ rules:
             }
 
             window.__pageBuild = '${BUILD_ID}';
+    // 【导出修复】页面侧运行时配置：密码不再从服务端 env 取，
+    //   而是在渲染页面时注入（浏览器里没有 env 对象）。
+    window.__CFG = { ADMIN_PASSWORD: '${ADMIN_PASSWORD}' };
 
             // ==========================================================
             // A2 · 秒级实时推送 (Server-Sent Events)
@@ -4622,7 +4656,7 @@ rules:
             async function liveLoop() {
               if (!liveOn) return;
               try {
-                const r = await fetch(window.location.origin + '/api/live?pwd=' + (env.ADMIN_PASSWORD || "CHANGE_ME")
+                const r = await fetch(window.location.origin + '/api/live?pwd=' + window.__CFG.ADMIN_PASSWORD
                     + '&since=' + encodeURIComponent(liveStamp), { cache: 'no-store' });
                 if (r.ok) {
                   const m = await r.json();
@@ -4651,7 +4685,7 @@ rules:
               const fetchStart = performance.now();
               await probeClientRtt();   // 真实测量 客户端↔CF边缘 RTT (15 秒节流)
               try {
-                const res = await fetch(window.location.origin + '/api/stats_data?pwd=` + (env.ADMIN_PASSWORD || "CHANGE_ME") + `&_t=' + Date.now() + (phoneSyncRequestId ? '&sync=1' : ''), {
+                const res = await fetch(window.location.origin + '/api/stats_data?pwd=` + window.__CFG.ADMIN_PASSWORD + `&_t=' + Date.now() + (phoneSyncRequestId ? '&sync=1' : ''), {
                   cache: 'no-store'
                 });
                 const fetchElapsed = Math.max(1, Math.round(performance.now() - fetchStart));
@@ -5393,7 +5427,7 @@ rules:
               if (!window.__autoScanFired) {
                 window.__autoScanFired = true;
                 setTimeout(function () {
-                  fetch(window.location.origin + '/api/manual_scan?pwd=' + (env.ADMIN_PASSWORD || "CHANGE_ME"),
+                  fetch(window.location.origin + '/api/manual_scan?pwd=' + window.__CFG.ADMIN_PASSWORD,
                     { method: 'POST', cache: 'no-store' }).catch(function () {});
                 }, 1500);
               }

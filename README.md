@@ -87,12 +87,29 @@ cp .env.example .env      # 填入你自己的值
 
 ### 2. 部署边缘
 
+**方式一：一键菜单**（推荐，含体检 → 部署 → 验收）
+
 ```bash
-node --check edge/worker_deploy.js            # 先语法检查
-python tools/cf_deploy.py "$CF_API_TOKEN"     # 部署（务必看完整输出）
+python deploy/一键.py
+```
+
+> ⚠ 必须用 `deploy/一键.py`。仓库根目录**没有**一键入口 ——
+> 菜单靠自身所在目录定位各步骤脚本，放到别处就找不到步骤文件了。
+
+**方式二：手动分步**（想看清每一步时用）
+
+```bash
+node --check edge/worker_deploy.js       # 1. 先语法检查（可选）
+python deploy/step1_check.py             # 2. 环境体检：配置/令牌/域名/设备
+python deploy/step2_deploy_edge.py       # 3. 部署边缘（填节点地址 + 注入版本 + 上传）
+python deploy/step4_verify.py            # 4. 线上验收（等 20~30 秒再做）
 ```
 
 判定成功的标准：**三处版本号一致** —— 源码里的、`/api/live` 返回的、页面内嵌的。
+
+**关于 `tools/cf_deploy.py`**：它现在只是**兼容包装器**，会把参数转交给
+`deploy/step2_deploy_edge.py`。不要再往它里面加部署逻辑 —— 两套实现必然漂移，
+历史上就因此部署出过带占位符的 Worker。配置一律从 `.env` 读，不从命令行传令牌。
 
 ### 3. 部署住宅节点
 

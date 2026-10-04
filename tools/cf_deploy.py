@@ -1,177 +1,56 @@
 # -*- coding: utf-8 -*-
 """
-cf_deploy.py - NOC Worker 部署器 (2026-10-04 重写: T9.1/T9.2/T9.3/T8.8)
+cf_deploy.py - 兼容入口（2026-10-05 改为薄包装）
 
-T9.1: bindings 改为【读取现有 + 合并】(只确保 SUB_DB 存在, 保留其它绑定),
-      不再写死覆盖 —— 将来加 Durable Object 等绑定不会被抹掉。
-T9.2: BUILD_ID 注入失败立即中止; 部署前自动备份, 失败自动恢复备份。
-T9.3: 日志改纯 ASCII(避免 GBK 乱码); metadata 增加 migrations 字段。
-T8.8: 部署时下载 Chart.js 内嵌进 Worker(/chart.js 本地直出), 下载失败则保留 CDN 兜底。
+【为什么改成包装器】
+  本文件过去是【第二套独立实现】：读自己目录下的 worker_deploy.js、
+  完全不注入 NODE_xx_IP 节点地址、不注入运行时参数绑定。
+  而 deploy/step2_deploy_edge.py 是【完整实现】：填节点、注 BUILD_ID、
+  内嵌 Chart.js、合并绑定、语法检查、失败中止。
+
+  两套实现并存必然漂移：按 README 跑这个入口，部署出来的 Worker
+  里节点地址还是 ${NODE_xx_IP} 占位符，订阅里会混进不可用地址。
+
+  现在这里只做一件事：把参数转交给 deploy/step2_deploy_edge.py。
+  想改部署逻辑，请改那一个文件，不要在这里再写一份。
+
+【历史 bug 记录（已随本次改造消除）】
+  · 异常类型名拼错成 `urllib.error.HTPOP5rror`（正确是 HTTPError）——
+    读取绑定或上传一旦抛异常，异常处理自己会再抛 AttributeError，
+    把真实失败原因掩盖掉。
+  · WORKER_FILE 写的是相对路径 "worker_deploy.js"，按 README 在仓库根
+    运行时找不到文件（真实位置是 edge/worker_deploy.js）。
+  · 不注入节点地址与运行时绑定。
 """
-import json
-import shutil
+import os
+import subprocess
 import sys
-import time
-import re
-import urllib.error
-import urllib.request
 
-sys.path.insert(0, __import__("os").path.dirname(__import__("os").path.abspath(__file__)))
-from load_config import cfg  # noqa: E402  （同目录的配置读取器）
-
-ACCOUNT_ID = cfg("CF_ACCOUNT_ID", required=True)
-SCRIPT_NAME = cfg("CF_SCRIPT_NAME", "my-worker")
-WORKER_FILE = "worker_deploy.js"
-SUB_DB_NS_ID = cfg("CF_KV_NAMESPACE_ID", required=True)
-
-CHART_JS_SOURCES = [
-    "https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js",
-    "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js",
-    "https://unpkg.com/chart.js@4.4.1/dist/chart.umd.min.js",
-]
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(HERE)
+CANONICAL = os.path.join(ROOT, 'deploy', 'step2_deploy_edge.py')
 
 
-def log(msg):
-    print("[*] " + msg)
+def main():
+    if not os.path.exists(CANONICAL):
+        print('[!] 找不到正式部署实现: %s' % CANONICAL)
+        print('    本文件只是兼容入口，真正的部署逻辑在 deploy/step2_deploy_edge.py')
+        return 1
+
+    print('[i] 本入口已改为兼容包装：实际执行 deploy/step2_deploy_edge.py')
+    print('    配置一律从 .env / 环境变量读取（不再从命令行接收令牌，')
+    print('    避免令牌出现在命令行历史与进程列表里）')
+    print()
+    # 原用法 `python tools/cf_deploy.py <TOKEN>` 里的令牌参数被忽略并提示，
+    # 但仍继续执行 —— 配置从 .env 读，行为对老用户更安全。
+    if len(sys.argv) > 1 and sys.argv[1].strip():
+        print('[i] 已忽略命令行传入的令牌参数（改从 .env 的 CF_API_TOKEN 读取）')
+        print()
+
+    p = subprocess.run([sys.executable, CANONICAL] + sys.argv[1:],
+                       cwd=ROOT)
+    return p.returncode
 
 
-def download_chartjs():
-    for url in CHART_JS_SOURCES:
-        try:
-            req = urllib.request.Request(url, headers={"User-Agent": "noc-deploy/1.0"})
-            with urllib.request.urlopen(req, timeout=30) as r:
-                body = r.read().decode("utf-8", "replace")
-            if len(body) > 50000 and "Chart" in body:
-                log("Chart.js downloaded from " + url + " (" + str(len(body)) + " bytes)")
-                return body
-        except Exception as e:
-            log("Chart.js source failed " + url + ": " + str(e))
-    return None
-
-
-def deploy(api_token):
-    # ---- T9.2: 部署前备份(含当前 BUILD_ID), 失败自动恢复 ----
-    ts = time.strftime("%Y%m%d_%H%M%S")
-    bak = WORKER_FILE + ".bak_before_deploy_" + ts
-    try:
-        shutil.copy(WORKER_FILE, bak)
-        log("backup saved -> " + bak)
-    except Exception as e:
-        print("[!] backup failed: " + str(e))
-        return False
-
-    try:
-        raw = open(WORKER_FILE, encoding="utf-8").read()
-
-        # ---- 注入 BUILD_ID: 失败即中止 (T9.2) ----
-        newid = "b" + time.strftime("%Y%m%d-%H%M%S")
-        raw2, n = re.subn(r"const BUILD_ID = '[^']*';",
-                          "const BUILD_ID = '%s';" % newid, raw, count=1)
-        if n != 1:
-            print("[!] BUILD_ID pattern not found - ABORT deploy (no file change)")
-            return False
-        raw = raw2
-        log("BUILD_ID -> " + newid)
-
-        # ---- T8.8: 内嵌 Chart.js(JSON 转义, 安全注入; 失败则保持 null -> CDN 兜底) ----
-        chart_src = download_chartjs()
-        if chart_src:
-            encoded = json.dumps(chart_src)   # 合法 JS 字符串字面量
-            # 用 lambda 做替换, 避免 re.subn 把 JSON 里的反斜杠转义当成组引用/转义
-            raw, m = re.subn(r"const CHART_JS_SOURCE = null;",
-                             lambda _m: "const CHART_JS_SOURCE = %s;" % encoded, raw, count=1)
-            if m == 1:
-                log("Chart.js embedded into worker")
-            else:
-                log("Chart.js inject pattern missing - skipped (CDN fallback stays)")
-        else:
-            log("Chart.js download failed - /chart.js will 404, CDN fallback stays")
-
-        open(WORKER_FILE, "w", encoding="utf-8", newline="\n").write(raw)
-    except Exception as e:
-        print("[!] prepare failed: " + str(e))
-        shutil.copy(bak, WORKER_FILE)
-        log("restored backup")
-        return False
-
-    headers = {"Authorization": "Bearer " + api_token.strip()}
-
-    # ---- T9.1: 读取现有 bindings 并合并(只确保 SUB_DB, 保留其余) ----
-    bindings = []
-    try:
-        req = urllib.request.Request(
-            "https://api.cloudflare.com/client/v4/accounts/%s/workers/scripts/%s/bindings"
-            % (ACCOUNT_ID, SCRIPT_NAME), headers=headers, method="GET")
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            if data.get("success"):
-                bindings = data.get("result", [])
-                log("existing bindings: " + str([b.get("name") for b in bindings]))
-    except urllib.error.HTPOP5rror as e:
-        print("[!] fetch bindings HTTP " + str(e.code) + " - deploy will still overwrite with SUB_DB only")
-    except Exception as e:
-        print("[!] fetch bindings failed: " + str(e))
-
-    merged = [b for b in bindings if b.get("name") != "SUB_DB"]
-    merged.append({
-        "type": "kv_namespace",
-        "name": "SUB_DB",
-        "namespace_id": SUB_DB_NS_ID,
-    })
-    log("bindings for this deploy: " + str([b.get("name") for b in merged]))
-
-    # ---- T9.3: metadata(compatibility_date 刻意不设, 保持现有运行时语义;
-    #   migrations 在当前无 Durable Object 时省略 —— API 不接受空数组,
-    #   将来加 DO 时按 {new_tag, new_classes} 结构补齐) ----
-    metadata = {
-        "main_module": "worker.js",
-        "bindings": merged,
-    }
-
-    import uuid
-    boundary = "----WebKitFormBoundary" + uuid.uuid4().hex
-    body = bytearray()
-    body.extend(("--%s\r\n" % boundary).encode("utf-8"))
-    body.extend(b'Content-Disposition: form-data; name="metadata"\r\n')
-    body.extend(b'Content-Type: application/json\r\n\r\n')
-    body.extend(json.dumps(metadata).encode("utf-8"))
-    body.extend(b'\r\n')
-    body.extend(("--%s\r\n" % boundary).encode("utf-8"))
-    body.extend(b'Content-Disposition: form-data; name="worker.js"; filename="worker.js"\r\n')
-    body.extend(b'Content-Type: application/javascript+module\r\n\r\n')
-    body.extend(open(WORKER_FILE, encoding="utf-8").read().encode("utf-8"))
-    body.extend(b'\r\n')
-    body.extend(("--%s--\r\n" % boundary).encode("utf-8"))
-
-    upload_headers = {
-        "Authorization": headers["Authorization"],
-        "Content-Type": "multipart/form-data; boundary=" + boundary,
-    }
-    upload_url = ("https://api.cloudflare.com/client/v4/accounts/%s/workers/scripts/%s"
-                  % (ACCOUNT_ID, SCRIPT_NAME))
-    log("uploading worker ...")
-    upload_req = urllib.request.Request(upload_url, data=bytes(body), headers=upload_headers, method="PUT")
-
-    try:
-        with urllib.request.urlopen(upload_req, timeout=120) as resp:
-            result = json.loads(resp.read().decode("utf-8"))
-        if result.get("success"):
-            print("[SUCCESS] Worker deployed. BUILD_ID=" + newid)
-            return True
-        print("[FAILED] deployment returned: " + json.dumps(result.get("errors"), ensure_ascii=False))
-    except urllib.error.HTPOP5rror as e:
-        print("[ERROR] HTTP " + str(e.code) + ": " + e.read().decode("utf-8", "replace"))
-    except Exception as e:
-        print("[ERROR] " + str(e))
-
-    # ---- 失败回滚 ----
-    shutil.copy(bak, WORKER_FILE)
-    log("deploy failed - restored backup " + bak + " (BUILD_ID back to previous)")
-    return False
-
-
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python cf_deploy.py <CF_API_TOKEN>")
-        sys.exit(1)
-    sys.exit(0 if deploy(sys.argv[1]) else 1)
+if __name__ == '__main__':
+    sys.exit(main())

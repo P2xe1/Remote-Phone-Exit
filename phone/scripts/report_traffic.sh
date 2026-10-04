@@ -636,9 +636,9 @@ if [ -n "$RAW" ]; then
   # 【2026-10-04 T7.3】把当前待处理/已消费的扫描指令 id 作为 scanAck 上报:
   #   Worker 据此确认"手机已收到该指令"后才删除 KV 里的 noc:cmd,
   #   未确认前会持续补发(修复指令在网络丢失时被永久吞掉的问题)。
-  SPOP6_ACK_JSON=""
-  [ -s /data/local/tmp/scan_req ] && SPOP6_ACK_JSON="\"scanAck\":\"$(cat /data/local/tmp/scan_req)\","
-  echo "{$TELEMETRY_JSON $MASTER_JSON $SPOP6_ACK_JSON $ONLINE_USERS_JSON $PINGS_JSON $USER_TRAFFICS_JSON $HISTORY_JSON $DOMAIN_JSON $NODE_STATUS_JSON $NODE_IDX_JSON \"conns\": $ACTIVE_CONNS, $STRIPPED_RAW" > /data/local/tmp/traffic_payload.json
+  SCAN_ACK_JSON=""
+  [ -s /data/local/tmp/scan_req ] && SCAN_ACK_JSON="\"scanAck\":\"$(cat /data/local/tmp/scan_req)\","
+  echo "{$TELEMETRY_JSON $MASTER_JSON $SCAN_ACK_JSON $ONLINE_USERS_JSON $PINGS_JSON $USER_TRAFFICS_JSON $HISTORY_JSON $DOMAIN_JSON $NODE_STATUS_JSON $NODE_IDX_JSON \"conns\": $ACTIVE_CONNS, $STRIPPED_RAW" > /data/local/tmp/traffic_payload.json
   PAYLOAD_BYTES=$(wc -c < /data/local/tmp/traffic_payload.json 2>/dev/null)
   [ -z "$PAYLOAD_BYTES" ] && PAYLOAD_BYTES=0
   echo "$HEAVY_STATE $PAYLOAD_BYTES $(date +%s)" > /data/local/tmp/last_payload_size.txt
@@ -681,9 +681,9 @@ if [ -n "$RESP" ]; then
   # 手动刷新指令: 大屏点"手动刷新" -> Worker 记 flag -> 这里落标记
   # -> ping_scheduler 发现标记后启动 fast_scan.sh 做全速扫描(去掉10秒间隔)
   # ========================================================
-  SPOP6_REQ=$(echo "$RESP" | /system/bin/sed -n 's/.*"scanReq":"\([^"]*\)".*/\1/p')
-  if [ -n "$SPOP6_REQ" ]; then
-    echo "$SPOP6_REQ" > /data/local/tmp/scan_req
+  SCAN_REQ=$(echo "$RESP" | /system/bin/sed -n 's/.*"scanReq":"\([^"]*\)".*/\1/p')
+  if [ -n "$SCAN_REQ" ]; then
+    echo "$SCAN_REQ" > /data/local/tmp/scan_req
   fi
   if [ -n "$SYNC_REQ" ]; then
     LAST_SYNC_REQ=""
