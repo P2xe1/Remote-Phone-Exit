@@ -15,15 +15,12 @@
 #   基线值随第二行一起上报, 前端并列显示。
 #
 # 目标选择依据(全部实测验证为真单播, 非 anycast CDN):
-#   kl 节点所在地 www.uitm.edu.my     ${RELAY_TARGET_IP}   实测 27ms
-#   gz 客户端所在地广东 www.21cn.com        ${RELAY_TARGET_IP}   客户端所在地电信广东
-#   sg 接入点2   www.smu.edu.sg      ${RELAY_TARGET_IP}   接入点2管理大学
-#   hk 接入点3     www.polyu.edu.hk    ${RELAY_TARGET_IP}   接入点3理工大学
-#   jp 目标4    www.nic.ad.jp       ${RELAY_TARGET_IP}  目标4 JPRS
-#   tw 目标5    www.seed.net.tw     ${RELAY_TARGET_IP}   目标5 Seednet
-# 被排除的候选(实测为 anycast, 会落到就近机房而不是该地区):
-#   nus.edu.sg/ntu.edu.sg(Cloudflare/Imperva) hku.hk(Fastly) hkt.com(Cloudflare)
-#   bharian/hmetro(Cloudflare) mas.gov.sg/sgx.com(Akamai) zaobao(AWS)
+#   每个可达分片(path)各绑一个目标, 用于测"该分片的真实往返"。
+#   判据: 目标必须落在单一物理站点上 —— 用 anycast CDN 的站点会落到
+#         就近机房, 测出来的是"到 CDN 的距离", 不是"到该地区的距离"。
+#   排除过程: 逐个实测候选, 凡是解析到 anycast 网络的(Cloudflare /
+#             Akamai / Fastly / AWS 等)一律排除, 只保留真单播站点。
+#   各目标的实测值见上方"实测 XXms"注释, 目标地址按需替换即可。
 # ============================================================
 
 INTL_FILE="/data/local/tmp/last_intl.txt"

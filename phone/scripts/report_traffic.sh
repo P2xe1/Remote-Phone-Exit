@@ -18,6 +18,9 @@ ONLINE_USERS_FILE="/data/local/tmp/online_users.txt"
 ONLINE_5S_RAW="/data/local/tmp/online_5s_raw.txt"
 ONLINE_LAST_ACTIVE="/data/local/tmp/online_last_active.txt"
 ONLINE_CACHE_FILE="/data/local/tmp/online_cache.txt"
+# 【新增】xray 权威在线名单的"当前/上一份"快照 + 每个用户的连接时刻
+ONLINE_PREV_SET="/data/local/tmp/online_prev_set.txt"
+CONN_STATE_FILE="/data/local/tmp/online_conn_state.txt"
 
 NOW=$(date +%s)
 
@@ -166,13 +169,33 @@ if [ $((NOW - LAST_ONLINE)) -ge 5 ]; then
   IS_ONLINE_TICK=1
   echo $NOW > "$ONLINE_TIME_FILE"
   /data/local/tmp/xray api statsgetallonlineusers --server=$API_SERVER 2>/dev/null > /data/local/tmp/online_raw.tmp
-  grep -o '"user_[^"]*"' /data/local/tmp/online_raw.tmp 2>/dev/null | sed 's/"user_//; s/"//' > "$ONLINE_USERS_FILE"
+  # 【修正】xray 的用户名是 <inboundTag>.<email>，且 tag 不一定是 in-kl
+  #   原来写死找 "user_ 前缀" —— 与 phones 的 stats 命名不符，会全部解析不到。
+  #   这里按 json 字段取值，再去掉 "user>>>" 前缀（stats 命令两种写法都兼容）。
+  grep -o '"user":[ ]*"[^"]*"' /data/local/tmp/online_raw.tmp 2>/dev/null \
+    | sed 's/.*"user":[ ]*"//; s/"$//' \
+    | sed 's/^user>>>//' | sed 's/^user_//' > "$ONLINE_USERS_FILE.tmp"
+  mv -f "$ONLINE_USERS_FILE.tmp" "$ONLINE_USERS_FILE" 2>/dev/null
 fi
 
 # ========================================================
 # 3. 提取 Xray 统计并处理用户累计流量基线与实时状态
 # ========================================================
 RAW=$(/data/local/tmp/xray api statsquery --server=$API_SERVER 2>/dev/null)
+
+# 【新增】从 awk 输出里摘出在线名单 -> 每次上报都带（6 秒级新鲜度）
+ONLINE_NOW=$(echo "$RAW" | sed -n 's/.*#ONLINE#//p' | head -n 1)
+RAW=$(echo "$RAW" | sed 's/#ONLINE#.*//')
+ONLINE_USERS_JSON=""
+if [ -f "$ONLINE_USERS_FILE" ] && [ ! -s "$ONLINE_USERS_FILE" ]; then
+  # 名单确实是空的（当前无人连接）: 明确上报空数组, 不能省略
+  ONLINE_USERS_JSON="\"onlineUsers\":[],"
+elif [ -n "$ONLINE_NOW" ]; then
+  ONLINE_USERS_JSON="\"onlineUsers\":[$(echo "$ONLINE_NOW" | sed 's/\([^,]*\)/"\1"/g')],"
+else
+  # 本次没跑到在线结算（例如 isOnlineTick 未命中）: 不带该字段, Worker 沿用上次
+  ONLINE_USERS_JSON=""
+fi
 
 USER_TRAFFICS_JSON=$(echo "$RAW" | awk \
   -v baseFile="$BASE_FILE" \
@@ -182,7 +205,9 @@ USER_TRAFFICS_JSON=$(echo "$RAW" | awk \
   -v onlineUsersFile="$ONLINE_USERS_FILE" \
   -v onlinePrevRawFile="$ONLINE_5S_RAW" \
   -v onlineLastActiveFile="$ONLINE_LAST_ACTIVE" \
-  -v onlineCacheFile="$ONLINE_CACHE_FILE" '
+  -v onlineCacheFile="$ONLINE_CACHE_FILE" \
+  -v onlinePrevSetFile="$ONLINE_PREV_SET" \
+  -v connStateFile="$CONN_STATE_FILE" '
 BEGIN {
   # 1. 加载持久化基线
   while ((getline line < baseFile) > 0) {
@@ -239,6 +264,20 @@ BEGIN {
     }
   }
   close(onlineCacheFile);
+
+  # 【新增】上一份 xray 在线名单：用来判断"谁刚刚离开"
+  while ((getline line < onlinePrevSetFile) > 0) {
+    gsub(/[ \r\n\t]/, "", line);
+    if (line != "") prev_set[line] = 1;
+  }
+  close(onlinePrevSetFile);
+
+  # 【新增】每个用户的最后连接时刻（epoch 秒）
+  while ((getline line < connStateFile) > 0) {
+    n = split(line, f, " ");
+    if (n >= 2) conn_at[f[1]] = f[2] + 0;
+  }
+  close(connStateFile);
 }
 /"name": "user>>>/ {
   n = split($0, parts, ">>>");
@@ -285,28 +324,33 @@ END {
     final_down[t] = base_down[t] + rdown;
     final_total[t] = final_up[t] + final_down[t];
 
-    # 5 秒周期在线状态与速率计算
-    if (isOnlineTick == 1) {
-      ptime = prev_5s_time[t] + 0;
-      dt = (ptime > 0 && now > ptime) ? (now - ptime) : 5;
-      pup = prev_5s_up[t] + 0;
-      pdown = prev_5s_down[t] + 0;
-      dup = (rup >= pup) ? (rup - pup) : rup;
-      ddown = (rdown >= pdown) ? (rdown - pdown) : rdown;
-      cur_rate_up[t] = int(dup / dt);
-      cur_rate_down[t] = int(ddown / dt);
-      dtotal = dup + ddown;
-      # 100 KB 真实业务流量阈值 (彻底免疫后台 204/URL-Test 延迟测试噪声)
-      if (dtotal >= 102400) {
-        cur_online[t] = 1;
-        last_active[t] = now;
-      } else if (online_set[t] == 1 && dtotal > 0 && (now - last_active[t]) < 20) {
-        # 持续业务长连接会话（前序已被认定活跃，且连接保持中）
-        cur_online[t] = 1;
-      } else {
-        cur_online[t] = 0;
-      }
-    } else {
+    # ============================================================
+    # 【2026-10-04 重写】在线判定改为【xray 活动连接列表】为权威
+    #   原因: 原实现用"字节是否增长"猜在线 —— 挂着不下载的用户（只刷文字、
+    #   待命状态）会被误判成离线。xray 的 statsgetallonlineusers 才是
+    #   真正的"连接在不在"。
+    #   字节增长降级为【速率】参考，不再参与在线判定。
+    #   本段与 isOnlineTick 解耦: 每轮上报都结算, 否则状态会有 3/4 时间不更新。
+    # ============================================================
+    conn_on[t] = (online_set[t] == 1) ? 1 : 0;
+    if (conn_on[t] == 1) {
+      conn_at[t] = now;              # 在列表里 -> 刷新"最后连接时刻"
+      last_active[t] = now;          # 兼容旧字段
+    }
+    cur_online[t] = conn_on[t];
+
+    # 速率：有 xray 读数差就算，与在线判定无关
+    ptime = prev_5s_time[t] + 0;
+    dt = (ptime > 0 && now > ptime) ? (now - ptime) : 5;
+    if (dt <= 0) dt = 5;
+    pup = prev_5s_up[t] + 0;
+    pdown = prev_5s_down[t] + 0;
+    dup = (rup >= pup) ? (rup - pup) : 0;
+    ddown = (rdown >= pdown) ? (rdown - pdown) : 0;
+    cur_rate_up[t] = int(dup / dt);
+    cur_rate_down[t] = int(ddown / dt);
+
+    if (0) {
       cur_online[t] = cached_online[t] + 0;
       cur_rate_down[t] = cached_rate_down[t] + 0;
       cur_rate_up[t] = cached_rate_up[t] + 0;
@@ -331,11 +375,25 @@ END {
       print t, (cur_raw_up[t]+0), (cur_raw_down[t]+0), now > onlinePrevRawFile;
       print t, (last_active[t]+0) > onlineLastActiveFile;
       print t, cur_online[t], cur_rate_down[t], cur_rate_up[t], (last_active[t]+0) > onlineCacheFile;
+      # 【新增】连接状态: token conn_on conn_at（供大屏算"多少分钟前在线"）
+      print t, conn_on[t], (conn_at[t]+0) > connStateFile;
     }
     close(onlinePrevRawFile);
     close(onlineLastActiveFile);
     close(onlineCacheFile);
+    close(connStateFile);
   }
+
+  # 【新增】把"本次 xray 报的在线名单"原样输出, 供上报使用（权威）
+  printf "\n#ONLINE#";
+  firstOn = 1;
+  for (t in online_set) {
+    if (online_set[t] != 1) continue;
+    if (!firstOn) printf ",";
+    printf "%s", t;
+    firstOn = 0;
+  }
+  printf "\n";
 
   printf "\"userTraffics\":{";
   first = 1;
@@ -580,7 +638,7 @@ if [ -n "$RAW" ]; then
   #   未确认前会持续补发(修复指令在网络丢失时被永久吞掉的问题)。
   SPOP6_ACK_JSON=""
   [ -s /data/local/tmp/scan_req ] && SPOP6_ACK_JSON="\"scanAck\":\"$(cat /data/local/tmp/scan_req)\","
-  echo "{$TELEMETRY_JSON $MASTER_JSON $SPOP6_ACK_JSON $PINGS_JSON $USER_TRAFFICS_JSON $HISTORY_JSON $DOMAIN_JSON $NODE_STATUS_JSON $NODE_IDX_JSON \"conns\": $ACTIVE_CONNS, $STRIPPED_RAW" > /data/local/tmp/traffic_payload.json
+  echo "{$TELEMETRY_JSON $MASTER_JSON $SPOP6_ACK_JSON $ONLINE_USERS_JSON $PINGS_JSON $USER_TRAFFICS_JSON $HISTORY_JSON $DOMAIN_JSON $NODE_STATUS_JSON $NODE_IDX_JSON \"conns\": $ACTIVE_CONNS, $STRIPPED_RAW" > /data/local/tmp/traffic_payload.json
   PAYLOAD_BYTES=$(wc -c < /data/local/tmp/traffic_payload.json 2>/dev/null)
   [ -z "$PAYLOAD_BYTES" ] && PAYLOAD_BYTES=0
   echo "$HEAVY_STATE $PAYLOAD_BYTES $(date +%s)" > /data/local/tmp/last_payload_size.txt
@@ -593,6 +651,11 @@ fi
 # ========================================================
 # 7. 无线 OTA 动态配置与用户主库热重载 (方案 B 硬件主库双向同步)
 # ========================================================
+# 【新增】把本次名单存档成"上一份"，下一轮用来判断谁刚离开
+if [ -f "$ONLINE_USERS_FILE" ]; then
+  cp -f "$ONLINE_USERS_FILE" "$ONLINE_PREV_SET" 2>/dev/null
+fi
+
 if [ -n "$RESP" ]; then
   REMOTE_VER=$(echo "$RESP" | /system/bin/sed -n 's/.*"version":"\([^"]*\)".*/\1/p')
 

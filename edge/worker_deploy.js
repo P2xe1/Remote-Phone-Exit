@@ -1336,6 +1336,26 @@ export default {
           } catch (e) {}
 
           // ============================================================
+          // 【2026-10-04 新增】用户连接状态：以 xray 权威活动连接列表为准
+          //   手机端每 5 秒调 statsgetallonlineusers，把名单放进每一次上报
+          //   （onlineUsers 字段）。这解决了老逻辑的根本缺陷：
+          //   老逻辑用"字节有没有增长"猜在线 —— 挂着不下载的用户会被误判离线。
+          //   名单归一化：xray 侧 email 是 user_<token>，这里统一成裸 token。
+          // ============================================================
+          let curOnlineUsers = null;   // 本次上报是否带来了名单
+          try {
+            if (Array.isArray(body.onlineUsers)) {
+              curOnlineUsers = body.onlineUsers.map(function (x) {
+                let t = String(x == null ? '' : x).trim();
+                t = t.replace(/^user_/, '');
+                return t;
+              }).filter(function (t) {
+                return t && t !== 'shared_legacy';
+              });
+            }
+          } catch (e) { curOnlineUsers = null; }
+
+          // ============================================================
           // 【2026-10-04 在线判定彻底改为实时】用两次上报的 xray 字节差算
           //   "最后增长时刻"与实时速率。绝不使用重载荷里的 online/lastActive ——
           //   那是 12 小时才更新一次的快照值, 实测会把一天前的会话一直显示成
@@ -1478,6 +1498,27 @@ export default {
             // 【2026-10-04】实时在线判定数据(见上方注释)
             userGrowAt: userGrowAt,
             userRates: userRates,
+            // 【2026-10-04 新增】xray 权威在线名单 + 落库时刻
+            //   onlineUsersAt 是"这份名单是什么时候的" —— 前端据此判断新鲜度,
+            //   超过 60 秒未更新则降级到字节增长兜底, 避免拿旧名单当实时。
+            onlineUsers: (curOnlineUsers !== null)
+                         ? curOnlineUsers
+                         : ((_prevSnap && _prevSnap.onlineUsers) || null),
+            onlineUsersAt: (curOnlineUsers !== null)
+                           ? Date.now()
+                           : ((_prevSnap && _prevSnap.onlineUsersAt) || 0),
+            // 每个用户的最后连接时刻: 在名单里的刷新为"现在", 其余沿用历史
+            userConnAt: (function () {
+              const out = {};
+              const prev = (_prevSnap && _prevSnap.userConnAt) || {};
+              for (const k in prev) out[k] = prev[k];
+              const _ns = Math.floor(Date.now() / 1000);
+              const list = (curOnlineUsers !== null)
+                           ? curOnlineUsers
+                           : ((_prevSnap && _prevSnap.onlineUsers) || []);
+              (list || []).forEach(function (t) { if (t) out[t] = _ns; });
+              return out;
+            })(),
             // 【2026-10-04】速率采样点存进共享快照: 下次任何 isolate 都能算速率
             totalSample: _totalSampleOut || null,
             userDomains: { ...userDomainAccumulators },
@@ -1893,6 +1934,7 @@ export default {
       payload.nodeIdx = (s && typeof s.nodeIdx === 'number') ? s.nodeIdx : 0;
       payload.nodeTotal = (s && typeof s.nodeTotal === 'number') ? s.nodeTotal : 0;
       payload.nodeFast = (s && typeof s.nodeFast === 'number') ? s.nodeFast : 0;
+      try {
       payload.users = Object.values(userStore).map(u => {
         const ut = payload.userTraffics[u.token] || {};
         // 【2026-10-04 修复"新用户显示从未连接"】userTraffics 是 12 小时重载荷,
@@ -1906,8 +1948,54 @@ export default {
         const _growAt = (s && s.userGrowAt && s.userGrowAt[u.token]) || 0;
         const _rate = (s && s.userRates && s.userRates[u.token]) || 0;
         const _nowSec = Math.floor(Date.now() / 1000);
-        // 在线 = 最近 90 秒内字节确实有增长(严格实时)
-        const _fresh = _growAt > 0 && (_nowSec - _growAt) < 90;
+        const _nowMs = Date.now();
+
+        // ------------------------------------------------------------
+        // 【2026-10-04 重写】连接状态：优先用 xray 权威名单
+        //   名单新鲜（≤60 秒）时以它为准；否则降级到"字节增长"兜底。
+        //   注意 online 与 rate 现在是两个独立维度：
+        //     在线但零流量 = 在线（旧逻辑会误判离线）
+        // ------------------------------------------------------------
+        const _ouList = (s && Array.isArray(s.onlineUsers)) ? s.onlineUsers : null;
+        const _ouAt = (s && s.onlineUsersAt) || 0;
+        const _ouFresh = _ouList !== null && _ouAt > 0 && (_nowMs - _ouAt) < 60000;
+        const _inXray = _ouFresh && _ouList.indexOf(u.token) >= 0;
+
+        const _gbFresh = _growAt > 0 && (_nowSec - _growAt) < 90;
+        const _isOn = _inXray || (!_ouFresh && _gbFresh);   // 名单不新鲜时才用字节兜底
+
+        // 最后连接时刻(秒): 名单里有 -> 就是现在; 否则取历史值
+        let _connAt = (s && s.userConnAt && s.userConnAt[u.token]) || 0;
+        if (_inXray) _connAt = _nowSec;
+        if (!_connAt && _growAt) _connAt = _growAt;
+
+        let _connState;
+        if (_isOn) {
+          _connState = 'online';
+        } else if (_connAt > 0) {
+          const _ageMin = (_nowMs / 1000 - _connAt) / 60;
+          if (_ageMin <= 10) _connState = 'recent';
+          else if (_ageMin <= 120) _connState = 'idle';
+          else _connState = 'long';
+        } else {
+          // 【2026-10-04 修正】connAt=0 有两类完全不同的情况, 不能一律当"从未连接":
+          //   · 有流量 -> 以前连过, 只是连接台账(部署那一刻才建)里还没记录
+          //     => 归入"长期离线", 由下方流量兜底
+          //   · 一眼没见过且零流量 -> 真的从未连接
+          //   若不给第一类兜底, 已用了几 GB 的老用户会显示成"从未连接"(误导)。
+          _connState = 'never';
+        }
+
+        // 累计流量的三个可信来源：本次快照字节 / 重载荷累计 / 已知的最后活跃时刻
+        const _tot = Math.max(
+          (payload.userTraffics[u.token] && payload.userTraffics[u.token].total) || 0,
+          _sb,
+          ut.total || 0
+        );
+        const _everConnected = _tot > 0 || (ut.lastActive || 0) > 0 || _connAt > 0;
+        // 从未连接 = 一眼没见过 且 完全没有流量痕迹（有流量就一定连过一次）
+        if (_connState === 'never' && _everConnected) _connState = 'long';
+
         return {
           name: u.name,
           token: u.token,
@@ -1916,8 +2004,10 @@ export default {
           lastSeen: u.lastSeen || '从未',
           lastIp: u.lastIp || '-',
           isAutoRecovered: Boolean(u.name && u.name.startsWith('恢复用户_')),
-          online: _fresh ? 1 : 0,
-          rateDown: _fresh ? _rate : 0,
+          // 【2026-10-04】online 用新的权威判定 _isOn（_fresh 已被 _isOn 取代）
+          //   速率不再挂靠在线上：刚断开但仍在传数据的用户，速率也该显示出来。
+          online: _isOn ? 1 : 0,
+          rateDown: _rate,
           rateUp: 0,
           // 【2026-10-04】最后活跃取【两者较新者】:
           //   · _growAt  = 实时观察到的字节增长时刻(精确, 秒级)
@@ -1925,9 +2015,19 @@ export default {
           //   只用 _growAt 会把历史全丢成"从未"(部署那一刻才开始记录)。
           //   注意 online 仍【严格只用实时】, 所以不会因为历史值而误报在线。
           lastActive: Math.max(_growAt || 0, ut.lastActive || 0),
-          totalTraffic: Math.max(ut.total || 0, _sb)
+          totalTraffic: Math.max(ut.total || 0, _sb),
+          // 【2026-10-04 新增】连接状态（大屏"用户连接状态"板块用）
+          connState: _connState,
+          connAt: _connAt,
+          connFromXray: _inXray ? 1 : 0,
+          onlineListFresh: _ouFresh ? 1 : 0
         };
       });
+      } catch (_usersErr) {
+        // 【2026-10-04】用户列表构造失败时不让整个大屏 500，并把真实错误透出来
+        payload.usersError = String((_usersErr && _usersErr.stack) || _usersErr);
+        payload.users = [];
+      }
 
       // 5. 手机主库同步状态 (实时计算, 供后台卡片右上角显示)
       //    inSync: 手机已生效的版本 == 云端当前版本
@@ -2357,9 +2457,7 @@ rules:
             </div>
           </td>
           <td data-label="服务状态" style="padding:10px 12px;">${statusDisplay}</td>
-          <td data-label="连接状态 (5 秒检测)" style="padding:10px 12px;" id="ssr_conn_${u.token}">${liveConn}</td>
           <td data-label="同步次数" style="padding:10px 12px;color:#888;font-size:12px;">${u.pullCount || 0}</td>
-          <td data-label="最后活跃" style="padding:10px 12px;font-size:11px;color:#777;">${liveLastActive}</td>
           <td data-label="出口 IP" style="padding:10px 12px;font-size:11px;color:#777;">${(u.lastIp && u.lastIp !== '-') ? u.lastIp : '--'}</td>
           <td style="padding:10px 12px;">
             <form method="POST" style="display:inline;">
@@ -3368,6 +3466,28 @@ rules:
               </div>
             </div>
             </div>
+
+            <!-- ======================================================== -->
+            <!-- 【2026-10-04 新增】用户连接状态（独立板块）                 -->
+            <!--   判据 = xray 权威活动连接列表(statsgetallonlineusers)      -->
+            <!--   手机每 5 秒刷一次、每次上报都带上 -> 6 秒级新鲜度          -->
+            <!--   老逻辑用"字节有没有增长"猜在线, 挂着不下载会被误判离线    -->
+            <!-- ======================================================== -->
+            <div class="card" style="margin-bottom:14px;">
+              <div class="card-title">
+                <span>用户连接状态</span>
+                <span style="font-size:10px;color:#666;" id="userConnSrc"></span>
+              </div>
+              <div id="userConnSummary" style="display:flex;flex-wrap:wrap;gap:11px;margin-bottom:12px;"></div>
+              <div id="userConnList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:9px;">
+                <div style="color:#444;font-size:12px;padding:6px;">等待数据…</div>
+              </div>
+              <div style="font-size:11px;color:#5a5a5a;margin-top:11px;line-height:1.7;border-top:1px solid #1a1a1a;padding-top:9px;">
+                <b style="color:#777;">判据：</b>手机每 5 秒调用 xray 的活动连接列表（<code style="color:#666;">statsgetallonlineusers</code>），随每次上报带上。
+                <b style="color:#777;">"在线"= 此刻确实有连接</b>，与有没有流量无关 —— 挂着不下载也算在线。
+              </div>
+            </div>
+
             <!-- 【2026-10-04 修复真实结构 bug】上面这个 </div> 是补上的:
                  原第 3 板块的 <div class="grid-2"> 一直没有闭合, 导致后面
                  "示波器 / 节点阵列 / 用户管理" 三张卡全被当成它的网格子项 ——
@@ -3426,14 +3546,12 @@ rules:
                       <th>用户</th>
                       <th>订阅地址 (支持一键点击复制)</th>
                       <th>服务状态</th>
-                      <th>连接状态 (5秒检测)</th>
                       <th>同步次数</th>
-                      <th>最后活跃</th>
                       <th>出口 IP</th>
                       <th>管理</th>
                     </tr>
                   </thead>
-                  <tbody id="userTableBody">${rows || '<tr><td colspan="8" style="padding:16px;text-align:center;color:#444;">暂无已配置用户</td></tr>'}</tbody>
+                  <tbody id="userTableBody">${rows || '<tr><td colspan="6" style="padding:16px;text-align:center;color:#444;">暂无已配置用户</td></tr>'}</tbody>
                 </table>
               </div>
             </div>
@@ -4035,11 +4153,115 @@ rules:
             }
 
             // 动态用户表格实时渲染函数 (A3 实时推送无感同步 · B1 待绑定高亮)
-            function renderUserTable(users) {
+        
+    // ================================================================
+    // 【2026-10-04 新增】用户连接状态板块
+    //   数据源：后端 payload.users[].connState / connAt / connFromXray
+    //   口径纪律：connAt=0 且累计流量=0 才显示"从未连接"；
+    //             没拿到名单时不猜，明确显示"名单未更新"。
+    // ================================================================
+    var _CONN_META = {
+      online: { icon: '\u25cf', label: '\u5728\u7ebf',        color: '#22c55e' },
+      recent: { icon: '\u25cb', label: '\u521a\u65ad\u5f00',  color: '#eab308' },
+      idle:   { icon: '\u25d0', label: '\u8fd1\u671f\u6d3b\u8dc3', color: '#8b94a7' },
+      long:   { icon: '\u2715', label: '\u957f\u671f\u79bb\u7ebf', color: '#ef4444' },
+      never:  { icon: '\u2014', label: '\u4ece\u672a\u8fde\u63a5', color: '#4b5563' }
+    };
+
+    function _fmtAgo(sec) {
+      if (!sec || sec <= 0) return '';
+      var d = Math.floor(Date.now() / 1000) - sec;
+      if (d < 0) d = 0;
+      if (d < 60) return d + ' \u79d2\u524d';
+      var m = Math.floor(d / 60);
+      if (m < 60) return m + ' \u5206\u949f\u524d';
+      var h = Math.floor(m / 60);
+      if (h < 24) return h + ' \u5c0f\u65f6\u524d';
+      return Math.floor(h / 24) + ' \u5929\u524d';
+    }
+
+    function _fmtBytes(b) {
+      b = Number(b) || 0;
+      if (b < 1024) return b + ' B';
+      if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+      if (b < 1073741824) return (b / 1048576).toFixed(1) + ' MB';
+      return (b / 1073741824).toFixed(2) + ' GB';
+    }
+
+    var _lastConnUsers = null;
+
+    function renderUserConn(users) {
+      var list = document.getElementById('userConnList');
+      var sumEl = document.getElementById('userConnSummary');
+      var srcEl = document.getElementById('userConnSrc');
+      if (!list) return;
+      if (!Array.isArray(users)) return;
+      _lastConnUsers = users;
+
+      var counts = { online: 0, recent: 0, idle: 0, long: 0, never: 0 };
+      var fromXray = 0, freshCnt = 0;
+
+      var cards = users.map(function (u) {
+        var st = u.connState || 'never';
+        if (!_CONN_META[st]) st = 'never';
+        counts[st]++;
+        if (u.connFromXray) fromXray++;
+        if (u.onlineListFresh) freshCnt++;
+
+        var meta = _CONN_META[st];
+        var ago = (st === 'online') ? '\u6b64\u523b' : _fmtAgo(u.connAt);
+        var dim = (u.enabled === false);
+        var name = String(u.name || u.token).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+        var sub;
+        if (st === 'online') {
+          sub = '\u6b64\u523b\u6709\u8fde\u63a5' + ((u.rateDown > 0) ? ' \u00b7 \u2193' + _fmtBytes(u.rateDown) + '/s' : ' \u00b7 \u65e0\u6d41\u91cf');
+        } else if (st === 'never') {
+          sub = '\u4ece\u672a\u89c2\u6d4b\u5230\u8fde\u63a5';
+        } else {
+          sub = ago ? (ago + '\u5728\u7ebf') : '\u2014';
+        }
+
+        return '<div style="background:#0a0a0a;border:1px solid ' + (st === 'online' ? '#1d3a24' : '#171717')
+          + ';border-radius:6px;padding:9px 11px;' + (dim ? 'opacity:.5;' : '') + '">'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:5px;">'
+          + '<span style="font-weight:600;font-size:13px;color:#ddd;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'
+          + name + (dim ? ' <span style="font-size:10px;color:#666;">(\u5df2\u505c\u7528)</span>' : '') + '</span>'
+          + '<span style="font-size:12px;font-weight:600;color:' + meta.color + ';white-space:nowrap;">'
+          + meta.icon + ' ' + meta.label + '</span>'
+          + '</div>'
+          + '<div style="font-size:11px;color:#777;margin-bottom:4px;">' + sub + '</div>'
+          + '<div style="display:flex;justify-content:space-between;font-size:10px;color:#555;font-family:monospace;">'
+          + '<span>\u7d2f\u8ba1 ' + _fmtBytes(u.totalTraffic) + '</span>'
+          + '<span>' + (u.connFromXray ? 'xray\u6743\u5a01' : (u.onlineListFresh ? '\u540d\u5355\u65e0\u6b64\u4eba' : '\u540d\u5355\u672a\u66f4\u65b0')) + '</span>'
+          + '</div></div>';
+      });
+
+      list.innerHTML = cards.length ? cards.join('') :
+        '<div style="color:#444;font-size:12px;padding:6px;">\u5c1a\u672a\u6dfb\u52a0\u7528\u6237</div>';
+
+      if (sumEl) {
+        var order = ['online', 'recent', 'idle', 'long', 'never'];
+        sumEl.innerHTML = order.map(function (k) {
+          var m = _CONN_META[k];
+          return '<span style="font-size:12px;color:' + m.color + ';font-weight:600;">'
+            + m.icon + ' ' + m.label + ' <b style="font-size:15px;">' + counts[k] + '</b></span>';
+        }).join('') + '<span style="font-size:12px;color:#555;">\u5171 ' + users.length + ' \u4eba</span>';
+      }
+
+      if (srcEl) {
+        var total = users.length;
+        srcEl.innerText = total
+          ? ('xray \u540d\u5355\u5224\u5b9a ' + fromXray + '/' + total + ' \u4eba \u00b7 \u540d\u5355\u65b0\u9c9c ' + freshCnt + '/' + total)
+          : '';
+      }
+    }
+
+    function renderUserTable(users) {
               const tbody = document.getElementById('userTableBody');
               if (!tbody || !Array.isArray(users)) return;
               if (users.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="padding:16px;text-align:center;color:#444;">暂无已配置用户</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="padding:16px;text-align:center;color:#444;">暂无已配置用户</td></tr>';
                 return;
               }
               const nowSec = Math.floor(Date.now() / 1000);
@@ -4676,6 +4898,8 @@ rules:
                     realUsers = d.users;
                     renderRankList();
                     renderUserTable(d.users);
+                    // 【2026-10-04 新增】连接状态板块（独立渲染器, 失败不影响别处）
+                    _safeRender('用户连接状态', function () { renderUserConn(d.users); });
                   }
 
                   // 3. 记录物理区域基准测速
