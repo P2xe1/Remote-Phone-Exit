@@ -99,9 +99,16 @@ def test_admin_html():
         'Argo->Phone Badge': 'id="pipeArgoPhone"' in html,
         'Phone->Egress Badge': 'id="pipePhoneEgress"' in html,
         'Total E2E Badge': 'id="totalE2E"' in html,
-        '5 Regional Gateways': all(f'id="gw{r}Rtt"' in html for r in ['Kl','Hk','Sg','Tw','Jp']),
+        # 【2026-10-06 修复】原检查项"5 Regional Gateways"要求页面上存在
+        #   gwKlRtt..gwJpRtt 五个区域网关元素，但该 UI 区块已按用户要求从大屏删除
+        #   （线上实测 5 个 id 命中均为 0），断言永远失败。改为检查现在真实存在、
+        #   且有实际数据来源的两个带宽峰值面板（手机端 bwPeak 上报 -> 大屏显示）。
+        'Bandwidth Peak Panels': all(f'id="{_b}"' in html for _b in ['bwPeak15m', 'bwPeakDay']),
         'User Table': 'id="userTableBody"' in html,
-        'Connection Status Column (5s)': '连接状态 (5秒检测)' in html,
+        # 【2026-10-06 修复】原检查依赖旧表头文字"连接状态 (5秒检测)"，
+        #   该文案已随 UI 改版改为"连接状态（独立板块）"，断言永远失败。
+        #   改为检查该板块真实存在的两个元素 id（连接数/峰值）。
+        'Connection Status Section': ('id="connCount"' in html and 'id="connPeak"' in html),
         'Rank List': 'id="rankList"' in html,
         'Oscilloscope Canvas': 'id="liveChart"' in html,
         'Bandwidth Gauge Canvas': 'id="gaugeChart"' in html
@@ -232,12 +239,12 @@ def test_headless_chrome():
                 ap: document.getElementById('pipeArgoPhone')?.innerText,
                 pe: document.getElementById('pipePhoneEgress')?.innerText,
                 e2e: document.getElementById('totalE2E')?.innerText,
-                kl: document.getElementById('gwKlRtt')?.innerText,
-                hk: document.getElementById('gwHkRtt')?.innerText,
+                p15: document.getElementById('bwPeak15m')?.innerText,
+                pdy: document.getElementById('bwPeakDay')?.innerText,
                 freshness: document.getElementById('dataFreshnessTag')?.innerText
             };
         })()""")
-        print(f"      Poll 1: Freshness={poll1.get('freshness')} | E2E={poll1.get('e2e')} (Hops: {poll1.get('ce')} -> {poll1.get('ea')} -> {poll1.get('ap')} -> {poll1.get('pe')}) | KL={poll1.get('kl')} HK={poll1.get('hk')}")
+        print(f"      Poll 1: Freshness={poll1.get('freshness')} | E2E={poll1.get('e2e')} (Hops: {poll1.get('ce')} -> {poll1.get('ea')} -> {poll1.get('ap')} -> {poll1.get('pe')}) | Peak15m={poll1.get('p15')} PeakDay={poll1.get('pdy')}")
 
         time.sleep(2.5)
         poll2 = eval_js("""(() => {
@@ -247,12 +254,12 @@ def test_headless_chrome():
                 ap: document.getElementById('pipeArgoPhone')?.innerText,
                 pe: document.getElementById('pipePhoneEgress')?.innerText,
                 e2e: document.getElementById('totalE2E')?.innerText,
-                kl: document.getElementById('gwKlRtt')?.innerText,
-                hk: document.getElementById('gwHkRtt')?.innerText,
+                p15: document.getElementById('bwPeak15m')?.innerText,
+                pdy: document.getElementById('bwPeakDay')?.innerText,
                 freshness: document.getElementById('dataFreshnessTag')?.innerText
             };
         })()""")
-        print(f"      Poll 2: Freshness={poll2.get('freshness')} | E2E={poll2.get('e2e')} (Hops: {poll2.get('ce')} -> {poll2.get('ea')} -> {poll2.get('ap')} -> {poll2.get('pe')}) | KL={poll2.get('kl')} HK={poll2.get('hk')}")
+        print(f"      Poll 2: Freshness={poll2.get('freshness')} | E2E={poll2.get('e2e')} (Hops: {poll2.get('ce')} -> {poll2.get('ea')} -> {poll2.get('ap')} -> {poll2.get('pe')}) | Peak15m={poll2.get('p15')} PeakDay={poll2.get('pdy')}")
 
         # Inspect table rows
         rows = eval_js("""(() => {

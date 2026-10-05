@@ -13,6 +13,11 @@ LAST_RAW_FILE="/data/local/tmp/last_raw_xray.txt"
 HIST_FILE="/data/local/tmp/history_15m.txt"
 HIST_TIME_FILE="/data/local/tmp/last_hist_time.txt"
 HIST_BYTES_FILE="/data/local/tmp/last_hist_bytes.txt"
+# 【2026-10-06 修复 · Bug4 补丁】峰值缓存文件路径必须在【全局】定义:
+#   原先它只写在"30 秒重算块"内部, 而下面"非重算周期复用缓存"的分支在块外,
+#   每 6 秒的普通轮次里这个变量是空的 -> [ -f "" ] 永远为假 -> 复用分支从不执行,
+#   载荷依旧 80% 轮次缺 bwPeak(实测 8 次采样只有 1 次带, 与修复前一致)。
+BW_PEAK_FILE="/data/local/tmp/bw_peak.txt"
 ONLINE_TIME_FILE="/data/local/tmp/online_time.txt"
 ONLINE_USERS_FILE="/data/local/tmp/online_users.txt"
 ONLINE_5S_RAW="/data/local/tmp/online_5s_raw.txt"
@@ -535,7 +540,7 @@ if [ $((NOW - LAST_HIST)) -ge 30 ]; then
   #   刷新页面就归零, 并不是真的 15 分钟。放这里算, 刷新/换浏览器都不丢。
   # 放在 30 秒块内: 15 分钟峰值只在新采样点到来时才可能变化,
   #   没必要每 6 秒（本脚本被调用的周期）重算一次。
-  BW_PEAK_FILE="/data/local/tmp/bw_peak.txt"
+  #   （BW_PEAK_FILE 路径已移到脚本顶部全局定义, 见 Bug4 补丁注释。）
   BW_15M=$(awk -F',' '
     NF >= 3 { d = $2 + 0; u = $3 + 0; t = d + u; if (t > mx) mx = t; }
     END { printf "%.2f", mx + 0 }' "$HIST_FILE" 2>/dev/null)
@@ -570,14 +575,13 @@ if [ $((NOW - LAST_HIST)) -ge 30 ]; then
   if awk -v a="$BW_15M" -v b="$BW_DAY_PEAK" 'BEGIN{exit !(a > b)}'; then
     BW_DAY_PEAK="$BW_15M"
   fi
-  # 只在峰值真的变大（或换了天）时落盘，减少写次数
-  if [ "$BW_PREV_KEY" != "$BW_DAY_KEY" ] \
-     || awk -v a="$BW_DAY_PEAK" -v b="$BW_PREV_PEAK" 'BEGIN{exit !(a > b)}'; then
-    # 【2026-10-06 修复 · Bug4】把 15 分钟峰值也一起落盘：本脚本每 6 秒被调度一次、
-    #   跑完即退出，而这段计算 30 秒才跑一次 —— 中间那 4 轮变量是空的，
-    #   载荷里就整个缺了 bwPeak 字段。落盘带上 15 分钟峰值，非重算周期直接复用。
-    echo "$BW_DAY_KEY $BW_DAY_PEAK $BW_15M" > "$BW_PEAK_FILE" 2>/dev/null
-  fi
+  # 【2026-10-06 修复 · Bug4 补丁】把 15 分钟峰值也一起落盘：本脚本每 6 秒被调度一次、
+  #   跑完即退出，而这段计算 30 秒才跑一次 —— 中间那 4 轮变量是空的，
+  #   载荷里就整个缺了 bwPeak 字段。落盘带上 15 分钟峰值，非重算周期直接复用。
+  #   必须【每次重算都落盘】: 旧写法"只在日峰值变大时才写"，本文件一旦停在
+  #   两字段的旧格式, 复用分支取不到 15 分钟值就只能按 0 上报 —— 等于没修。
+  #   本文件是手机本地小文件(几十字节), 30 秒写一次的成本可忽略。
+  echo "$BW_DAY_KEY $BW_DAY_PEAK $BW_15M" > "$BW_PEAK_FILE" 2>/dev/null
   BW_PEAK_JSON="\"bwPeak\":{\"total15m\":$BW_15M,\"day\":$BW_DAY_PEAK,\"dayKey\":\"$BW_DAY_KEY\"},"
 fi
 
