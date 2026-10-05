@@ -1,14 +1,31 @@
 # 一台手机当出口
 
+[![CI](https://github.com/P2xe1/Remote-Phone-Exit/actions/workflows/ci.yml/badge.svg)](https://github.com/P2xe1/Remote-Phone-Exit/actions/workflows/ci.yml)
+![platforms](https://img.shields.io/badge/platforms-Cloudflare%20Workers%20%7C%20Android-informational)
+![node](https://img.shields.io/badge/node-%E2%89%A518-informational)
+![docs](https://img.shields.io/badge/docs-%E6%95%99%E7%A8%8B%20%2B%20%E4%B8%93%E9%A2%98%E6%8A%A5%E5%91%8A-informational)
+
 **一台手机 = 一个出口。** 它在哪个网络里，你的流量就从哪个网络出去——不需要服务器，不需要公网 IP，不需要端口映射。
 
 手机装两个程序：一个接住从隧道送进来的流量、用所在宽带直连目标；另一个主动把回程隧道连出去并保持。你在终端上的代理软件里填好配置，连上它，出口就已经成立了。
 
 另附一个实时监控大屏：出问题的第 10 秒就能看出是哪一段坏了。
 
+### 三步开始
+
+```bash
+cp .env.example .env      # 1) 填配置（凭据只放本地，不进版本库）
+python deploy/一键.py      # 2) 自检 → 部署边缘 → 线上验收（含失败回滚）
+sh run_daemon.sh          # 3) 节点侧按固定顺序启动
+```
+
+详细步骤、部署方式与排错见下方 [快速开始](#快速开始) 与 [排错](#排错先二分再深入)。
+
 > 本项目源自真实运行的系统：一台常驻海外的手机负责出口，Cloudflare 边缘负责分发与聚合，浏览器大屏把每一段的真实状态呈现出来。
 >
 > **完整教程见 [`docs/边缘节点与链路监控_搭建与运维教程.html`](docs/边缘节点与链路监控_搭建与运维教程.html)** —— 单文件、双击即可看，含 8 张架构图与逐步操作说明。
+>
+> **变更记录**：[`CHANGELOG.md`](CHANGELOG.md) · **安全边界与威胁模型**：[`SECURITY.md`](SECURITY.md) · **文档入口**：<https://p2xe1.github.io/Remote-Phone-Exit/>
 
 ---
 
