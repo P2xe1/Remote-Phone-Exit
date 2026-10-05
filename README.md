@@ -1,9 +1,6 @@
 # 一台手机当出口
 
-<!-- CI 徽章：等 .github/workflows/ci.yml 推送成功（需要令牌带 workflow 权限）后，
-     把下面这行取消注释即可，届时徽章会显示真实的流水线状态。
 [![CI](https://github.com/P2xe1/Remote-Phone-Exit/actions/workflows/ci.yml/badge.svg)](https://github.com/P2xe1/Remote-Phone-Exit/actions/workflows/ci.yml)
--->
 ![platforms](https://img.shields.io/badge/platforms-Cloudflare%20Workers%20%7C%20Android-informational)
 ![node](https://img.shields.io/badge/node-%E2%89%A518-informational)
 ![docs](https://img.shields.io/badge/docs-%E6%95%99%E7%A8%8B%20%2B%20%E4%B8%93%E9%A2%98%E6%8A%A5%E5%91%8A-informational)
