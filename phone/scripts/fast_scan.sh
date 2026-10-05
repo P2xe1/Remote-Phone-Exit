@@ -20,6 +20,12 @@ LAST_TIMES_FILE="/data/local/tmp/last_ping_times.txt"
 LAST_LOSSES_FILE="/data/local/tmp/last_losses.txt"
 # 【RTT 修复】手机 ↔ CF 边缘 的真实单次 RTT(TCP time_connect), 单值文件
 EDGE_RTT_FILE="/data/local/tmp/last_edge_rtt.txt"
+# 全局探测通行证(硬性最多 2 个并发探测); 文件缺失时退化为不限制, 不会让脚本报错
+if [ -f /data/local/tmp/probe_gate.sh ]; then . /data/local/tmp/probe_gate.sh; fi
+if ! command -v probe_slot_acquire >/dev/null 2>&1; then
+  probe_slot_acquire() { echo 0; }
+  probe_slot_release() { :; }
+fi
 FLAG="/data/local/tmp/scan_req"
 SCAN_START_TS=$(date +%s)   # 【2026-10-04 T6.6】记录启动时刻, 用于判断是否有新指令在扫描期间到达
 
@@ -132,7 +138,9 @@ for SPEC in \
   HN=$(echo "$SPEC" | cut -d'|' -f4)
   SCAN_LABEL="$K"
   NOWS=$(date +%s)
+  _slot=$(probe_slot_acquire)
   M=$(fast_measure "$URL" "$HN" "$IP")
+  probe_slot_release "$_slot"
   MED=$(echo "$M" | awk '{print $1+0}')
   FAIL=$(echo "$M" | awk '{print $2+0}')
   OKN=$(echo "$M" | awk '{print $3+0}')
@@ -169,6 +177,7 @@ done
 # ---- 公网出口探测 ----
 # 【统一口径 2026-10-04】单次 -> 3 次采样, 丢弃 <10ms, 取最低 3 个有效样本的中位数。
 PGW=0
+_slot=$(probe_slot_acquire)
 for ANCHOR in 8.8.8.8 1.1.1.1; do
   _e1=0; _e2=0; _e3=0; _en=0
   for _ei in 1 2 3; do
@@ -189,10 +198,13 @@ for ANCHOR in 8.8.8.8 1.1.1.1; do
   [ "$PGW" -gt 0 ] && break
 done
 [ -z "$PGW" ] && PGW=0
+probe_slot_release "$_slot"
 
 # 【RTT 修复】收尾时把 手机 ↔ CF 边缘 的 TCP 1×RTT 也刷新一次,
 #   这样"手动刷新"之后第 3 段立刻是新值, 而不是上一轮 60 秒周期的旧值。
+_slot=$(probe_slot_acquire)
 P_EDGE_RTT=$(measure_edge_rtt)
+probe_slot_release "$_slot"
 echo "$P_EDGE_RTT" > "$EDGE_RTT_FILE.tmp" && mv "$EDGE_RTT_FILE.tmp" "$EDGE_RTT_FILE"
 
 SCAN_LABEL=""
