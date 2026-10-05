@@ -1,0 +1,86 @@
+name: CI
+
+# 说明：这个工作流【只读】，不需要写权限。
+#   默认的 GITHUB_TOKEN 权限被收窄到 contents: read —— 即使某个步骤被注入，
+#   也改不动仓库内容、发不了 release。
+#   将来若新增"发布"类工作流（需要 contents: write），请把用到的 action
+#   固定到 commit SHA（而不是 @v4 这种可移动的 tag），否则一个被劫持的
+#   action 就能以你的名义发布产物。
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: 语法检查与凭据自检
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 安装 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # ----------------------------------------------------------------
+      # 1. 边缘 Worker：整个大屏/订阅/遥测聚合都在一个 JS 文件里，
+      #    一个括号打错就是整站 500，所以先做语法检查。
+      # ----------------------------------------------------------------
+      - name: JavaScript 语法检查（边缘 Worker）
+        run: node --check edge/worker_deploy.js
+
+      # ----------------------------------------------------------------
+      # 2. 工具与部署脚本：编译一遍即可发现语法错误。
+      #    ⚠ 这里刻意【不用】 shell 通配符或 git ls-files | xargs：
+      #      仓库里有中文文件名（deploy/一键.py），shell 与 xargs 在不同
+      #      环境下对非 ASCII 路径的引号处理不一致，容易误报。
+      #      交给 Python 自己遍历，路径怎么写的都能正确处理。
+      # ----------------------------------------------------------------
+      - name: Python 语法检查（工具与部署脚本）
+        run: |
+          python3 - <<'PY'
+          import pathlib, py_compile
+          files = [p for p in pathlib.Path('.').rglob('*.py') if '.git' not in p.parts]
+          for p in files:
+              py_compile.compile(str(p), doraise=True)
+          print('已编译 %d 个 Python 文件，全部通过' % len(files))
+          PY
+
+      # ----------------------------------------------------------------
+      # 3. 节点脚本：这些脚本跑在 Android 手机上，目标解释器是 mksh（POSIX 兼容）。
+      #    这里用 ubuntu 的 sh（dash）做语法检查 —— 它比 mksh 更严格，
+      #    dash 能过的基本不会在手机上出语法错误。
+      # ----------------------------------------------------------------
+      - name: Shell 语法检查（节点脚本）
+        run: |
+          fail=0
+          for f in phone/scripts/*.sh; do
+            if sh -n "$f"; then
+              echo "ok   $f"
+            else
+              echo "::error file=$f::shell 语法检查失败"
+              fail=1
+            fi
+          done
+          exit $fail
+
+      # ----------------------------------------------------------------
+      # 4. 凭据自检：这是本仓库最重要的一道门禁。
+      #    这个仓库是【对外发布副本】，绝不允许出现真实域名、令牌、口令、
+      #    设备标识。脚本对"致命项"返回非 0（直接让 CI 红），
+      #    对公开 CDN 段这类噪音只提示、不阻塞。
+      # ----------------------------------------------------------------
+      - name: 凭据自检（致命项命中即失败）
+        run: python3 tools/check_secrets.py .
+
