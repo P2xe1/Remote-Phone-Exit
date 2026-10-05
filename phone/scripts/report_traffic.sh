@@ -172,9 +172,17 @@ if [ $((NOW - LAST_ONLINE)) -ge 5 ]; then
   # 【修正】xray 的用户名是 <inboundTag>.<email>，且 tag 不一定是 in-kl
   #   原来写死找 "user_ 前缀" —— 与 phones 的 stats 命名不符，会全部解析不到。
   #   这里按 json 字段取值，再去掉 "user>>>" 前缀（stats 命令两种写法都兼容）。
-  grep -o '"user":[ ]*"[^"]*"' /data/local/tmp/online_raw.tmp 2>/dev/null \
-    | sed 's/.*"user":[ ]*"//; s/"$//' \
-    | sed 's/^user>>>//' | sed 's/^user_//' > "$ONLINE_USERS_FILE.tmp"
+  # 【2026-10-05 修复 · 关键】原来的正则在找 `"user": "..."`，
+  #   但 xray 实际返回的是 {"users":["user>>>user_xxx>>>online", ...]} ——
+  #   匹配不到 => 名单永远是空的 => 大屏"谁在线"全靠旧名单兜底，
+  #   还会被反复重新盖时间戳(表现为"多人刚断开时间完全相同")。
+  #   现在按 xray 的真实结构解析: 取出 users 数组 -> 拆逗号 -> 去引号 ->
+  #   去掉 user>>> / user_ 前缀与 >>>online 后缀。
+  tr -d ' \t\r\n' < /data/local/tmp/online_raw.tmp 2>/dev/null \
+    | sed -n 's/.*"users":\[\(.*\)\].*/\1/p' \
+    | tr ',' '\n' | tr -d '"' \
+    | sed 's/^user>>>//; s/^user_//; s/>>>online$//' \
+    | grep -v '^$' > "$ONLINE_USERS_FILE.tmp" 2>/dev/null
   mv -f "$ONLINE_USERS_FILE.tmp" "$ONLINE_USERS_FILE" 2>/dev/null
 fi
 
@@ -187,14 +195,50 @@ RAW=$(/data/local/tmp/xray api statsquery --server=$API_SERVER 2>/dev/null)
 ONLINE_NOW=$(echo "$RAW" | sed -n 's/.*#ONLINE#//p' | head -n 1)
 RAW=$(echo "$RAW" | sed 's/#ONLINE#.*//')
 ONLINE_USERS_JSON=""
-if [ -f "$ONLINE_USERS_FILE" ] && [ ! -s "$ONLINE_USERS_FILE" ]; then
-  # 名单确实是空的（当前无人连接）: 明确上报空数组, 不能省略
-  ONLINE_USERS_JSON="\"onlineUsers\":[],"
-elif [ -n "$ONLINE_NOW" ]; then
-  ONLINE_USERS_JSON="\"onlineUsers\":[$(echo "$ONLINE_NOW" | sed 's/\([^,]*\)/"\1"/g')],"
-else
-  # 本次没跑到在线结算（例如 isOnlineTick 未命中）: 不带该字段, Worker 沿用上次
-  ONLINE_USERS_JSON=""
+# 【2026-10-05 修复 · 关键】原来这里依赖 ONLINE_NOW(#ONLINE# 标记, 实际恒空):
+#   名单非空时会走到 else 分支 => 整个字段被省略 => Worker 只能沿用上一次的旧名单,
+#   大屏"谁在线/刚断开时间"全都不准。现在一律以【名单文件】为准: 有人在线就是真人名单,
+#   没人就是空数组, 语义明确, 不再省略。
+if [ -f "$ONLINE_USERS_FILE" ]; then
+  _ou_list=$(awk 'NF>0 { printf "%s\"%s\"", (c++ ? "," : ""), $0 }' "$ONLINE_USERS_FILE" 2>/dev/null)
+  ONLINE_USERS_JSON="\"onlineUsers\":[$_ou_list],"
+fi
+
+# ========================================================
+# 【2026-10-05 修复】"最后在线时刻"改由手机端维护(唯一权威源)。
+#   原因: 该状态原先由【各个机房各自推算】, 不同机房算出的时间会不一致,
+#   叠加跨机房兜底后, 大屏会出现"多人时间完全相同"或时间倒退(实测用户反馈)。
+#   现在: 手机维护 token -> 最后在线时刻(秒), 随每次上报下发, 只增不减。
+#   所有机房都用同一份 => 显示必然一致。
+# ========================================================
+LASTSEEN_FILE="/data/local/tmp/user_last_seen.txt"
+[ -f "$LASTSEEN_FILE" ] || : > "$LASTSEEN_FILE"
+if [ "$IS_ONLINE_TICK" = "1" ]; then
+  NOWS=$(date +%s)
+  # 【2026-10-05 二次修复 · 完整性】
+  #   user_last_seen.txt 曾经被人工清空过, 之后就只剩最近上线的 2 个人,
+  #   于是离线用户(用户C/用户F/9/测试/用户A)的时间没有权威值,
+  #   各机房只能各自推算 => 大屏同一个人在不同机房显示的时间不一样。
+  #   现在每次刷新都从 online_last_active.txt 回灌 —— 那个文件由本脚本
+  #   对【全部用户】持久维护(只增不减), 所以这份名单是完整的。
+  #   合并规则: 只取较大值, 任何来源都不会把时间改小(防倒退)。
+  {
+    cat "$LASTSEEN_FILE" 2>/dev/null
+    # ① 历史全量: token 最后活跃时刻(来自上一轮的 online_last_active.txt)
+    awk 'NF>=2 && ($2+0)>0 { print $1 "=" ($2+0) }' "$ONLINE_LAST_ACTIVE" 2>/dev/null
+    # ② 本轮实时: 刚刚还在 xray 在线名单里的人 -> 就是现在
+    # 直接从（刚刷新过的）在线名单文件逐行读 token —— 不能再依赖 ONLINE_NOW,
+    #   那个变量来自 statsquery 输出里的 #ONLINE# 标记, 实际为空。
+    while read -r _t; do
+      [ -n "$_t" ] && echo "$_t=$NOWS"
+    done < "$ONLINE_USERS_FILE"
+  } | awk -F= 'NF==2 && $1!="" { v=$2+0; if (v>(m[$1]+0)) m[$1]=v } END { for (k in m) if ((m[k]+0)>0) print k "=" m[k] }' \
+    | sort > "$LASTSEEN_FILE.tmp" 2>/dev/null
+  mv -f "$LASTSEEN_FILE.tmp" "$LASTSEEN_FILE" 2>/dev/null
+fi
+LASTSEEN_JSON=""
+if [ -s "$LASTSEEN_FILE" ]; then
+  LASTSEEN_JSON="\"lastSeen\":{$(awk -F= 'NF==2 && $1!="" { printf "%s\"%s\":%s", (c++ ? "," : ""), $1, $2 }' "$LASTSEEN_FILE")},"
 fi
 
 USER_TRAFFICS_JSON=$(echo "$RAW" | awk \
@@ -697,7 +741,7 @@ if [ -n "$RAW" ]; then
   # 【2026-10-05】总带宽峰值（15 分钟窗口 / 当日）。在 30 秒采样块里算出，
   #   这里只负责带上；块没跑到时变量为空，用空串兜底（不编造数字）。
   [ -z "$BW_PEAK_JSON" ] && BW_PEAK_JSON=""
-  echo "{$TELEMETRY_JSON $MASTER_JSON $SCAN_ACK_JSON $ONLINE_USERS_JSON $PINGS_JSON $USER_TRAFFICS_JSON $HISTORY_JSON $BW_PEAK_JSON $DOMAIN_JSON $NODE_STATUS_JSON $NODE_IDX_JSON \"conns\": $ACTIVE_CONNS, $STRIPPED_RAW" > /data/local/tmp/traffic_payload.json
+  echo "{$TELEMETRY_JSON $MASTER_JSON $SCAN_ACK_JSON $ONLINE_USERS_JSON $LASTSEEN_JSON $PINGS_JSON $USER_TRAFFICS_JSON $HISTORY_JSON $BW_PEAK_JSON $DOMAIN_JSON $NODE_STATUS_JSON $NODE_IDX_JSON \"conns\": $ACTIVE_CONNS, $STRIPPED_RAW" > /data/local/tmp/traffic_payload.json
   PAYLOAD_BYTES=$(wc -c < /data/local/tmp/traffic_payload.json 2>/dev/null)
   [ -z "$PAYLOAD_BYTES" ] && PAYLOAD_BYTES=0
   echo "$HEAVY_STATE $PAYLOAD_BYTES $(date +%s)" > /data/local/tmp/last_payload_size.txt
@@ -705,6 +749,27 @@ if [ -n "$RAW" ]; then
     -H "Content-Type: application/json" \
     -H "X-Sync-Key: $REPORT_SECRET" \
     -d @/data/local/tmp/traffic_payload.json 2>/dev/null)
+
+  # ========================================================
+  # 【2026-10-05 跨机房修复 · 关键】
+  #   实测: 本机(节点所在地)对 ${WORKER_HOST} 的默认路由落在【欧洲机房】(MRS),
+  #   而看大屏的人(节点所在地/国内)的请求落在【亚洲机房】(POP2/POP1/POP3)。
+  #   大屏的实时快照是按机房各存一份的 => 手机上报送去 MRS, 观众在 POP2 读到的是
+  #   空/旧快照(实测整屏 --, 或"数据 130 秒前")。
+  #   修法: 同一份载荷再【定向】投递到亚洲机房(钉 IP, 实测该 IP 落 POP2),
+  #         让观众所在机房也有新鲜数据。成本 +1 请求/轮 ≈ +1.44 万/天, 在免费额度内。
+  # ========================================================
+  #   实测(2026-10-05): ${CF_ANCHOR_4} 从本机落 POP2, ${CF_ANCHOR_1} 从本机落 POP3。
+  #   这两个机房覆盖了观众最常见的落点; 其它机房由 KV 全球兜底(最多几分钟陈旧)。
+  if [ -n "$RESP" ]; then
+    for _seedip in ${CF_ANCHOR_4} ${CF_ANCHOR_1}; do
+      /system/bin/curl --connect-timeout 2 -m 3 -s -o /dev/null -X POST "$WORKER_URL" \
+        -H "Content-Type: application/json" \
+        -H "X-Sync-Key: $REPORT_SECRET" \
+        --resolve "${WORKER_HOST}:443:$_seedip" \
+        -d @/data/local/tmp/traffic_payload.json 2>/dev/null
+    done
+  fi
 fi
 
 # ========================================================
