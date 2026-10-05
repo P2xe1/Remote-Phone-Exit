@@ -5,6 +5,15 @@
 ![node](https://img.shields.io/badge/node-%E2%89%A518-informational)
 ![docs](https://img.shields.io/badge/docs-%E6%95%99%E7%A8%8B%20%2B%20%E4%B8%93%E9%A2%98%E6%8A%A5%E5%91%8A-informational)
 
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/P2xe1/Remote-Phone-Exit)
+
+> **一键部署按钮**：点它 → 授权 → 填几个变量 → Worker 与 KV 自动建好。
+> 但**设备侧仍然需要一台常驻设备**（按钮只部署边缘），完整清单见
+> [`docs/ZERO_TO_RUNNING.md`](docs/ZERO_TO_RUNNING.md)。
+> 按钮路径有三个前提：`wrangler.toml` 里的 **`NODES` 必须填**（默认清单的地址是
+> 构建期占位符）、三个机密（`ADMIN_PASSWORD` / `SYNC_SECRET` / `VLESS_UUID`）
+> 要在控制台单独设置、`WORKER_HOST` / `TUNNEL_HOST` 要改成你自己的域名。
+
 **一台手机 = 一个出口。** 它在哪个网络里，你的流量就从哪个网络出去——不需要服务器，不需要公网 IP，不需要端口映射。
 
 手机装两个程序：一个接住从隧道送进来的流量、用所在宽带直连目标；另一个主动把回程隧道连出去并保持。你在终端上的代理软件里填好配置，连上它，出口就已经成立了。
