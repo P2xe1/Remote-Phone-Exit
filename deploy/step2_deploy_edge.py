@@ -49,6 +49,11 @@ def bad(m):
     print('[!] %s' % m)
 
 
+def warn(m):
+    # 【2026-10-05 新增】提示级输出：不阻塞部署，但需要使用者看一眼。
+    print('[~] %s' % m)
+
+
 def fill_nodes(raw):
     """把手里的 NODE_xx_IP 填进源码副本"""
     ips = dict(node_ips())
@@ -89,6 +94,13 @@ def cf_request(method, path, token, body=None, timeout=120):
         return json.loads(resp.read().decode('utf-8') or '{}')
 
 
+# 【2026-10-05 新增】--dry-run：只做"本地能做完的全部校验"，不碰 Cloudflare。
+#   为什么需要：部署前最怕的是"配置填错了，但要等到上传后才发现"。
+#   干跑会把节点地址填充、占位符残留、BUILD_ID 注入、语法检查、绑定清单
+#   全部走一遍并打印结果，最后只停在"准备上传"那一步，不改线上任何东西。
+DRY_RUN = '--dry-run' in sys.argv
+
+
 def main():
     token = cfg('CF_API_TOKEN', required=True)
     acct = cfg('CF_ACCOUNT_ID', required=True)
@@ -120,17 +132,29 @@ def main():
     missing_idx = sorted(set(int(m) for m in
                              re.findall(r'server:\s*"\$\{NODE_(\d+)_IP\}"', raw)))
     if missing_idx:
-        bad('还有 %d 个节点地址没填上，已中止部署（避免下发不可用地址）：' % len(missing_idx))
-        print('      缺: %s' % ', '.join('NODE_%02d_IP' % i for i in missing_idx[:20]))
-        if len(missing_idx) > 20:
-            print('      ... 共 %d 个' % len(missing_idx))
-        print()
-        print('   两种改法，任选其一：')
-        print('     · 补齐 .env 里这些键，然后重跑本步')
-        print('     · 确实只用更少节点 —— 那就从 edge/worker_deploy.js 的 RAW_NODES 里')
-        print('       删掉对应行，并同步调整 buildNodeDisplayNames 里的索引区间分组，')
-        print('       不要只填空一部分')
-        return 1
+        if n_used == 0:
+            bad('一个节点地址都没填（.env 里没有任何 NODE_xx_IP）—— 已中止，未做任何改动')
+            print('      请先按 .env.example 的「接入点清单」一节填 NODE_01_IP …')
+            return 1
+        # 【2026-10-05 改进】"给几个地址就部署几个节点"：
+        #   把没提供地址的条目【整行删掉】，而不是中止，也绝不留下占位符。
+        #   为什么删行是安全的：
+        #     · 节点显示名按索引顺序重新编号（见 buildNodeDisplayNames），
+        #       删行不会让名字与地址错配；
+        #     · 每个条目自带 path / region，删掉别的条目不影响留下来的；
+        #     · 删掉的是"没有地址"的条目，因此订阅里不会出现不可用地址。
+        #   （旧行为是直接中止，要求用户手工去改源码 —— 对外部署时这太容易卡住。）
+        keep = []
+        dropped = 0
+        for ln in raw.split('\n'):
+            mm = re.search(r'server:\s*"\$\{NODE_(\d+)_IP\}"', ln)
+            if mm and int(mm.group(1)) in missing_idx:
+                dropped += 1
+                continue
+            keep.append(ln)
+        raw = '\n'.join(keep)
+        warn('节点清单已裁剪：按 .env 提供的 %d 个地址，删除 %d 个未提供地址的条目'
+             % (n_used, dropped))
     ok('节点地址已填充：%d 个（无残留占位符）' % n_used)
 
     # ---- 1.5 运行期配置占位符 ----
@@ -150,12 +174,25 @@ def main():
         raw, n = re.subn(r'\$\{%s\}' % re.escape(k), v, raw)
         if n:
             ok('已注入 %s（%d 处）' % (k, n))
-    # 注完还留着占位符 -> 中止，绝不把带占位符的源码传上去
-    left = sorted(set(re.findall(r'\$\{([A-Z_][A-Z0-9_]*)\}', raw)))
-    left = [k for k in left if not k.startswith('NODE_')]
+    # 注完还留着占位符 -> 中止，绝不把带占位符的源码传上去。
+    # 【2026-10-05 修正】原实现把【所有】${KEY} 一律当成"漏填"，于是把 Worker
+    #   自己在渲染期插值的合法占位符也判成错误 —— 例如页面模板里的
+    #   ${ADMIN_PASSWORD}、${DEVICE_NAME}、${BUILD_ID}：它们由 Worker 里的同名
+    #   常量在生成 HTML 时替换，根本不需要在构建期填。后果是这一版对外部署
+    #   会被自己的检查拦住（实测：一执行就报 13 个"未注入占位符"）。
+    #   现在只拦【构建期】真正必须替换的键：
+    #     · NODE_nn_IP —— 节点地址，由上面的 fill_nodes 负责；
+    #     · BUILD_SUBS 里列出的键。
+    #   其余 ${KEY} 只要 Worker 里有同名定义，就按"渲染期插值"放行。
+    runtime_defined = set(re.findall(r'(?:const|let|var)\s+([A-Z_][A-Z0-9_]*)\s*=', raw))
+    # ⚠ 用负向后顾排除转义写法 \${KEY}（那是"字面文本"，例如注释里的示例），
+    #   否则会把注释里的示例当成漏填。
+    left = sorted(set(re.findall(r'(?<!\\)\$\{([A-Z_][A-Z0-9_]*)\}', raw)))
+    left = [k for k in left if k not in runtime_defined]
     if left:
         bad('源码里还有没注入的占位符: %s' % ', '.join(left[:8]))
-        print('      请在上面的 BUILD_SUBS 里补上，或从 .env 填好对应值')
+        print('      请在上面的 BUILD_SUBS 里补上，或从 .env 填好对应值；')
+        print('      若这是 Worker 自己渲染期插值的键，请在 Worker 里保留同名定义。')
         return 1
 
     # ---- 2. BUILD_ID ----
@@ -194,15 +231,18 @@ def main():
 
     # ---- 5. 绑定（保留已有 + 确保 KV） ----
     bindings = []
-    try:
-        res = cf_request('GET', '/accounts/%s/workers/scripts/%s/bindings' % (acct, script), token)
-        if res.get('success'):
-            bindings = res.get('result') or []
-            ok('现有绑定: %s' % [b.get('name') for b in bindings])
-    except urllib.error.HTTPError as e:
-        log('读取绑定失败 HTTP %s（继续，将只写 KV 绑定）' % e.code)
-    except Exception as e:
-        log('读取绑定失败 %s' % str(e)[:80])
+    if DRY_RUN:
+        log('干跑模式：跳过"读取远端现有绑定"（不访问 Cloudflare）')
+    else:
+        try:
+            res = cf_request('GET', '/accounts/%s/workers/scripts/%s/bindings' % (acct, script), token)
+            if res.get('success'):
+                bindings = res.get('result') or []
+                ok('现有绑定: %s' % [b.get('name') for b in bindings])
+        except urllib.error.HTTPError as e:
+            log('读取绑定失败 HTTP %s（继续，将只写 KV 绑定）' % e.code)
+        except Exception as e:
+            log('读取绑定失败 %s' % str(e)[:80])
 
     merged = [b for b in bindings if b.get('name') != 'SUB_DB']
     merged.append({'type': 'kv_namespace', 'name': 'SUB_DB', 'namespace_id': ns})
@@ -260,6 +300,17 @@ def main():
     body.extend(raw.encode('utf-8'))
     body.extend(b'\r\n')
     body.extend(('--%s--\r\n' % boundary).encode())
+
+    if DRY_RUN:
+        print()
+        ok('干跑完成：本地校验全部通过，未改动线上任何东西')
+        print('  · 目标脚本   : %s' % script)
+        print('  · 将写入绑定 : %s' % [b.get('name') for b in merged])
+        print('  · 载荷大小   : %.1f KB' % (len(body) / 1024.0))
+        print('  · 语法检查   : 通过')
+        print()
+        print('  确认无误后去掉 --dry-run 重新执行即可真正部署。')
+        return 0
 
     log('上传中 ...')
     req = urllib.request.Request(

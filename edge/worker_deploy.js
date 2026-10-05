@@ -80,19 +80,19 @@ function _cfg(key, fallback) {
 //   原实现写死了真实机型与系统版本，脱敏后成了未定义变量 ——
 //   模板字符串在服务端求值时就会抛 ReferenceError，整页打不开。
 //   这里给出中性默认值；运行时可用同名环境变量覆盖。
-const TUNNEL_ID_PREFIX = _cfg('TUNNEL_ID_PREFIX', '--------');
-const DEVICE_NAME = _cfg('DEVICE_NAME', '未上报');
-const SOC = _cfg('SOC', '未上报');
-const CARRIER = _cfg('CARRIER', '未上报');
-const DEVICE_BRAND = _cfg('DEVICE_BRAND', '未上报');
-const DEVICE_MODEL = _cfg('DEVICE_MODEL', '未上报');
-const DEVICE_CODENAME = _cfg('DEVICE_CODENAME', '未上报');
-const ANDROID_VER = _cfg('ANDROID_VER', '未上报');
-const ADMIN_PASSWORD = _cfg('ADMIN_PASSWORD', 'CHANGE_ME');
-const SYNC_SECRET = _cfg('SYNC_SECRET', 'CHANGE_ME');
+let TUNNEL_ID_PREFIX = _cfg('TUNNEL_ID_PREFIX', '--------');
+let DEVICE_NAME = _cfg('DEVICE_NAME', '未上报');
+let SOC = _cfg('SOC', '未上报');
+let CARRIER = _cfg('CARRIER', '未上报');
+let DEVICE_BRAND = _cfg('DEVICE_BRAND', '未上报');
+let DEVICE_MODEL = _cfg('DEVICE_MODEL', '未上报');
+let DEVICE_CODENAME = _cfg('DEVICE_CODENAME', '未上报');
+let ANDROID_VER = _cfg('ANDROID_VER', '未上报');
+let ADMIN_PASSWORD = _cfg('ADMIN_PASSWORD', 'CHANGE_ME');
+let SYNC_SECRET = _cfg('SYNC_SECRET', 'CHANGE_ME');
 // 【导出修复】WORKER_HOST 同样是运行时配置：缓存键与探活地址都要用它。
 //   必须定义在 _cfg 之后 —— 顶层模板字符串求值时它要已经可用。
-const WORKER_HOST = _cfg('WORKER_HOST', 'worker.example.com');
+let WORKER_HOST = _cfg('WORKER_HOST', 'worker.example.com');
 const NOTICE_NAME = "※请优先选择低延迟接入点※";
 
 // 辅助函数：根据 Token 确定性生成用户专属 UUID (保证与手机端一致)
@@ -966,9 +966,36 @@ async function touchUser(token, patch) {
   return store;
 }
 
+
+// 【对外发布副本 · 运行期配置注入】
+//   上面那些 `let X = _cfg(...)` 定义在模块加载期就求值了，那时还没有 env，
+//   所以只能拿到默认值。若就这样部署：管理口令会停在 CHANGE_ME、
+//   WORKER_HOST 指向 worker.example.com、SYNC_SECRET 也是 CHANGE_ME
+//   —— 表现为"部署成功但登录不上 / 没有遥测"。
+//   所以收到请求时用部署级绑定(bindings)重新解析一遍。
+//   （线上实例是构建期把真实值写进源码，不依赖这段。）
+function _applyCfg(env) {
+  if (!env) return;
+  __setCfg(env);
+  TUNNEL_ID_PREFIX = _cfg('TUNNEL_ID_PREFIX', '--------');
+  DEVICE_NAME = _cfg('DEVICE_NAME', '未上报');
+  SOC = _cfg('SOC', '未上报');
+  CARRIER = _cfg('CARRIER', '未上报');
+  DEVICE_BRAND = _cfg('DEVICE_BRAND', '未上报');
+  DEVICE_MODEL = _cfg('DEVICE_MODEL', '未上报');
+  DEVICE_CODENAME = _cfg('DEVICE_CODENAME', '未上报');
+  ANDROID_VER = _cfg('ANDROID_VER', '未上报');
+  ADMIN_PASSWORD = _cfg('ADMIN_PASSWORD', 'CHANGE_ME');
+  SYNC_SECRET = _cfg('SYNC_SECRET', 'CHANGE_ME');
+  WORKER_HOST = _cfg('WORKER_HOST', 'worker.example.com');
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    // 【对外发布副本】用部署级绑定重新解析顶层配置常量（必须在任何用到它们的
+    //   分支之前调用；线上实例是构建期写死真实值，不依赖这一步）
+    _applyCfg(env);
     boundEnv = env;   // 绑定是部署级的, 供用户库读写函数取用
     const reqStartMs = Date.now();   // 用于统计 CF 边缘真实处理耗时
 
