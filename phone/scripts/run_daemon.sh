@@ -20,6 +20,7 @@ sleep 1
 RC=0
 for f in /data/local/tmp/xray /data/local/tmp/cloudflared_native \
          /data/local/tmp/config.json /data/local/tmp/config.yml \
+         /data/local/tmp/tunnel_creds.json \
          /data/local/tmp/traffic_daemon.sh; do
   if [ ! -e "$f" ]; then
     echo "MISSING: $f"
