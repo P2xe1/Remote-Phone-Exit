@@ -38,6 +38,17 @@
 
 ## 2. 六步部署
 
+> **方式 B：一键部署按钮（只覆盖边缘那半）**
+> 仓库首页有 **Deploy to Cloudflare** 按钮：点击 → 授权 → 填变量 → 边缘就建好了
+> （Worker + KV 命名空间自动创建）。它【不】部署设备侧，设备侧仍要走下面的步骤 6。
+> 三条前提，缺一条就跑不起来：
+> 1. `wrangler.toml` 里的 **`NODES` 必须填**（格式 `路径:地址`，逗号分隔）——
+>    默认清单里的地址是构建期占位符，按钮路径没有构建期；
+> 2. 三个机密（`ADMIN_PASSWORD` / `SYNC_SECRET` / `VLESS_UUID`）在控制台
+>    用 **Encrypt** 或 `wrangler secret put` 单独设置，不要写进 `wrangler.toml`；
+> 3. `WORKER_HOST` / `TUNNEL_HOST` 改成你自己的域名。
+> 下面的一~六步是**完整路径**（也是唯一能把设备侧一起做完的路径）。
+
 ### 步骤 1 · 建键值存储（KV）
 
 控制台 → **Storage & Databases → KV → Create namespace**，名字随意（例如 `noc`）。

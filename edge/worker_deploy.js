@@ -93,6 +93,10 @@ let SYNC_SECRET = _cfg('SYNC_SECRET', 'CHANGE_ME');
 // 【导出修复】WORKER_HOST 同样是运行时配置：缓存键与探活地址都要用它。
 //   必须定义在 _cfg 之后 —— 顶层模板字符串求值时它要已经可用。
 let WORKER_HOST = _cfg('WORKER_HOST', 'worker.example.com');
+// 【对外发布副本】渲染期会用到的隧道域名（页面模板里写着 ${TUNNEL_HOST}）：
+//   构建期那条部署路径会把它替换成字面值；走 Cloudflare 绑定部署时
+//   必须存在这个同名变量，否则渲染页面会 ReferenceError。
+let TUNNEL_HOST = _cfg('TUNNEL_HOST', 'vpn.example.com');
 const NOTICE_NAME = "※请优先选择低延迟接入点※";
 
 // 辅助函数：根据 Token 确定性生成用户专属 UUID (保证与手机端一致)
@@ -988,14 +992,43 @@ function _applyCfg(env) {
   ADMIN_PASSWORD = _cfg('ADMIN_PASSWORD', 'CHANGE_ME');
   SYNC_SECRET = _cfg('SYNC_SECRET', 'CHANGE_ME');
   WORKER_HOST = _cfg('WORKER_HOST', 'worker.example.com');
+  TUNNEL_HOST = _cfg('TUNNEL_HOST', 'vpn.example.com');
+}
+
+// 【对外发布副本 · 节点清单】
+//   绑定里给一个 NODES 就能整份覆盖默认清单，格式（逗号分隔）：
+//     "路径:地址,路径:地址,..."   例如  "/kl:1.2.3.4,/hk:5.6.7.8"
+//   省略路径时默认 /kl；落点(region)由大屏实测自动补，不需要手填。
+function _applyNodesFromEnv() {
+  const raw = _cfg('NODES', '');
+  if (raw) {
+    const out = [];
+    String(raw).split(',').forEach(function (item) {
+      const s = item.trim();
+      if (!s) return;
+      const i = s.lastIndexOf(':');
+      const path = i > 0 ? s.slice(0, i) : '/kl';
+      const ip = i > 0 ? s.slice(i + 1) : s;
+      if (ip) out.push({ name: '', server: ip, region: 'KL', path: path });
+    });
+    if (out.length) {
+      RAW_NODES.length = 0;
+      out.forEach(function (n) { RAW_NODES.push(n); });
+    }
+  }
+  // 兜底：仍是构建期占位符的条目一律剔掉（按钮路径没做构建期替换时会走到这里）
+  for (let i = RAW_NODES.length - 1; i >= 0; i--) {
+    if (/\$\{/.test(String(RAW_NODES[i] && RAW_NODES[i].server || ''))) RAW_NODES.splice(i, 1);
+  }
 }
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    // 【对外发布副本】用部署级绑定重新解析顶层配置常量（必须在任何用到它们的
-    //   分支之前调用；线上实例是构建期写死真实值，不依赖这一步）
+    // 【对外发布副本】用部署级绑定重新解析顶层配置常量与节点清单
+    //   （必须在任何用到它们的代码之前调用；线上实例是构建期写死真实值，不依赖这一步）
     _applyCfg(env);
+    _applyNodesFromEnv();
     boundEnv = env;   // 绑定是部署级的, 供用户库读写函数取用
     const reqStartMs = Date.now();   // 用于统计 CF 边缘真实处理耗时
 
@@ -4967,7 +5000,7 @@ rules:
               const fetchStart = performance.now();
               await probeClientRtt();   // 真实测量 客户端↔CF边缘 RTT (15 秒节流)
               try {
-                const res = await fetch(window.location.origin + '/api/stats_data?pwd=` + window.__CFG.ADMIN_PASSWORD + `&_t=' + Date.now() + (phoneSyncRequestId ? '&sync=1' : ''), {
+                const res = await fetch(window.location.origin + '/api/stats_data?pwd=' + window.__CFG.ADMIN_PASSWORD + '&_t=' + Date.now() + (phoneSyncRequestId ? '&sync=1' : ''), {
                   cache: 'no-store'
                 });
                 const fetchElapsed = Math.max(1, Math.round(performance.now() - fetchStart));
