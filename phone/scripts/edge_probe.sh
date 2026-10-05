@@ -25,6 +25,12 @@ if ! mkdir "$_LOCK" 2>/dev/null; then
   mkdir "$_LOCK" 2>/dev/null || exit 0
 fi
 echo $$ > "$_LOCK/pid"
+# 全局探测通行证(硬性最多 2 个并发探测); 文件缺失时退化为不限制, 不会让脚本报错
+if [ -f /data/local/tmp/probe_gate.sh ]; then . /data/local/tmp/probe_gate.sh; fi
+if ! command -v probe_slot_acquire >/dev/null 2>&1; then
+  probe_slot_acquire() { echo 0; }
+  probe_slot_release() { :; }
+fi
 # 【不要加 trap ... EXIT 清锁】mksh 会把 EXIT trap 继承给子 shell,
 #   脚本里任何 $(...) / 管道 / 后台任务退出都会把锁删掉 -> 锁失效。
 #   锁的清理交给"PID 存活检查": 实例被杀后锁残留, 下次启动发现
@@ -79,6 +85,8 @@ while true; do
     [ "$(date +%s)" -ge "$NEXT" ] && break
     sleep 1
   done
+  _slot=$(probe_slot_acquire)
   V=$(measure_edge_rtt)
+  probe_slot_release "$_slot"
   echo "$V" > "$EDGE_RTT_FILE.tmp" && mv "$EDGE_RTT_FILE.tmp" "$EDGE_RTT_FILE"
 done

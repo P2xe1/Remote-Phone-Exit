@@ -25,6 +25,12 @@ if ! mkdir "$_LOCK" 2>/dev/null; then
   mkdir "$_LOCK" 2>/dev/null || exit 0
 fi
 echo $$ > "$_LOCK/pid"
+# 全局探测通行证(硬性最多 2 个并发探测); 文件缺失时退化为不限制, 不会让脚本报错
+if [ -f /data/local/tmp/probe_gate.sh ]; then . /data/local/tmp/probe_gate.sh; fi
+if ! command -v probe_slot_acquire >/dev/null 2>&1; then
+  probe_slot_acquire() { echo 0; }
+  probe_slot_release() { :; }
+fi
 # 【不要加 trap ... EXIT 清锁】mksh 会把 EXIT trap 继承给子 shell,
 #   脚本里任何 $(...) / 管道 / 后台任务退出都会把锁删掉 -> 锁失效。
 #   锁的清理交给"PID 存活检查": 实例被杀后锁残留, 下次启动发现
@@ -421,7 +427,9 @@ while true; do
   esac
 
   # 统一采样: 15 次 TCP+TLS 握手 -> 最低3均值(最优可达时延) + 丢包率
+  _slot=$(probe_slot_acquire)
   MEAS=$(measure_anchor "$ANCHOR_URL" "$ANCHOR_HOST" "$ANCHOR_IP")
+  probe_slot_release "$_slot"
   BEST=$(echo "$MEAS" | awk '{print $1+0}')
   FAILS=$(echo "$MEAS" | awk '{print $2+0}')
   OKS=$(echo "$MEAS" | awk '{print $3+0}')
@@ -472,6 +480,7 @@ while true; do
   # 【统一口径 2026-10-04 用户决策】原来单次采样, 现改为 3 次采样 + 统一口径:
   # 丢弃 <10ms 的无效样本, 取最低 3 个有效样本的中位数; 不足 3 个则本锚点作废, 换下一个。
   P_GW=0
+  _slot=$(probe_slot_acquire)
   for ANCHOR in 8.8.8.8 1.1.1.1; do
     _e1=0; _e2=0; _e3=0; _en=0
     for _ei in 1 2 3; do
@@ -492,6 +501,7 @@ while true; do
     [ "$P_GW" -gt 0 ] && break
   done
   [ "$P_GW" -le 0 ] && P_GW=0
+  probe_slot_release "$_slot"
 
   # --------------------------------------------------------
   # 【RTT 提速 2026-10-04 · 方案 A】原来这里每 60 秒测一次 edgeRtt。

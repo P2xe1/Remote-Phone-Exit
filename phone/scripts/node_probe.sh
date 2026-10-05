@@ -25,6 +25,12 @@ if ! mkdir "$_LOCK" 2>/dev/null; then
   mkdir "$_LOCK" 2>/dev/null || exit 0
 fi
 echo $$ > "$_LOCK/pid"
+# 全局探测通行证(硬性最多 2 个并发探测); 文件缺失时退化为不限制, 不会让脚本报错
+if [ -f /data/local/tmp/probe_gate.sh ]; then . /data/local/tmp/probe_gate.sh; fi
+if ! command -v probe_slot_acquire >/dev/null 2>&1; then
+  probe_slot_acquire() { echo 0; }
+  probe_slot_release() { :; }
+fi
 # 【不要加 trap ... EXIT 清锁】mksh 会把 EXIT trap 继承给子 shell,
 #   脚本里任何 $(...) / 管道 / 后台任务退出都会把锁删掉 -> 锁失效。
 #   锁的清理交给"PID 存活检查": 实例被杀后锁残留, 下次启动发现
@@ -107,7 +113,9 @@ while true; do
 
   OK=0
   RTT=0
+  _slot=""
   if [ -n "$NIP" ]; then
+    _slot=$(probe_slot_acquire)
     # ============================================================
     # 【2026-10-04 核查修复】原来是【单次采样】, 而手机 5G 接入网的 TCP 握手
     #   抖动可达 5 倍(独立复测: 同节点 90/19/122/45/56 ms), 页面显示的就是
@@ -166,6 +174,7 @@ while true; do
       *) NCOLO="" ;;
     esac
   fi
+  probe_slot_release "$_slot"
 
   NOWS=$(date +%s)
   # 记录: ip path ok 时刻 rtt毫秒
