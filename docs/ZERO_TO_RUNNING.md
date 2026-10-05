@@ -98,11 +98,15 @@ python deploy/gen_secrets.py     # 把三个占位口令换成强随机值（只
 | `CF_SCRIPT_NAME` | 你给 Worker 起的名字（随意，例如 `noc-edge`） |
 | `WORKER_HOST` | 边缘子域，例如 `sub.example.com` |
 | `TUNNEL_HOST` | 步骤 3 里那条 Public Hostname，例如 `vpn.example.com` |
+| `TUNNEL_ID` | 步骤 3 建隧道时得到的隧道 ID（设备侧 `config.yml` 的 `tunnel:` 就是它） |
+| `TUNNEL_CREDS_FILE` | 步骤 3 下载的隧道凭据 JSON 的本地路径（部署时推到设备 `/data/local/tmp/tunnel_creds.json`，权限 600） |
 | `ADMIN_PASSWORD` | 步骤 4 已自动生成（记下它，登录监控台要用） |
 | `SYNC_SECRET` | 同上 |
 | `VLESS_UUID` | 同上 |
 | `DAY_TZ` | 统计日界线时区，例如 `Asia/Shanghai` |
 | `PHONE_SERIAL` | 设备序列号（`adb devices` 第一列） |
+| `RELAY_TARGET_IP` | 设备上的统计接口地址，默认 `127.0.0.1` |
+| `CF_ANCHOR_1` … `CF_ANCHOR_6` | 六个 CF anycast 地址，用于量"客户端 ↔ 边缘"时延；`.env.example` 里给了可用示例 |
 
 填完先跑一次体检：
 
@@ -131,6 +135,21 @@ python deploy/step2_deploy_edge.py --dry-run
 ```bash
 python deploy/fetch_binaries.py  # 官方源下载 + 校验 + 推到 /data/local/tmp
 python deploy/一键.py 3          # = step3_deploy_node.py（推脚本与配置）
+```
+
+第 3 步会推到设备的东西（**新设备首次启动就能起来**，不需要等运行时同步）：
+
+| 文件 | 内容 | 来源 |
+| --- | --- | --- |
+| 11 个 `.sh` | 已把 `WORKER_HOST` / `SYNC_SECRET` / `RELAY_TARGET_IP` / CF 锚点等**真实值注入** | `.env` |
+| `config.json` | 代理核心配置 | 优先从 Worker 的 `/api/phone_xray_config` 拉权威配置；拉不到用仓库样例兜底（自动去掉非法占位客户端、注入你的 UUID） |
+| `config.yml` | 隧道配置（`tunnel:` + `credentials-file:` 都有值） | `.env` 的 `TUNNEL_ID` |
+| `tunnel_creds.json` | 隧道凭据（权限 600） | `.env` 的 `TUNNEL_CREDS_FILE` |
+
+想先离线核对"到底会推什么"，用干跑（不接设备也能跑）：
+
+```bash
+python deploy/step3_deploy_node.py --dry     # 生成物写到临时目录并列出清单
 ```
 
 然后在设备上：

@@ -71,6 +71,29 @@
 
 ### 修复
 
+- **新设备首次启动必然失败（`config.json` 缺失）**：部署器原来把 `config.json`
+  标成"由手机运行时自己拉"，跳过不推；但启动脚本在拉起前会检查
+  `/data/local/tmp/config.json` 存在，缺了就直接退出 —— 所谓"运行时自己拉"
+  根本没机会执行（鸡生蛋）。现在部署时就生成并推送一份可用的 `config.json`：
+  **优先从 Worker 的 `/api/phone_xray_config` 拉权威配置**（与订阅下发的 UUID、
+  端口、路径完全一致），拉不到时用仓库样例兜底 —— 兜底路径会自动删掉样例里
+  非法占位的客户端项、并把主 UUID 换成你 `.env` 里的 `VLESS_UUID`。
+- **隧道身份没被部署**：`config.yml` 模板里的 `${TUNNEL_ID}` 不在替换表里，
+  生成出来是空的 `tunnel:`；`tunnel_creds.json` 也从来没被推过。
+  现在 `.env` 增加 `TUNNEL_ID` 与 `TUNNEL_CREDS_FILE`（或 `TUNNEL_CREDS_JSON`），
+  部署时校验隧道 ID 非空、凭据是合法 JSON、并与凭据里的 TunnelID 做一致性提醒，
+  最后把凭据推到 `/data/local/tmp/tunnel_creds.json` 并 `chmod 600`。
+- **节点脚本里的配置没注入（静默失效）**：脚本被**原样推送**，里面的
+  `WORKER_URL="https://${WORKER_HOST}/api/report_traffic"` 在设备上没人给
+  `WORKER_HOST` 赋值，URL 变成 `https:///api/...` —— 设备看着在跑，
+  上报与同步全部静默失效。现在推送前会把 `WORKER_HOST` / `SYNC_SECRET` /
+  `RELAY_TARGET_IP` / `TUNNEL_HOST` / `CF_ANCHOR_1..6` 等真实值注入脚本，
+  **并且**：替换后若仍有未填的占位符就中止（不把带占位符的脚本推上设备）；
+  脚本里自己定义的变量（如 `TARGET_MS`）会被正确识别、不算漏填。
+- **六个 CF 锚点没人管**：`fast_scan.sh` / `ping_scheduler.sh` / `intl_probe.sh`
+  依赖 `${CF_ANCHOR_1..6}`，但 `.env.example` 里根本没有这几个键 ——
+  分段时延测量直接是废的。现在补上六个键（给了 Cloudflare 公开网段里的可用示例）
+  并纳入部署替换表；缺失时部署会明确报错而不是推一串占位符。
 - **导出副本的管理页整页打不开**（严重，由冒烟测试发现）：导出脚本里有一条
   "把含 `env.X` 的单引号串改成模板字符串"的规则，它的字符类允许**跨越字符串边界**，
   于是把 `'...pwd=' + (env.ADMIN_PASSWORD || "CHANGE_ME") + '&_t='` 当成一整段字符串，

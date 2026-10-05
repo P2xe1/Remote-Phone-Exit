@@ -29,6 +29,7 @@ RC=0
 # ---- 1) 必需文件 ----
 echo "[1/4] 必需文件"
 for f in "$TMP/xray" "$TMP/cloudflared_native" "$TMP/config.json" "$TMP/config.yml" \
+         "$TMP/tunnel_creds.json" \
          "$TMP/run_daemon.sh" "$TMP/traffic_daemon.sh" "$TMP/report_traffic.sh" \
          "$TMP/ping_scheduler.sh" "$TMP/node_probe.sh" "$TMP/edge_probe.sh" \
          "$TMP/probe_gate.sh"; do

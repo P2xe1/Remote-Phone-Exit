@@ -99,8 +99,14 @@ def check_env_example():
         warn('找不到 .env.example')
         return
     keys = set(re.findall(r'^([A-Z_][A-Z0-9_]*)\s*=', read(env), re.M))
+    # 【2026-10-05】补上部署脚本真正会读的键 —— 少一个就是"设备看着在跑、
+    #   上报静默失效"（这轮修的就是这一类）。
     need = set(['CF_API_TOKEN', 'CF_ACCOUNT_ID', 'CF_KV_NAMESPACE_ID', 'CF_SCRIPT_NAME',
-                'WORKER_HOST', 'TUNNEL_HOST', 'ADMIN_PASSWORD', 'SYNC_SECRET', 'VLESS_UUID'])
+                'WORKER_HOST', 'TUNNEL_HOST', 'TUNNEL_ID', 'TUNNEL_CREDS_FILE',
+                'ADMIN_PASSWORD', 'SYNC_SECRET', 'VLESS_UUID',
+                'RELAY_TARGET_IP', 'PHONE_SERIAL',
+                'CF_ANCHOR_1', 'CF_ANCHOR_2', 'CF_ANCHOR_3',
+                'CF_ANCHOR_4', 'CF_ANCHOR_5', 'CF_ANCHOR_6'])
     miss = sorted(need - keys)
     if miss:
         fail('.env.example 缺少这些键：%s' % ', '.join(miss))
