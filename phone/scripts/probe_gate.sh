@@ -37,9 +37,26 @@ probe_slot_acquire() {
         return 0
       fi
       # 回收"持有者已死"的名额(被杀/崩溃留下的残留)
+      # 【2026-10-06 修复 · Bug3】原来写成 `[ -z "$_p" ] || ! kill -0 ...` ——
+      #   刚抢到名额的进程在"mkdir 成功、pid 还没写进去"的微秒窗口内会被别人
+      #   看到 _p 为空，于是名额目录被立刻 rm -rf 删掉 => 并发上限 2 失效。
+      #   现在：pid 为空时【不立刻回收】，只有目录已存在 ≥3 秒且仍然没有存活
+      #   PID 才判断为残留（3 秒远大于写 pid 的耗时）。stat -c %Y 在 Android
+      #   toybox 上可用（本机实测 Toybox 0.8.11 支持）。
       _p=$(cat "$GATE_DIR/$_s/pid" 2>/dev/null)
-      if [ -z "$_p" ] || ! kill -0 "$_p" 2>/dev/null; then
-        rm -rf "$GATE_DIR/$_s" 2>/dev/null
+      if [ -n "$_p" ]; then
+        if ! kill -0 "$_p" 2>/dev/null; then
+          rm -rf "$GATE_DIR/$_s" 2>/dev/null
+        fi
+      else
+        _dir_mtime=$(stat -c %Y "$GATE_DIR/$_s" 2>/dev/null || echo 0)
+        _cur_time=$(date +%s)
+        if [ $((_cur_time - _dir_mtime)) -ge 3 ]; then
+          _p_recheck=$(cat "$GATE_DIR/$_s/pid" 2>/dev/null)
+          if [ -z "$_p_recheck" ] || ! kill -0 "$_p_recheck" 2>/dev/null; then
+            rm -rf "$GATE_DIR/$_s" 2>/dev/null
+          fi
+        fi
       fi
     done
     sleep 1

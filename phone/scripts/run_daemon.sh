@@ -5,9 +5,12 @@
 #   2026-10-05 修复 B11: 启动后【真正检查】进程是否起来, 不再无条件报成功
 # ============================================================
 # 顺序不能变: 先杀 traffic_daemon(否则它不断复活子进程), 再杀其余。
+# 【2026-10-06 修复 · Bug8】原来先杀 xray/cloudflared —— 在"核心已死、看门狗还活着"
+#   的那个窗口里，traffic_daemon 会检测到核心缺失并立刻用旧配置把它们拉起来，
+#   于是出现"刚重启完又跑了旧进程/两份进程"。现在严格按注释的顺序：先杀看门狗。
+pkill -f traffic_daemon.sh
 pkill -f xray
 pkill -f cloudflared
-pkill -f traffic_daemon.sh
 pkill -f ping_scheduler.sh
 pkill -f node_probe.sh
 pkill -f edge_probe.sh
