@@ -557,7 +557,10 @@ async function mergeClientRtt(colo, rtt) {
 }
 
 // 读取最新实时快照, 供 SSE 每秒推送。只走内存与免费 Cache API, 不碰 KV。
-async function readLiveSnapshot() {
+// 【2026-10-06 修复 · Bug7】allowKv=true(默认) 时保持原行为：本机房 Cache 里没有
+//   或过旧(>120s) 就回源 KV 全球快照。长轮询的后续轮次传 false，只读本机房
+//   Cache API 与内存 —— 手机一旦有新上报，第一时间写的正是本机房 Cache。
+async function readLiveSnapshot(allowKv = true) {
   // 【关键】优先读本机房 Cache API: 免费、无限量、同机房所有 isolate 共享。
   // 为什么不能只读 isolate 内存: 手机的上报与浏览器的长轮询很可能落在
   // 【不同的 isolate】上, 各自的内存互相看不见 —— 实测会导致推送数据冻结
@@ -570,7 +573,7 @@ async function readLiveSnapshot() {
   if (!s) s = globalMemoryStats;
   // 【2026-10-05 跨机房治本】本机房 Cache 里没有(或太旧)时, 回落 KV 全球快照,
   //   否则"落在无数据机房"的观众会看到"遥测推送中断 + 整屏 --"。
-  if (!s || (Date.now() - (s.timestamp || 0)) > 120000) {
+  if (allowKv && (!s || (Date.now() - (s.timestamp || 0)) > 120000)) {
     try {
       const _env = boundEnv;
       if (_env && _env.SUB_DB) {
@@ -622,6 +625,12 @@ async function readLiveSnapshot() {
     // 【方案 A+C】CF 锚点实测落点机房码
     colos: s.colos || null,
     jitters: s.jitters || null,
+    // 【2026-10-06 修复 · Bug5】精简快照补上"总计流量 + 峰值"：
+    //   前端靠这三个字段刷新"总计上下行流量 / 15 分钟峰值 / 一天峰值"。
+    //   缺失时前端保持原值（不会用 null 覆盖），所以这里如实透传或留 null。
+    bwPeak: s.bwPeak || null,
+    downBytes: (typeof s.downBytes === 'number') ? s.downBytes : null,
+    upBytes: (typeof s.upBytes === 'number') ? s.upBytes : null,
     // 【2026-10-04 用户要求】55 节点矩阵要跟着实时推送刷新(原来只有 60 秒轮询才更新),
     //   并且带当前探测索引 —— 测速中按 nodes.txt 顺序推进, 不按时间戳乱跳。
     nodeStatus: Array.isArray(s.nodeStatus) ? s.nodeStatus : null,
@@ -1123,8 +1132,15 @@ export default {
       let snap = null;
       let first = true;
       while (first || (Date.now() - t0) < 15000) {
+        // 【2026-10-06 修复 · Bug7】只有【首轮】允许回源 KV。
+        //   ⚠ 注意别写成 readLiveSnapshot(first)：`first` 在下面一行就被置成 false 了，
+        //     照抄那种写法等于永远不允许读 KV，冷机房的兜底会彻底失效。
+        //     这里先把它取出来再改标志位。
+        //   为什么只在首轮读：手机一有新上报，第一时间写的是【本机房 Cache API】，
+        //   之后 1 秒一轮的等待期根本不需要再回源 KV —— 既省读额度，也少一次网络往返。
+        const _allowKv = first;
         first = false;
-        snap = await readLiveSnapshot();
+        snap = await readLiveSnapshot(_allowKv);
         if (snap && snap.stamp !== since) break;
         await new Promise((r) => setTimeout(r, 1000));
       }
@@ -1670,6 +1686,18 @@ export default {
             return out;
           })();
 
+          // 【2026-10-06 修复 · Bug5】把"总计上下行流量"也放进快照：
+          //   原来只有 /api/stats_data(60 秒轮询) 会算这两个数，/api/live 的精简快照
+          //   没有它们，前端 applyBwPanel() 只能等下一次整页轮询 —— 表现为
+          //   "半圆仪表在跳，但下面的总计流量/峰值卡住 60 秒不动"。
+          //   口径与 /api/stats_data 完全一致：逐用户累计值求和（不新造数字）。
+          let _sumDownBytes = 0, _sumUpBytes = 0;
+          for (const _tk in userTrafficsOut) {
+            const _u = userTrafficsOut[_tk] || {};
+            _sumDownBytes += (_u.down || 0);
+            _sumUpBytes += (_u.up || 0);
+          }
+
           globalMemoryStats = {
             updatedAt: nowStr,
             todayDate: todayDateStr,
@@ -1723,6 +1751,10 @@ export default {
             //   时刻; 而轻量的 lastSeen 文件在人工清理后可能只剩少数几个用户,
             //   离线用户就会退化成"各机房各自推算" => 大屏每台机器显示的时间都不一样。
             userTraffics: userTrafficsOut,
+            // 【2026-10-06 修复 · Bug5】逐用户累计流量求和（与 /api/stats_data 同口径），
+            //   供 /api/live 精简快照下发，让"总计上下行流量"也能秒级刷新。
+            downBytes: _sumDownBytes,
+            upBytes: _sumUpBytes,
             // 【2026-10-04】per-user 实时字节(见上方注释)
             statUserBytes: statUserBytes,
             statUserBytesAt: Date.now(),
@@ -1986,7 +2018,11 @@ export default {
             // 直接以其为准, 不再 { ...DEFAULT_USERS, ...incoming } 混入默认名单
             // (否则后台删除的默认成员会被手机回推复活)。
             // 仅"裸对象(旧客户端/手动恢复)"这一条 legacy 路径保留默认名单合并。
-            const merged = (wrapped || Object.keys(incoming).length === 0)
+          // 【2026-10-06 修复 · Bug1】判定写反了：本意是"带 version 的回推(手机权威视图)
+          //   直接采用，只有裸对象才合并默认名单"，但 `wrapped || ...` 让回推也走了合并分支 ——
+          //   后台删掉的默认成员会被手机回推原样写回 KV（"复活"）。
+          //   正确条件：!wrapped(裸对象) 或 空载荷 -> 合并；其余(带 version 的回推) -> 以其为准。
+          const merged = (!wrapped || Object.keys(incoming).length === 0)
               ? { ...DEFAULT_USERS, ...incoming }
               : incoming;
             const kvOk = await saveCachedUsers(merged);   // 内置写入熔断: 内容未实质变化则不写 KV
@@ -2497,21 +2533,16 @@ export default {
       const cached = await getCachedUsers();
       let user = cached[token] || null;
 
-      if (!user && token && token.length >= 6) {
-        // 容灾兜底：未知 token 仍下发配置(避免冷机房误判 403)，但【绝不入库】。
-        // 旧实现在这里调用 saveCachedUsers()，会把任意随机 token 变成"正式用户"
-        // 并写进共享用户库 —— 既污染后台列表(实测出现重复的"用户D")，又放大
-        // KV 写入量。现在改为纯临时对象，不落任何持久层。
-        user = {
-          name: '临时_' + token.substring(0, 4),
-          token: token,
-          enabled: true,
-          transient: true,
-          lastSeen: '未登记',
-          lastIp: request.headers.get('cf-connecting-ip') || '-',
-          userAgent: request.headers.get('user-agent') || '-',
-          pullCount: 0
-        };
+      if (!user) {
+        // 【2026-10-06 修复 · Bug2】原来这里是"任意 ≥6 字符 token 都下发配置"的容灾兜底，
+        //   意图是防"冷机房缓存没同步"误伤正常用户；但判定过宽 —— 任何随机 token
+        //   (以及已被彻底删除的用户)都能拿到 200 + 全部节点配置(真实 IP/端口/UUID/路径)。
+        //   现在改成【二次权威核验】：getCachedUsers() 已经查过
+        //   隔离区内存 -> 本机房 Cache API -> 全球 KV -> 兜底名单 四级，
+        //   仍未命中就再直查一次 KV 全球主库；确认不存在一律 403。
+        //   成本：只在"未知 token"请求上多一次 KV 读(默认 60 秒缓存)，不产生写入。
+        const authStore = await getAuthoritativeUsers();
+        user = authStore[token] || null;
       }
       if (!user) return new Response('错误：订阅不存在或已被禁用', { status: 403 });
       if (!user.enabled) return new Response('错误：该订阅已被管理员停用', { status: 403 });
@@ -4216,7 +4247,15 @@ rules:
               // ① 总计上下行流量
               var tbEl = document.getElementById('bwTotalBytes');
               if (tbEl) {
-                var tot = (Number(d.downBytes) || 0) + (Number(d.upBytes) || 0);
+                // 【2026-10-06 修复 · Bug5】精简快照可能只带了部分字段：
+                //   缺哪一项就退回最近一次完整 stats 的同名字段（仍然缺才当 0），
+                //   避免"总计流量"在推送与轮询之间来回跳成 0。
+                var _dFull = window.__lastFullStats || null;
+                var downVal = (typeof d.downBytes === 'number') ? d.downBytes
+                            : (_dFull ? _dFull.downBytes : 0);
+                var upVal = (typeof d.upBytes === 'number') ? d.upBytes
+                          : (_dFull ? _dFull.upBytes : 0);
+                var tot = (Number(downVal) || 0) + (Number(upVal) || 0);
                 tbEl.innerText = (tot > 0) ? formatBytes(tot) : '未测到';
               }
               // ② 两个峰值（手机端统计）
@@ -4959,14 +4998,14 @@ rules:
                   else gaugeChart.data.datasets[0].backgroundColor[0] = '#ffffff';
                   gaugeChart.update('none');
                 } catch (e) {}
-                // 总计流量 / 两个峰值：峰值来自手机端真实统计（不用浏览器会话的临时值）
-                // ⚠ /api/live 推的是【精简快照】(只有 up/down/pings 等), 不含
-                //   downBytes/upBytes/bwPeak。所以这里不传参, 让 applyBwPanel
-                //   读最近一次完整 stats 的缓存 —— 推送路径到得比轮询快(6秒 vs 60秒),
-                //   不这样做的话这四项要等轮询才更新。
-                try {
-                  applyBwPanel();
-                } catch (e) {}
+          // 总计流量 / 两个峰值：峰值来自手机端真实统计（不用浏览器会话的临时值）
+          // 【2026-10-06 修复 · Bug5】原来这里不传参，等于让 applyBwPanel 去读
+          //   "最近一次完整 stats"的缓存 —— 那是 60 秒轮询才更新的，于是半圆仪表
+          //   在跳、下面三项卡住 60 秒。现在服务端已把
+          //   downBytes/upBytes/bwPeak 放进精简快照，这里直接把它传下去即可秒级刷新。
+          try {
+            applyBwPanel(m);
+          } catch (e) {}
               }
               // 【2026-10-03 关键修复】这里必须同时刷新 6 个区域的延迟数字与抖动。
               // 上一轮只让"年龄"走了实时推送, 而更新数字的 setGw 仍只在 60 秒轮询里调用,

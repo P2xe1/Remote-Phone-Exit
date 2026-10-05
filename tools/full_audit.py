@@ -64,10 +64,12 @@ def test_subscription():
         has_proxy = 'PROXY' in content
         has_auto = 'AUTO - 自动选优' in content
         has_fallback = 'FALLBACK - 故障转移' in content
-        has_znh = 'DM-Link' in content
-        print(f"  [+] Clash Subscription: {node_count} nodes | PROXY={has_proxy} | AUTO={has_auto} | FALLBACK={has_fallback} | DM-Link={has_znh}")
+        # 【2026-10-06 修复 · Bug6】订阅分组已按用户决策精简为
+        #   PROXY / AUTO / FALLBACK 三个核心组，专线组与地区组全部删除。
+        #   这里原来还断言旧组存在 => 脚本第 2 步必然崩溃（0 项通过）。
+        print(f"  [+] Clash Subscription: {node_count} nodes | PROXY={has_proxy} | AUTO={has_auto} | FALLBACK={has_fallback}")
         assert node_count >= 50, f"Expected >= 50 nodes, got {node_count}"
-        assert has_proxy and has_auto and has_fallback and has_znh, "Missing core proxy groups"
+        assert has_proxy and has_auto and has_fallback, "Missing core proxy groups"
 
     # V2Ray
     v2ray_url = f"{BASE_URL}/sub?token=USER_TOKEN_2&type=v2ray"

@@ -573,9 +573,22 @@ if [ $((NOW - LAST_HIST)) -ge 30 ]; then
   # 只在峰值真的变大（或换了天）时落盘，减少写次数
   if [ "$BW_PREV_KEY" != "$BW_DAY_KEY" ] \
      || awk -v a="$BW_DAY_PEAK" -v b="$BW_PREV_PEAK" 'BEGIN{exit !(a > b)}'; then
-    echo "$BW_DAY_KEY $BW_DAY_PEAK" > "$BW_PEAK_FILE" 2>/dev/null
+    # 【2026-10-06 修复 · Bug4】把 15 分钟峰值也一起落盘：本脚本每 6 秒被调度一次、
+    #   跑完即退出，而这段计算 30 秒才跑一次 —— 中间那 4 轮变量是空的，
+    #   载荷里就整个缺了 bwPeak 字段。落盘带上 15 分钟峰值，非重算周期直接复用。
+    echo "$BW_DAY_KEY $BW_DAY_PEAK $BW_15M" > "$BW_PEAK_FILE" 2>/dev/null
   fi
   BW_PEAK_JSON="\"bwPeak\":{\"total15m\":$BW_15M,\"day\":$BW_DAY_PEAK,\"dayKey\":\"$BW_DAY_KEY\"},"
+fi
+
+# 非 30 秒重算周期：直接复用本地缓存的最新峰值，确保每轮 6 秒上报均带有 bwPeak
+#   （老格式文件只有两个字段，_k_15m 取空时按 0 处理，向后兼容。）
+if [ -z "$BW_PEAK_JSON" ] && [ -f "$BW_PEAK_FILE" ]; then
+  read -r _k_key _k_day _k_15m < "$BW_PEAK_FILE" 2>/dev/null
+  if [ -n "$_k_key" ] && [ -n "$_k_day" ]; then
+    [ -z "$_k_15m" ] && _k_15m=0
+    BW_PEAK_JSON="\"bwPeak\":{\"total15m\":$_k_15m,\"day\":$_k_day,\"dayKey\":\"$_k_key\"},"
+  fi
 fi
 
 # 格式化 15 分钟历史波次为 JSON (严格剥除任何 \r 防止破坏 JSON 语法)
