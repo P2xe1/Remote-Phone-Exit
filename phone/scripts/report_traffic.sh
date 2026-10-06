@@ -1,5 +1,9 @@
 #!/system/bin/sh
-API_SERVER="${RELAY_TARGET_IP}:10085"
+# 【2026-10-06 修复】xray API 只监听 127.0.0.1:10085(见 Worker 下发的配置)。
+#   原来指向 RELAY_TARGET_IP(公网探测目标), statsquery 必然失败 -> RAW 为空 -> 整轮不上报。
+API_SERVER="127.0.0.1:10085"
+# 历史共享用户 shared_legacy 的流量归属对象(可留空 = 不归并), 必须与 Worker 的 LEGACY_OWNER_TOKEN 一致
+LEGACY_OWNER_TOKEN="${LEGACY_OWNER_TOKEN}"
 WORKER_URL="https://${WORKER_HOST}/api/report_traffic"
 CONFIG_URL="https://${WORKER_HOST}/api/phone_xray_config"
 USERS_URL="https://${WORKER_HOST}/api/phone_users"
@@ -65,7 +69,7 @@ ACTIVE_CONNS=$((RAW_CONNS > 0 ? RAW_CONNS - 1 : 0))
 XRAY_LIVE=0
 X_PID=$(pgrep -f "/data/local/tmp/xray run" 2>/dev/null | head -n1)
 if [ -n "$X_PID" ]; then
-  if /data/local/tmp/xray api statsquery --server=${RELAY_TARGET_IP}:10085 >/dev/null 2>&1; then
+  if /data/local/tmp/xray api statsquery --server=$API_SERVER >/dev/null 2>&1; then
     XRAY_LIVE=1
   fi
 fi
@@ -99,6 +103,22 @@ CARRIER=$(getprop gsm.operator.alpha 2>/dev/null)
 [ -z "$DEV_ABI" ] && DEV_ABI="unknown"
 [ -z "$ANDROID_VER" ] && ANDROID_VER="unknown"
 [ -z "$CARRIER" ] && CARRIER="unknown"
+
+# 【2026-10-06 修复】字符串字段拼进 JSON 前必须转义: WiFi 名/机型/运营商里只要有一个 " 或 \,
+#   整份载荷就是非法 JSON -> Worker 400 -> 本轮上报全部丢失。
+json_esc() { printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g' | tr -d '\r\n\t'; }
+WIFI_SSID=$(json_esc "$WIFI_SSID")
+WIFI_SPEED=$(json_esc "$WIFI_SPEED")
+BAT_TEMP=$(json_esc "$BAT_TEMP")
+BAT_CHG=$(json_esc "$BAT_CHG")
+UPTIME_STR=$(json_esc "$UPTIME_STR")
+DEV_BRAND=$(json_esc "$DEV_BRAND")
+DEV_MODEL=$(json_esc "$DEV_MODEL")
+DEV_ABI=$(json_esc "$DEV_ABI")
+ANDROID_VER=$(json_esc "$ANDROID_VER")
+CARRIER=$(json_esc "$CARRIER")
+case "$WIFI_RSSI" in ''|*[!0-9-]*) WIFI_RSSI=0 ;; esac
+case "$BAT_LVL" in ''|*[!0-9]*) BAT_LVL=0 ;; esac
 
 TELEMETRY_JSON="\"telemetry\":{\"battery\":{\"level\":$BAT_LVL,\"temp\":\"$BAT_TEMP\",\"status\":\"$BAT_CHG\"},\"wifi\":{\"ssid\":\"$WIFI_SSID\",\"rssi\":$WIFI_RSSI,\"speed\":\"$WIFI_SPEED\"},\"uptime\":\"$UPTIME_STR\",\"sockets\":$ACTIVE_CONNS,\"brand\":\"$DEV_BRAND\",\"model\":\"$DEV_MODEL\",\"abi\":\"$DEV_ABI\",\"android\":\"$ANDROID_VER\",\"carrier\":\"$CARRIER\",\"xrayLive\":$XRAY_LIVE,\"cfErrors\":$CF_502_ERRS},\"xrayStatus\":$XRAY_LIVE,"
 
@@ -205,7 +225,7 @@ ONLINE_USERS_JSON=""
 #   大屏"谁在线/刚断开时间"全都不准。现在一律以【名单文件】为准: 有人在线就是真人名单,
 #   没人就是空数组, 语义明确, 不再省略。
 if [ -f "$ONLINE_USERS_FILE" ]; then
-  _ou_list=$(awk 'NF>0 { printf "%s\"%s\"", (c++ ? "," : ""), $0 }' "$ONLINE_USERS_FILE" 2>/dev/null)
+  _ou_list=$(awk 'NF>0 { gsub(/[^A-Za-z0-9_-]/, "", $0); if ($0 != "") printf "%s\"%s\"", (c++ ? "," : ""), $0 }' "$ONLINE_USERS_FILE" 2>/dev/null)
   ONLINE_USERS_JSON="\"onlineUsers\":[$_ou_list],"
 fi
 
@@ -256,7 +276,8 @@ USER_TRAFFICS_JSON=$(echo "$RAW" | awk \
   -v onlineLastActiveFile="$ONLINE_LAST_ACTIVE" \
   -v onlineCacheFile="$ONLINE_CACHE_FILE" \
   -v onlinePrevSetFile="$ONLINE_PREV_SET" \
-  -v connStateFile="$CONN_STATE_FILE" '
+  -v connStateFile="$CONN_STATE_FILE" \
+  -v legacyOwner="$LEGACY_OWNER_TOKEN" '
 BEGIN {
   # 1. 加载持久化基线
   while ((getline line < baseFile) > 0) {
@@ -335,7 +356,7 @@ BEGIN {
     dir = parts[4];
     sub(/^user_/, "", u);
     sub(/[" ,]+/, "", dir);
-    if (u == "shared_legacy") u = "USER_TOKEN_1";
+    if (u == "shared_legacy" && legacyOwner != "") u = legacyOwner;
   }
 }
 /"value": [0-9]+/ {
@@ -343,8 +364,9 @@ BEGIN {
     n = split($0, vparts, ":");
     if (n >= 2) {
       val = vparts[2] + 0;
-      if (dir ~ /uplink/) cur_raw_up[u] = val;
-      if (dir ~ /downlink/) cur_raw_down[u] = val;
+      # 【2026-10-06 修复】shared_legacy 归并到某用户时必须累加, 否则会覆盖该用户自己的计数
+      if (dir ~ /uplink/) cur_raw_up[u] += val;
+      if (dir ~ /downlink/) cur_raw_down[u] += val;
       tokens[u] = 1;
     }
     u = ""; dir = "";
@@ -611,7 +633,7 @@ END { printf "],"; }' "$HIST_FILE" 2>/dev/null)
 # ========================================================
 # 5. 用户访问域名网站统计 (解析 /sdcard/xray_live.log)
 # ========================================================
-DOMAIN_JSON=$(tail -n 300 /sdcard/xray_live.log 2>/dev/null | awk '/accepted tcp:/ {
+DOMAIN_JSON=$(tail -n 300 /sdcard/xray_live.log 2>/dev/null | awk -v legacyOwner="$LEGACY_OWNER_TOKEN" '/accepted tcp:/ {
   target = ""; user = "";
   for (i=1; i<=NF; i++) {
     if ($i == "accepted" && $(i+1) ~ /^tcp:/) {
@@ -624,13 +646,15 @@ DOMAIN_JSON=$(tail -n 300 /sdcard/xray_live.log 2>/dev/null | awk '/accepted tcp
   }
   if (target != "" && user != "") {
     sub(/^user_/, "", user);
-    if (user == "shared_legacy") user = "USER_TOKEN_2";
+    if (user == "shared_legacy" && legacyOwner != "") user = legacyOwner;
     n = split(target, p, ".");
     if (n >= 2) {
       if (n >= 3 && (p[n-1] == "com" || p[n-1] == "net" || p[n-1] == "org" || p[n-1] == "co")) domain = p[n-2]"."p[n-1]"."p[n];
       else domain = p[n-1]"."p[n];
     } else domain = target;
-    counts[user"|"domain]++;
+    # 【2026-10-06 修复】日志里的域名/用户名只保留安全字符, 防止拼坏 JSON
+    gsub(/[^A-Za-z0-9._-]/, "", domain); gsub(/[^A-Za-z0-9_-]/, "", user);
+    if (domain != "" && user != "") counts[user"|"domain]++;
   }
 } END {
   printf "\"domainStats\":{";
@@ -656,7 +680,9 @@ DOMAIN_JSON=$(tail -n 300 /sdcard/xray_live.log 2>/dev/null | awk '/accepted tcp
 PV_MASTER=""
 [ -f "$VER_FILE" ] && PV_MASTER=$(cat "$VER_FILE" 2>/dev/null)
 SA_MASTER=""
-[ -f /data/local/tmp/last_sync_req.txt ] && SA_MASTER=$(cat /data/local/tmp/last_sync_req.txt 2>/dev/null)
+# 【2026-10-06 修复】确认只能在同步真正完成后发出: 原来读 last_sync_req.txt(收到指令就写),
+#   sync_worker 失败也会被 Worker 当成"已同步 ✓"。现在只读 sync_worker 成功后写的 sync_acked.txt。
+[ -f /data/local/tmp/sync_acked.txt ] && SA_MASTER=$(cat /data/local/tmp/sync_acked.txt 2>/dev/null | tr -cd 'A-Za-z0-9_-')
 PT_MASTER=""
 if [ -f /data/local/tmp/config.json ]; then
   PT_MASTER=$(grep -o 'user_[a-zA-Z0-9_-]*' /data/local/tmp/config.json 2>/dev/null | sed 's/^user_/"/; s/$/"/' | sort -u | tr '\n' ',' | sed 's/,$//')
@@ -694,8 +720,7 @@ if [ -n "$RAW" ]; then
     [ "$CUR_VER" != "$OLD_VER" ] && HEAVY_DUE=1
   fi
   if [ "$HEAVY_DUE" = "1" ]; then
-    echo "$NOW_H" > "$HEAVY_FILE"
-    [ -f "$VER_FILE" ] && cp -f "$VER_FILE" "$HEAVY_VER_FILE" 2>/dev/null
+    # 【2026-10-06 修复】发送时刻改为上报成功后才记(见下方 curl 之后), 失败则下一轮重发
     HEAVY_STATE="heavy"
   else
     USER_TRAFFICS_JSON=""
@@ -778,11 +803,16 @@ if [ -n "$RAW" ]; then
   # ========================================================
   #   实测(2026-10-06): ${CF_ANCHOR_4} 落 POP2, ${CF_ANCHOR_1} 落 POP1, ${RELAY_TARGET_IP} 稳落 POP3。
   #   这三个机房覆盖了观众最常见的亚洲核心落点; 采用后台并发发射(即发即弃), 耗时 0ms 绝不拖慢 6 秒主循环。
+  if [ "$HEAVY_STATE" = "heavy" ] && echo "$RESP" | grep -q '"status":"ok"'; then
+    echo "$NOW_H" > "$HEAVY_FILE"
+    [ -f "$VER_FILE" ] && cp -f "$VER_FILE" "$HEAVY_VER_FILE" 2>/dev/null
+  fi
   if [ -n "$RESP" ]; then
     for _seedip in ${CF_ANCHOR_4} ${CF_ANCHOR_1} ${RELAY_TARGET_IP}; do
       /system/bin/curl --connect-timeout 2 -m 3 -s -o /dev/null -X POST "$WORKER_URL" \
         -H "Content-Type: application/json" \
         -H "X-Sync-Key: $REPORT_SECRET" \
+        -H "X-Seed: 1" \
         --resolve "${WORKER_HOST}:443:$_seedip" \
         -d @/data/local/tmp/traffic_payload.json >/dev/null 2>&1 &
     done
@@ -823,8 +853,15 @@ if [ -n "$RESP" ]; then
   # -> ping_scheduler 发现标记后启动 fast_scan.sh 做全速扫描(去掉10秒间隔)
   # ========================================================
   SCAN_REQ=$(echo "$RESP" | /system/bin/sed -n 's/.*"scanReq":"\([^"]*\)".*/\1/p')
+  # 【2026-10-06 修复】① 同一条指令不重复写(否则 mtime 不断更新, fast_scan 会误判"有新指令"反复重跑);
+  #   ② 收到新指令直接拉起 fast_scan —— 原来要等 ping_scheduler 下一个 60 秒循环才发现。
   if [ -n "$SCAN_REQ" ]; then
-    echo "$SCAN_REQ" > /data/local/tmp/scan_req
+    if [ "$(cat /data/local/tmp/scan_req 2>/dev/null)" != "$SCAN_REQ" ]; then
+      echo "$SCAN_REQ" > /data/local/tmp/scan_req
+      if ! pgrep -f "fast_scan.sh" >/dev/null 2>&1; then
+        nohup sh /data/local/tmp/fast_scan.sh </dev/null >/dev/null 2>&1 &
+      fi
+    fi
   fi
   if [ -n "$SYNC_REQ" ]; then
     LAST_SYNC_REQ=""
