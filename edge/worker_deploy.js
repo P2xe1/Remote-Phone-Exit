@@ -571,19 +571,29 @@ async function readLiveSnapshot(allowKv = true) {
     if (r) s = await r.json();
   } catch (e) {}
   if (!s) s = globalMemoryStats;
-  // 【2026-10-05 跨机房治本】本机房 Cache 里没有(或太旧)时, 回落 KV 全球快照,
-  //   否则"落在无数据机房"的观众会看到"遥测推送中断 + 整屏 --"。
-  if (allowKv && (!s || (Date.now() - (s.timestamp || 0)) > 120000)) {
+  // 【2026-10-06 跨机房优化】本机房 Cache 里没有或超过 20 秒未收到新鲜上报时, 回落 KV 全球快照,
+  //   避免在无数据机房持续等待 120 秒展示陈旧数据。
+  if (allowKv && (!s || (Date.now() - (s.timestamp || 0)) > 20000)) {
     try {
       const _env = boundEnv;
       if (_env && _env.SUB_DB) {
           // 【2026-10-05 修复 · 第②项】读缓存 60 → 30 秒：KV 官方规定 cacheTtl
-          //   最小 30 秒（设 0 会被拒绝），所以"去掉那 60 秒"只能做到减半。
-          //   代价：本路径的 KV 读按机房每 30 秒最多一次，仍有充足余量。
+          //   最小 30 秒（设 0 会被拒绝）。同一机房每 30 秒最多向 KV 发起 1 次真实读。
           const _raw = await _env.SUB_DB.get(SNAP_KV_KEY, { cacheTtl: 30 });
         if (_raw) {
           const _k = JSON.parse(_raw);
-          if (_k && (!s || (_k.timestamp || 0) > (s.timestamp || 0))) s = _k;
+          if (_k && (!s || (_k.timestamp || 0) > (s.timestamp || 0))) {
+            s = _k;
+            // 回填本机房 Cache API，供同机房所有 isolate 及后续长轮询轮次共享
+            try {
+              await caches.default.put(
+                new URL(`https://${WORKER_HOST}/internal_cache/stats_latest`),
+                new Response(JSON.stringify(s), {
+                  headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60' }
+                })
+              );
+            } catch (e) {}
+          }
         }
       }
     } catch (e) {}
@@ -2132,17 +2142,24 @@ export default {
           }
         } catch (cErr) {}
       }
-      // 【2026-10-05 跨机房治本】本机房没有快照、或快照已过旧(>120 秒)时,
-      //   回落到 KV 的全球快照(最多 5 分钟陈旧, 仍满足"<=599 秒显示绿色"的规则)。
-    //   【2026-10-05 修复 · 第②项】cacheTtl 60 → 30（官方最小 30 秒）：
-    //   把"读缓存额外带来的陈旧"从最多 60 秒压到最多 30 秒。
-    //   同一机房每 30 秒最多 1 次真实 KV 读，读额度仍有充足余量。
+      // 【2026-10-06 跨机房优化】本机房没有快照、或快照超过 20 秒未收到新鲜上报时,
+      //   回落到 KV 的全球快照, 避免在无数据机房持续等待 120 秒展示陈旧数据。
       try {
-        if (!s || (serverNow - (s.timestamp || 0)) > 120000) {
-      const _kvRaw = await env.SUB_DB.get(SNAP_KV_KEY, { cacheTtl: 30 });
+        if (!s || (serverNow - (s.timestamp || 0)) > 20000) {
+          const _kvRaw = await env.SUB_DB.get(SNAP_KV_KEY, { cacheTtl: 30 });
           if (_kvRaw) {
             const _kvSnap = JSON.parse(_kvRaw);
-            if (_kvSnap && (!s || (_kvSnap.timestamp || 0) > (s.timestamp || 0))) s = _kvSnap;
+            if (_kvSnap && (!s || (_kvSnap.timestamp || 0) > (s.timestamp || 0))) {
+              s = _kvSnap;
+              try {
+                await caches.default.put(
+                  new URL(`https://${WORKER_HOST}/internal_cache/stats_latest`),
+                  new Response(JSON.stringify(s), {
+                    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60' }
+                  })
+                );
+              } catch (e) {}
+            }
           }
         }
       } catch (e) {}
