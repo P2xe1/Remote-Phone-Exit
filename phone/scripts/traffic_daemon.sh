@@ -70,9 +70,9 @@ while true; do
     nohup /data/local/tmp/xray run -c /data/local/tmp/config.json </dev/null >/sdcard/xray_live.log 2>&1 &
   fi
 
-  # 2. 确保 cloudflared 存活
+  # 2. 确保 cloudflared 存活 (已开启 QUIC/HTTP3 原生多路复用隧道)
   if ! pgrep -f "cloudflared_native" >/dev/null 2>&1; then
-    nohup /data/local/tmp/cloudflared_native tunnel --config /data/local/tmp/config.yml --no-autoupdate --edge-ip-version 4 --protocol http2 run </dev/null >/sdcard/cf_named.log 2>&1 &
+    nohup /data/local/tmp/cloudflared_native tunnel --config /data/local/tmp/config.yml --no-autoupdate --edge-ip-version 4 --protocol quic run </dev/null >/sdcard/cf_named.log 2>&1 &
   fi
 
   # 3. 确保 ping_scheduler 存活

@@ -776,15 +776,15 @@ if [ -n "$RAW" ]; then
   #   修法: 同一份载荷再【定向】投递到亚洲机房(钉 IP, 实测该 IP 落 POP2),
   #         让观众所在机房也有新鲜数据。成本 +1 请求/轮 ≈ +1.44 万/天, 在免费额度内。
   # ========================================================
-  #   实测(2026-10-05): ${CF_ANCHOR_4} 从本机落 POP2, ${CF_ANCHOR_1} 从本机落 POP3。
-  #   这两个机房覆盖了观众最常见的落点; 其它机房由 KV 全球兜底(最多几分钟陈旧)。
+  #   实测(2026-10-06): ${CF_ANCHOR_4} 落 POP2, ${CF_ANCHOR_1} 落 POP1, ${RELAY_TARGET_IP} 稳落 POP3。
+  #   这三个机房覆盖了观众最常见的亚洲核心落点; 采用后台并发发射(即发即弃), 耗时 0ms 绝不拖慢 6 秒主循环。
   if [ -n "$RESP" ]; then
-    for _seedip in ${CF_ANCHOR_4} ${CF_ANCHOR_1}; do
+    for _seedip in ${CF_ANCHOR_4} ${CF_ANCHOR_1} ${RELAY_TARGET_IP}; do
       /system/bin/curl --connect-timeout 2 -m 3 -s -o /dev/null -X POST "$WORKER_URL" \
         -H "Content-Type: application/json" \
         -H "X-Sync-Key: $REPORT_SECRET" \
         --resolve "${WORKER_HOST}:443:$_seedip" \
-        -d @/data/local/tmp/traffic_payload.json 2>/dev/null
+        -d @/data/local/tmp/traffic_payload.json >/dev/null 2>&1 &
     done
   fi
 fi
