@@ -3159,7 +3159,7 @@ rules:
             .pipe-desc { font-size: var(--md-sys-typescale-label-small); color: var(--md-sys-color-on-surface-variant); font-family: var(--md-sys-font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
             /* MD3 assist chip */
             .pipe-tag { font-size: var(--md-sys-typescale-label-small); font-weight: 500; padding: 3px 8px; border-radius: var(--md-sys-shape-corner-small); display: inline-block; margin-top: 6px; border: 1px solid transparent; white-space: nowrap; }
-            .relay-node.invalid { background: var(--noc-color-success-container); color: var(--noc-color-on-success-container); }
+            .pipe-tag.online { background: var(--noc-color-success-container); color: var(--noc-color-on-success-container); }
             .pipe-tag.edge { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
             .pipe-tag.tunnel { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
             .pipe-tag.host { background: var(--noc-color-success-container); color: var(--noc-color-on-success-container); }
@@ -4013,12 +4013,14 @@ rules:
                       <th>用户</th>
                       <th>订阅地址 (支持一键点击复制)</th>
                       <th>服务状态</th>
+                      <th>连接状态</th>
                       <th>同步次数</th>
+                      <th>最后活跃</th>
                       <th>出口 IP</th>
                       <th>管理</th>
                     </tr>
                   </thead>
-                  <tbody id="userTableBody">${rows || '<tr><td colspan="6" style="padding:16px;text-align:center;color:#444;">暂无已配置用户</td></tr>'}</tbody>
+                  <tbody id="userTableBody">${rows || '<tr><td colspan="8" style="padding:16px;text-align:center;color:#444;">暂无已配置用户</td></tr>'}</tbody>
                 </table>
               </div>
             </div>
@@ -4294,7 +4296,7 @@ rules:
               manualScanBusy = true;
               if (btn) { btn.disabled = true; btn.innerText = '⚡ 已下发…'; }
               try {
-                const r = await fetch(window.location.origin + '/api/manual_scan?pwd=' + window.__CFG.ADMIN_PASSWORD, {
+                const r = await fetch(window.location.origin + '/api/manual_scan', { headers: { 'X-Admin-Key': window.__CFG.ADMIN_PASSWORD },
                   method: 'POST', cache: 'no-store'
                 });
                 const j = await r.json();
@@ -4538,7 +4540,7 @@ rules:
                   total: stat.total || 0,
                   up: stat.up || 0,
                   down: stat.down || 0,
-                  online: relay-node.invalid || 0,
+                  online: stat.online || 0,
                   rateDown: stat.rateDown || 0,
                   rateUp: stat.rateUp || 0,
                   lastActive: stat.lastActive || 0
@@ -4798,7 +4800,7 @@ rules:
               const tbody = document.getElementById('userTableBody');
               if (!tbody || !Array.isArray(users)) return;
               if (users.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="padding:16px;text-align:center;color:#444;">暂无已配置用户</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="padding:16px;text-align:center;color:#444;">暂无已配置用户</td></tr>';
                 return;
               }
               const nowSec = Math.floor(Date.now() / 1000);
@@ -4873,8 +4875,8 @@ rules:
                   '</span>';
                 }
 
-                const clashUrl = window.location.origin + '/sub?token=' + u.token + '&type=clash';
-                const v2rayUrl = window.location.origin + '/sub?token=' + u.token + '&type=v2ray';
+                const clashUrl = window.location.origin + '/sub?token=' + encodeURIComponent(u.token) + '&type=clash';
+                const v2rayUrl = window.location.origin + '/sub?token=' + encodeURIComponent(u.token) + '&type=v2ray';
 
                 return '<tr style="border-bottom:1px solid #141414;">' +
                   '<td style="padding:10px 12px;font-weight:600;">' + nameDisplay + '</td>' +
@@ -4981,7 +4983,7 @@ rules:
               const badge = document.getElementById('phoneSyncBadge');
               if (btn) { btn.disabled = true; btn.innerText = '⟳ 下发中…'; }
               try {
-                const r = await fetch(window.location.origin + '/api/phone_sync?pwd=' + window.__CFG.ADMIN_PASSWORD, {
+                const r = await fetch(window.location.origin + '/api/phone_sync', { headers: { 'X-Admin-Key': window.__CFG.ADMIN_PASSWORD },
                   method: 'POST', cache: 'no-store'
                 });
                 const j = await r.json();
@@ -5013,7 +5015,8 @@ rules:
             window.__pageBuild = '${BUILD_ID}';
     // 【导出修复】页面侧运行时配置：密码不再从服务端 env 取，
     //   而是在渲染页面时注入（浏览器里没有 env 对象）。
-    window.__CFG = { ADMIN_PASSWORD: '${ADMIN_PASSWORD}' };
+    // 【2026-10-06 修复】原来直接拼进单引号字符串: 口令含 ' 或 </script> 会破坏/注入脚本。
+    window.__CFG = { ADMIN_PASSWORD: ${JSON.stringify(String(ADMIN_PASSWORD)).replace(/</g, '\\u003c')} };
 
             // ==========================================================
             // A2 · 秒级实时推送 (Server-Sent Events)
@@ -5151,8 +5154,8 @@ rules:
 
             // ==========================================================
             // 断线告警: 手机超过阈值未上报时在页面顶部弹出醒目横幅
-            //   90 秒 -> 黄色(数据延迟偏高)
-            //   300 秒 -> 红色(服务中断)
+            //   600 秒 -> 黄色(数据延迟偏高)
+            //   1800 秒 -> 红色(服务中断)
             // 数据来源: 实时推送带回来的 ageS + 距上次推送的本地耗时,
             //           因此精度是秒级的, 不依赖整页 60 秒轮询。
             // ==========================================================
@@ -5207,8 +5210,8 @@ rules:
             async function liveLoop() {
               if (!liveOn) return;
               try {
-                const r = await fetch(window.location.origin + '/api/live?pwd=' + window.__CFG.ADMIN_PASSWORD
-                    + '&since=' + encodeURIComponent(liveStamp), { cache: 'no-store' });
+                const r = await fetch(window.location.origin + '/api/live?since=' + encodeURIComponent(liveStamp),
+                    { cache: 'no-store', headers: { 'X-Admin-Key': window.__CFG.ADMIN_PASSWORD } });
                 if (r.ok) {
                   const m = await r.json();
                   if (m && m.stamp) { liveStamp = m.stamp; applyLiveSnapshot(m); }
@@ -5236,7 +5239,7 @@ rules:
               const fetchStart = performance.now();
               await probeClientRtt();   // 真实测量 客户端↔CF边缘 RTT (15 秒节流)
               try {
-                const res = await fetch(window.location.origin + '/api/stats_data?pwd=' + window.__CFG.ADMIN_PASSWORD + '&_t=' + Date.now() + (phoneSyncRequestId ? '&sync=1' : ''), {
+                const res = await fetch(window.location.origin + '/api/stats_data?_t=' + Date.now() + (phoneSyncRequestId ? '&sync=1' : ''), { headers: { 'X-Admin-Key': window.__CFG.ADMIN_PASSWORD },
                   cache: 'no-store'
                 });
                 const fetchElapsed = Math.max(1, Math.round(performance.now() - fetchStart));
@@ -5504,7 +5507,7 @@ rules:
                   if (d.pings) {
                     if (window.__probeError) window.__probeError('P1-INBLOCK');
                     const p = d.pings;
-                    const j = d.jitters || { kl: 4, gz: 4, sg: 4, hk: 4, jp: 4, tw: 4 };
+                    const j = d.jitters || {};   // 【2026-10-06】不再编造 4ms 默认抖动
                     window.latestPingTimes = d.pingTimes || window.latestPingTimes || {};
                     // 【G1 修复】手机只在【测量成功】时才更新时间戳, 所以这里算出的
                     // 年龄是可信的。以服务端 serverTime 为基准, 免疫本机与手机时钟偏差。
@@ -5577,9 +5580,10 @@ rules:
                     var tm = d.telemetry || {};
                     var bat = tm.battery || {}, wifi = tm.wifi || {};
                     var setT = function (id, v) { var e = document.getElementById(id); if (e) e.innerText = v; };
-                    setT('healthBattery', (bat.level !== undefined ? bat.level : '--') + '%');
+                    // 【2026-10-06 修复】手机读不到电量时上报 0, 原来会显示 0% 并误报电量偏低
+                    setT('healthBattery', ((typeof bat.level === 'number' && bat.level > 0) ? bat.level : '--') + '%');
                     setT('healthCharging', bat.status === 'Charging' ? '⚡ 充电中' : (bat.status === 'Discharging' ? '🔋 放电中' : (bat.status || '--')));
-                    setT('healthTemp', (bat.temp !== undefined ? bat.temp : '--') + ' °C');
+                    setT('healthTemp', (bat.temp !== undefined && bat.temp !== '') ? (bat.temp + ' °C') : '--');
                     setT('healthRssi', (wifi.rssi !== undefined ? wifi.rssi : '--') + ' dBm');
                     setT('healthWifiSpeed', wifi.speed || '--');
                     var xr = tm.xrayLive;
@@ -5608,9 +5612,9 @@ rules:
                       }
                     } catch (e) {}
                     var alerts = [];
-                    if (bat.level !== undefined && bat.level <= 20) alerts.push('电量偏低');
+                    if (typeof bat.level === 'number' && bat.level > 0 && bat.level <= 20) alerts.push('电量偏低');
                     if (bat.temp !== undefined && parseFloat(bat.temp) >= 42) alerts.push('温度偏高');
-                    if (xr === false) alerts.push('Xray 离线');   // 只有明确上报离线才告警
+                    if (xr === false || xr === 0 || xr === '0') alerts.push('Xray 离线');   // 手机上报的是数字 0/1   // 只有明确上报离线才告警
                     if (wifi.rssi !== undefined && wifi.rssi <= -75) alerts.push('WiFi 信号弱');
                     var alEl = document.getElementById('healthAlert');
                     if (alEl) {
