@@ -271,6 +271,23 @@ flush_state() {
   echo "\"pings\":{\"kl\":$P_KL,\"gz\":$P_GZ,\"sg\":$P_SG,\"hk\":$P_HK,\"jp\":$P_JP,\"tw\":$P_TW,\"egress\":${P_GW:-0}},\"jitters\":{\"kl\":$J_KL,\"gz\":$J_GZ,\"sg\":$J_SG,\"hk\":$J_HK,\"jp\":$J_JP,\"tw\":$J_TW},\"pingTimes\":{\"kl\":$T_KL,\"gz\":$T_GZ,\"sg\":$T_SG,\"hk\":$T_HK,\"jp\":$T_JP,\"tw\":$T_TW},\"losses\":{\"kl\":$L_KL,\"gz\":$L_GZ,\"sg\":$L_SG,\"hk\":$L_HK,\"jp\":$L_JP,\"tw\":$L_TW},\"edgeRtt\":${P_EDGE_RTT:-0},\"intlPings\":{\"kl\":$I_KL,\"gz\":$I_GZ,\"sg\":$I_SG,\"hk\":$I_HK,\"jp\":$I_JP,\"tw\":$I_TW},\"intlTimes\":{\"kl\":$IT_KL,\"gz\":$IT_GZ,\"sg\":$IT_SG,\"hk\":$IT_HK,\"jp\":$IT_JP,\"tw\":$IT_TW},\"intlBaseline\":${I_BASE:-0},\"colos\":{\"kl\":\"$C_KL\",\"gz\":\"$C_GZ\",\"sg\":\"$C_SG\",\"hk\":\"$C_HK\",\"jp\":\"$C_JP\",\"tw\":\"$C_TW\"},\"activeSlot\":$SLOT,\"activeNode\":\"$ACTIVE_KEY\"," > "$PING_CACHE.tmp" && mv "$PING_CACHE.tmp" "$PING_CACHE"
 }
 
+# ========================================================
+# 【2026-10-06 修复】每个区域测量前重新读一次持久化状态。
+#   原来只在每轮开头读一次, 之后 flush_state 用内存里的 6 个旧值整体覆盖文件 ——
+#   fast_scan.sh(手动刷新)刚写入的新结果会在 ≤10 秒内被旧值盖回去, 时间戳也会倒退。
+# ========================================================
+reload_hist() {
+  read -r P_KL P_GZ P_SG P_HK P_JP P_TW 2>/dev/null < "$LAST_PINGS_FILE"
+  read -r J_KL J_GZ J_SG J_HK J_JP J_TW 2>/dev/null < "$LAST_JITTERS_FILE"
+  read -r T_KL T_GZ T_SG T_HK T_JP T_TW 2>/dev/null < "$LAST_TIMES_FILE"
+  read -r L_KL L_GZ L_SG L_HK L_JP L_TW 2>/dev/null < "$LAST_LOSSES_FILE"
+  for _rv in P_KL P_GZ P_SG P_HK P_JP P_TW J_KL J_GZ J_SG J_HK J_JP J_TW \
+             T_KL T_GZ T_SG T_HK T_JP T_TW L_KL L_GZ L_SG L_HK L_JP L_TW; do
+    eval "_rx=\${$_rv}"
+    case "$_rx" in ''|*[!0-9]*) eval "$_rv=0" ;; esac
+  done
+}
+
 while true; do
   # 【严格 60 秒周期】本轮起点 = 当前整分钟。锚定墙上时钟,
   # 无论本轮测量快慢, 下一轮必定在下一个整分钟开始 => 物理上不可能漂移或拉长。
@@ -401,6 +418,7 @@ while true; do
     sleep 1
   done
   NOW=$(date +%s)
+  reload_hist   # 【2026-10-06】合并 fast_scan 等其它进程写入的最新值, 只改本区域那一列
   VAL=0
   OLD_VAL=0
   OLD_JIT=0

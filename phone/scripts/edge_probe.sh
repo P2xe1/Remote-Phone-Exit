@@ -53,14 +53,17 @@ EDGE_RTT_FILE="/data/local/tmp/last_edge_rtt.txt"
 # 与 ping_scheduler.sh / fast_scan.sh 中的同名函数保持逐字一致
 measure_edge_rtt() {
   _n=0; _v1=0; _v2=0; _v3=0
-  for _i in 1 2 3; do
+  # 【2026-10-06 修复】原来固定测 3 次且必须 3 次全有效, 丢 1 个样本整次作废(显示 --)。
+  #   现在最多尝试 5 次, 凑够 3 个有效样本(>=10ms)即停。
+  for _i in 1 2 3 4 5; do
     _T=$(/system/bin/curl --connect-timeout 1 -m 2 -o /dev/null -s \
          -w "%{time_connect}" "https://${TUNNEL_HOST}/kl" 2>/dev/null)
     _V=$(awk -v t="$_T" 'BEGIN{v=int(t*1000); print (v>0?v:0)}')
-    if [ "$_V" -gt 0 ]; then
+    if [ "$_V" -ge 10 ]; then
       _n=$((_n + 1))
       case $_n in 1) _v1=$_V;; 2) _v2=$_V;; 3) _v3=$_V;; esac
     fi
+    [ "$_n" -ge 3 ] && break
   done
   awk -v a="$_v1" -v b="$_v2" -v c="$_v3" 'BEGIN{
     # 【统一口径 2026-10-04 用户决策】丢弃 <10ms 的无效样本, 取最低 3 个有效样本的中位数;
