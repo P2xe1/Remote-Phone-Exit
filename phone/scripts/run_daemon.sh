@@ -36,7 +36,7 @@ if [ "$RC" != "0" ]; then
 fi
 
 nohup /data/local/tmp/xray run -c /data/local/tmp/config.json </dev/null > /sdcard/xray_live.log 2>&1 &
-nohup /data/local/tmp/cloudflared_native tunnel --config /data/local/tmp/config.yml --no-autoupdate --edge-ip-version 4 --protocol quic run </dev/null > /sdcard/cf_named.log 2>&1 &
+nohup /data/local/tmp/cloudflared_native tunnel --config /data/local/tmp/config.yml --no-autoupdate --edge-ip-version 4 --protocol http2 run </dev/null > /sdcard/cf_named.log 2>&1 &
 nohup /data/local/tmp/traffic_daemon.sh </dev/null > /dev/null 2>&1 &
 sleep 3
 
