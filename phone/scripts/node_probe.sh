@@ -98,7 +98,7 @@ while true; do
   [ -z "$NPATH" ] && NPATH="/kl"
   NIP="$NIP_ORIG"
 
-  # 【2026-10-04 修复 T6.3】域名式节点(如 auto.cf.relay-node.invalid)原来直接塞进
+  # 【2026-10-04 修复 T6.3】域名式节点(如 auto.cf.example.com)原来直接塞进
   #   --resolve 会失败(实测 000, 永远标红)。现在先 DNS 解析成 IP 再 --resolve;
   #   解析失败本轮如实标 0 跳过, 不消耗两次 5 秒的无效探测。
   IS_IP=$(echo "$NIP" | grep -cE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$')
@@ -212,7 +212,8 @@ while true; do
   #   远低于 8%(12 Mbps) 预算。
   # ============================================================
   FAST_LEFT_FILE="/data/local/tmp/node_fast_left"
-  SCAN_TS=$(ls -l /data/local/tmp/scan_req 2>/dev/null | awk '{print $6$7$8}' | tr -d ':')
+  # 【2026-10-06 修复】原来解析 ls -l 的时间列(只到分钟), 1 分钟内的两次指令会被当成同一次。
+  SCAN_TS=$(date -r /data/local/tmp/scan_req +%s 2>/dev/null)
   [ -z "$SCAN_TS" ] && SCAN_TS="none"
   LAST_FULL=$(cat /data/local/tmp/node_full_at 2>/dev/null)
   [ -z "$LAST_FULL" ] && LAST_FULL="none"
