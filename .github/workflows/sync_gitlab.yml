@@ -18,7 +18,10 @@ jobs:
       - name: Push to GitLab with Loop Detection
         env:
           GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
-          GITLAB_REPO: ${{ secrets.GITLAB_REPO }}
+          # 2026-10-07: project transferred from p2xel-group to remote-phone1
+          # (remote-phone1 holds the GitLab Duo trial credits). Kept hardcoded
+          # because the repo path is not a secret (repo is public).
+          GITLAB_REPO: remote-phone1/Remote-Phone-Exit
         run: |
           if [ -z "$GITLAB_TOKEN" ] || [ -z "$GITLAB_REPO" ]; then
             echo "::notice ::Secrets not configured. Skipping."
