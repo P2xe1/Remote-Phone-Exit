@@ -1149,6 +1149,9 @@ export default {
       if (request.method !== 'POST') {
         return new Response('Method Not Allowed', { status: 405 });
       }
+      // 【2026-10-06 修复】拒绝跨源写入, 防止第三方页面批量污染样本
+      const _org = request.headers.get('Origin');
+      if (_org && _org !== url.origin) return new Response('Forbidden', { status: 403 });
       const hdr = { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
       const colo = (request.cf && request.cf.colo) ? String(request.cf.colo).toUpperCase() : '';
       if (!colo || colo.length > 8 || !/^[A-Z]{3}$/.test(colo)) {
@@ -1179,7 +1182,7 @@ export default {
     // 【数据来源】本机房 isolate 内存 -> 免费 Cache API; (实测手机与浏览器同在 POP2 机房)
     // -------------------------------------------------------------
     if (url.pathname === '/api/live') {
-      if (url.searchParams.get('pwd') !== ADMIN_PASSWORD) {
+      if (!_adminOk(request, url)) {
         return new Response('Unauthorized', { status: 401 });
       }
       const since = url.searchParams.get('since') || '';
@@ -1217,7 +1220,7 @@ export default {
     //   看不到 KV 里的计数；只有落到"没有实时数据的机房"才走 KV 兜底。
     // -------------------------------------------------------------
     if (url.pathname === '/api/kv_health') {
-      if (url.searchParams.get('pwd') !== ADMIN_PASSWORD) {
+      if (!_adminOk(request, url)) {
         return new Response('Unauthorized', { status: 401 });
       }
       const _kh = { ok: true, now: Date.now() };
@@ -1257,7 +1260,7 @@ export default {
     //   -> 大屏逐个点亮。约 20 秒全部完成。
     // -------------------------------------------------------------
     if (url.pathname === '/api/manual_scan') {
-      if (url.searchParams.get('pwd') !== ADMIN_PASSWORD) {
+      if (!_adminOk(request, url)) {
         return new Response('Unauthorized', { status: 401 });
       }
       // 【2026-10-04 修复 T7.3】只允许 POST, 防止 GET/爬虫误触发全速扫描
@@ -1297,9 +1300,12 @@ export default {
     // -------------------------------------------------------------
     if (url.pathname === '/api/report_traffic' && request.method === 'POST') {
       const syncKey = request.headers.get('X-Sync-Key');
-      if (syncKey !== SYNC_SECRET) {
+      if (!_syncOk(syncKey)) {
         return new Response('Unauthorized', { status: 401 });
       }
+      // 【2026-10-06 修复】手机向其它机房的定向补发带 X-Seed: 1。补发只需更新本机房缓存,
+      //   跳过 readCmd(无缓存 KV 读) / 用户流量 KV 写 / 全球快照写 —— 否则请求与 KV 读量翻 4 倍。
+      const isSeed = request.headers.get('X-Seed') === '1';
       try {
         const body = await request.json();
         // 【2026-10-04 T7.3/T6.5】待下发指令的暂存: 必须在 if 块外声明,
@@ -1360,13 +1366,18 @@ export default {
             }
 
             // 关键归属补丁：如果历史客户端连接了 shared_legacy，将其产生的真实物理流量归属给用户C (USER_TOKEN_21)
+            // 【2026-10-06 修复】原来读 23 写 22(脱敏编号错位), 累加变成覆盖。改为单一配置项。
             if (rawUserBytes['shared_legacy']) {
-              rawUserBytes['USER_TOKEN_22'] = (rawUserBytes['USER_TOKEN_23'] || 0) + rawUserBytes['shared_legacy'];
+              const _lo = _legacyOwner();
+              if (_lo) {
+                rawUserBytes[_lo] = (rawUserBytes[_lo] || 0) + rawUserBytes['shared_legacy'];
+                delete rawUserBytes['shared_legacy'];
+              }
             }
 
-            const dayOfWeek = now.getDay() || 7;
-            const mondayDate = new Date(now);
-            mondayDate.setDate(now.getDate() - dayOfWeek + 1);
+            // 【2026-10-06 修复】星期按 DAY_TZ 计算(原来 getDay/setDate 走 UTC, 周一零点附近错位)
+            const dayOfWeek = _tzWeekday(now);
+            const mondayDate = new Date(now.getTime() - (dayOfWeek - 1) * 86400000);
             const mondayStr = mondayDate.toLocaleDateString('zh-CN', { timeZone: _dayTz() }).replace(/\//g, '-');
 
             // 【2026-10-04 真实性修复】这里原本有一个 HISTORICAL_BASE:
@@ -1402,6 +1413,8 @@ export default {
                   acc.week = 0;
                   acc.lastMonday = mondayStr;
                 }
+                // 【2026-10-06 修复】从快照恢复的累加器没有 lastRaw, 原来会把整段原始计数当增量(重复计数)
+                if (typeof acc.lastRaw !== 'number') acc.lastRaw = raw;
                 let delta = 0;
                 if (raw >= acc.lastRaw) {
                   delta = raw - acc.lastRaw;
@@ -1423,7 +1436,7 @@ export default {
                 let uToken = parts[0];
                 const dom = parts[1];
                 if (uToken.startsWith('user_')) uToken = uToken.substring(5);
-                if (uToken === 'shared_legacy') uToken = 'USER_TOKEN_25';
+                if (uToken === 'shared_legacy') { const _lo = _legacyOwner(); if (_lo) uToken = _lo; }
                 const count = body.domainStats[key];
                 if (!userDomainAccumulators[uToken]) userDomainAccumulators[uToken] = {};
                 userDomainAccumulators[uToken][dom] = (userDomainAccumulators[uToken][dom] || 0) + count;
@@ -1510,7 +1523,7 @@ export default {
           // 【2026-10-04 修复 T4.4】只信 KV 权威源: 不再 || syncReqMemory 兜底
           // (isolate 私有内存里的旧指令会在跨 isolate 场景下复活已消费的请求)。
           // 【2026-10-04 修复 T7.3/T6.5】指令改为 ack 后才删除, 未 ack 继续下发。
-          const curReq = await readCmd(env);
+          const curReq = isSeed ? null : await readCmd(env);
           if (typeof body.phoneVersion === 'string') {
             await mergePhoneMaster({
               version: body.phoneVersion,
@@ -1692,7 +1705,7 @@ export default {
           //   现在加最底层: 重载荷时写 KV(约 2 次/天), 缺字段时读 KV 并带 cacheTtl=300
           //   (实际 KV 读约 288 次/天, 远低于 10 万/天配额; 写 2 次/天, 远低于 1000/天)。
           const USER_TRAFFIC_KV_KEY = 'noc:user_traffics';
-          if (body.userTraffics && Object.keys(body.userTraffics).length > 0) {
+          if (!isSeed && body.userTraffics && Object.keys(body.userTraffics).length > 0) {
             try { await env.SUB_DB.put(USER_TRAFFIC_KV_KEY, JSON.stringify(body.userTraffics)); } catch (e) {}
           }
           let _kvUserTraffics = null;
@@ -1925,7 +1938,7 @@ export default {
           //   三条同时成立才写：间隔够久 + 轮到我写(或上一版已失联) + 未到硬上限。
           //   稳态下同一时刻只有【一个机房】在写，约 576 次/天；即便读缓存让判据
           //   偏保守，也被 SNAP_DAILY_CAP 兜死，绝不再超额度。
-          try {
+          if (!isSeed) try {
             const _nowMs = Date.now();
             const _prevRaw = await env.SUB_DB.get(SNAP_KV_KEY, { cacheTtl: 30 });
             let _prev = null;
@@ -1996,7 +2009,7 @@ export default {
     //         手机下次上报(约 6 秒)取走指令并强制重新拉取, 然后回报确认
     // -------------------------------------------------------------
     if (url.pathname === '/api/phone_sync') {
-      if (url.searchParams.get('pwd') !== ADMIN_PASSWORD) {
+      if (!_adminOk(request, url)) {
         return new Response('Unauthorized', { status: 401 });
       }
       if (request.method === 'POST') {
@@ -2023,7 +2036,7 @@ export default {
     // -------------------------------------------------------------
     if (url.pathname === '/api/phone_users') {
       const syncKey = request.headers.get('X-Sync-Key') || url.searchParams.get('key');
-      if (syncKey !== SYNC_SECRET) {
+      if (!_syncOk(syncKey)) {
         return new Response('Unauthorized', { status: 401 });
       }
       if (request.method === 'POST') {
@@ -2035,6 +2048,13 @@ export default {
             //   ② { version, users }                    —— 手机回推(带乐观并发校验)
             const wrapped = body.users && typeof body.users === 'object';
             const incoming = wrapped ? body.users : body;
+            // 【2026-10-06 修复】token 会被原样渲染进后台页面与订阅地址, 必须限制字符集(防存储型 XSS)
+            const _badTok = Object.keys(incoming || {}).filter(function (k) { return !/^[A-Za-z0-9_-]{1,64}$/.test(k); });
+            if (_badTok.length) {
+              return new Response(JSON.stringify({ status: 'error', note: '非法 token(仅允许 A-Z a-z 0-9 _ -, 最长 64)', bad: _badTok.slice(0, 5) }), {
+                status: 400, headers: { 'Content-Type': 'application/json; charset=utf-8' }
+              });
+            }
             const claimedVer = (wrapped && typeof body.version === 'string') ? body.version : null;
 
             const current = await getAuthoritativeUsers();
@@ -2105,7 +2125,7 @@ export default {
     // -------------------------------------------------------------
     if (url.pathname === '/api/phone_xray_config') {
       const syncKey = request.headers.get('X-Sync-Key') || url.searchParams.get('key');
-      if (syncKey !== SYNC_SECRET) {
+      if (!_syncOk(syncKey)) {
         return new Response('Unauthorized', { status: 401 });
       }
       const userStore = await getAuthoritativeUsers();
