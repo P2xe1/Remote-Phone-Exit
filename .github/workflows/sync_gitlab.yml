@@ -1,0 +1,41 @@
+name: Sync to GitLab
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to GitLab with Loop Detection
+        env:
+          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+          GITLAB_REPO: ${{ secrets.GITLAB_REPO }}
+        run: |
+          if [ -z "$GITLAB_TOKEN" ] || [ -z "$GITLAB_REPO" ]; then
+            echo "::notice ::Secrets not configured. Skipping."
+            exit 0
+          fi
+          TARGET_URL="https://oauth2:${GITLAB_TOKEN}@gitlab.com/${GITLAB_REPO}.git"
+          
+          GL_HEAD=$(git ls-remote "$TARGET_URL" refs/heads/main | awk '{print $1}')
+          LOCAL_HEAD=$(git rev-parse HEAD)
+          
+          echo "GitHub HEAD: $LOCAL_HEAD"
+          echo "GitLab HEAD: $GL_HEAD"
+          
+          if [ "$GL_HEAD" = "$LOCAL_HEAD" ]; then
+            echo "Both sides are already in sync. Skipping push to avoid loop."
+            exit 0
+          fi
+          
+          echo "Syncing repository to GitLab..."
+          git push "$TARGET_URL" main:main --force
