@@ -2139,8 +2139,7 @@ export default {
     // 1. 实时真实数据聚合轮询接口 (/api/stats_data) - 优先内存与 Cache API
     // -------------------------------------------------------------
     if (url.pathname === '/api/stats_data') {
-      const auth = url.searchParams.get('pwd');
-      if (auth !== ADMIN_PASSWORD) {
+      if (!_adminOk(request, url)) {
         return new Response('Unauthorized', { status: 401 });
       }
 
@@ -2305,7 +2304,11 @@ export default {
             }
           }
           if (rawUserTraffic['shared_legacy']) {
-            rawUserTraffic['USER_TOKEN_26'] = (rawUserTraffic['USER_TOKEN_27'] || 0) + rawUserTraffic['shared_legacy'];
+            const _lo = _legacyOwner();
+            if (_lo) {
+              rawUserTraffic[_lo] = (rawUserTraffic[_lo] || 0) + rawUserTraffic['shared_legacy'];
+              delete rawUserTraffic['shared_legacy'];
+            }
           }
 
           // 从始至终累计绝对流量 (手机端持久化权威数据，绝无复杂日周回环Bug)
@@ -2327,7 +2330,7 @@ export default {
                 up: u_up,
                 down: u_down,
                 total: u_tot,
-                online: relay-node.invalid || 0,
+                online: item.online || 0,
                 rateDown: item.rateDown || 0,
                 rateUp: item.rateUp || 0,
                 lastActive: item.lastActive || 0
@@ -2402,7 +2405,8 @@ export default {
       payload.nodeTotal = (s && typeof s.nodeTotal === 'number') ? s.nodeTotal : 0;
       payload.nodeFast = (s && typeof s.nodeFast === 'number') ? s.nodeFast : 0;
       try {
-      payload.users = Object.values(userStore).map(u => {
+      // 【2026-10-06 修复】以 key 为准统一 token(原来 key 与 token 字段可能不一致, 流量/在线查不到)
+      payload.users = Object.keys(userStore).map(function (_k) { return Object.assign({}, userStore[_k], { token: _k }); }).map(u => {
         const ut = payload.userTraffics[u.token] || {};
         // 【2026-10-04 修复"新用户显示从未连接"】userTraffics 是 12 小时重载荷,
         //   新接入用户不在里面 -> 前端误判"🔴 从未连接 (0 B)"。
@@ -2611,6 +2615,8 @@ export default {
       const type = (url.searchParams.get('type') || 'clash').toLowerCase();
 
       if (!token) return new Response('错误：缺少必要参数', { status: 400 });
+      // 【2026-10-06 修复】非法格式直接拒绝, 不进入任何存储读取
+      if (!/^[A-Za-z0-9_-]{1,64}$/.test(token)) return new Response('错误：订阅不存在或已被禁用', { status: 403 });
 
       const cached = await getCachedUsers();
       let user = cached[token] || null;
@@ -2623,8 +2629,20 @@ export default {
         //   隔离区内存 -> 本机房 Cache API -> 全球 KV -> 兜底名单 四级，
         //   仍未命中就再直查一次 KV 全球主库；确认不存在一律 403。
         //   成本：只在"未知 token"请求上多一次 KV 读(默认 60 秒缓存)，不产生写入。
-        const authStore = await getAuthoritativeUsers();
-        user = authStore[token] || null;
+        // 【2026-10-06 修复】原来未传 cacheTtl, 每个随机 token 都是一次真实 KV 读(可被刷爆额度)。
+        //   现在: KV 读带边缘缓存 + 确认不存在的 token 在本机房负缓存 60 秒。
+        const _negUrl = new URL(`https://${WORKER_HOST}/internal_cache/neg_token/` + encodeURIComponent(token));
+        let _neg = null;
+        try { _neg = await caches.default.match(_negUrl); } catch (e) {}
+        if (!_neg) {
+          const authStore = await getAuthoritativeUsers(USERS_KV_READ_TTL);
+          user = authStore[token] || null;
+          if (!user) {
+            try {
+              await caches.default.put(_negUrl, new Response('1', { headers: { 'Cache-Control': 'public, max-age=60' } }));
+            } catch (e) {}
+          }
+        }
       }
       if (!user) return new Response('错误：订阅不存在或已被禁用', { status: 403 });
       if (!user.enabled) return new Response('错误：该订阅已被管理员停用', { status: 403 });
@@ -2770,8 +2788,7 @@ rules:
     // 3. 真实纯黑白 NOC 运营看板 (/admin)
     // -------------------------------------------------------------
     if (url.pathname === '/admin') {
-      const auth = url.searchParams.get('pwd');
-      if (auth !== ADMIN_PASSWORD) {
+      if (!_adminOk(request, url)) {
         return new Response(`
           <!DOCTYPE html><html><head><meta charset="utf-8"><title>系统认证</title>
           <style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;display:flex;justify-content:center;align-items:center;height:85vh;background:#000;color:#fff;}
@@ -2821,12 +2838,13 @@ rules:
         } catch (opErr) {
           console.log('User action error:', opErr);
         }
-        return Response.redirect(`${url.origin}/admin?pwd=${ADMIN_PASSWORD}${kvErr ? '&kverr=1' : ''}`, 302);
+        return Response.redirect(`${url.origin}/admin?pwd=${encodeURIComponent(ADMIN_PASSWORD)}${kvErr ? '&kverr=1' : ''}`, 302);
       }
 
       // 获取当前真实用户列表 (方案 B：直读内存与 Edge Cache，由手机闪存主库保底反哺)
       const userStore = await getAuthoritativeUsers();
-      const users = Object.values(userStore);
+      // 【2026-10-06 修复】以 key 为准统一 token
+      const users = Object.keys(userStore).map(function (_k) { return Object.assign({}, userStore[_k], { token: _k }); });
 
       // 【2026-10-04】首屏实时用户状态: 直接读【共享快照】(与 /api/stats_data 同源同逻辑)。
       //   注意: 这里不能引用 stats_data 那个 handler 里的 payload —— 它在本作用域不存在,
@@ -2905,19 +2923,21 @@ rules:
           <td data-label="订阅地址 (点击可全选)" style="padding:10px 12px;">
             <div style="display:flex;gap:6px;align-items:center;margin-bottom:4px;">
               <span style="font-size:10px;color:#777;width:35px;">Clash</span>
-              <input value="${url.origin}/sub?token=${u.token}&type=clash" readonly style="width:230px;padding:3px 6px;font-size:11px;background:#050505;color:#ddd;border:1px solid #222;border-radius:3px;" onclick="this.select()">
+              <input value="${escHtml(url.origin + '/sub?token=' + encodeURIComponent(u.token) + '&type=clash')}" readonly style="width:230px;padding:3px 6px;font-size:11px;background:#050505;color:#ddd;border:1px solid #222;border-radius:3px;" onclick="this.select()">
             </div>
             <div style="display:flex;gap:6px;align-items:center;">
               <span style="font-size:10px;color:#777;width:35px;">V2Ray</span>
-              <input value="${url.origin}/sub?token=${u.token}&type=v2ray" readonly style="width:230px;padding:3px 6px;font-size:11px;background:#050505;color:#ddd;border:1px solid #222;border-radius:3px;" onclick="this.select()">
+              <input value="${escHtml(url.origin + '/sub?token=' + encodeURIComponent(u.token) + '&type=v2ray')}" readonly style="width:230px;padding:3px 6px;font-size:11px;background:#050505;color:#ddd;border:1px solid #222;border-radius:3px;" onclick="this.select()">
             </div>
           </td>
           <td data-label="服务状态" style="padding:10px 12px;">${statusDisplay}</td>
+          <td data-label="连接状态" style="padding:10px 12px;">${liveConn}</td>
           <td data-label="同步次数" style="padding:10px 12px;color:#888;font-size:12px;">${escHtml(u.pullCount || 0)}</td>
+          <td data-label="最后活跃" style="padding:10px 12px;font-size:11px;color:#777;">${liveLastActive}</td>
           <td data-label="出口 IP" style="padding:10px 12px;font-size:11px;color:#777;">${(u.lastIp && u.lastIp !== '-') ? escHtml(u.lastIp) : '--'}</td>
           <td style="padding:10px 12px;">
             <form method="POST" style="display:inline;">
-              <input type="hidden" name="token" value="${u.token}">
+              <input type="hidden" name="token" value="${escHtml(u.token)}">
               <input type="hidden" name="action" value="toggle">
               <button style="padding:4px 8px;background:#141414;color:#ccc;border:1px solid #282828;border-radius:3px;cursor:pointer;font-size:11px;">${u.enabled ? '停用' : '启用'}</button>
             </form>
@@ -5976,7 +5996,9 @@ rules:
         headers: {
           'Content-Type': 'text/html; charset=utf-8',
           'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-          'Pragma': 'no-cache'
+          'Pragma': 'no-cache',
+          // 【2026-10-06】页面 URL 带 ?pwd=, 禁止通过 Referer 外泄
+          'Referrer-Policy': 'no-referrer'
         }
       });
     }
