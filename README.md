@@ -1,4 +1,4 @@
-# 一台手机/设备当代理网络出口
+# 一台手机当出口
 
 [![CI](https://github.com/P2xe1/Remote-Phone-Exit/actions/workflows/ci.yml/badge.svg)](https://github.com/P2xe1/Remote-Phone-Exit/actions/workflows/ci.yml)
 ![platforms](https://img.shields.io/badge/platforms-Cloudflare%20Workers%20%7C%20Android-informational)
@@ -14,12 +14,7 @@
 > 构建期占位符）、三个机密（`ADMIN_PASSWORD` / `SYNC_SECRET` / `VLESS_UUID`）
 > 要在控制台单独设置、`WORKER_HOST` / `TUNNEL_HOST` 要改成你自己的域名。
 
-**一台手机/设备 = 一个出口。** 
-
-它在哪个网络，你就通过Clash/V2Ray/Shadowrocket从哪个网络出去
-
-不需要服务器，不需要公网 IP，不需要端口映射
-
+**一台手机 = 一个出口。** 它在哪个网络里，你的流量就从哪个网络出去——不需要服务器，不需要公网 IP，不需要端口映射。
 
 ```
 大陆代理 ──▶ Cloudflare ──▶ 隧道 ◀─▶ 海外终端连接的WiFi ──▶ 目标网站
