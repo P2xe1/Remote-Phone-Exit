@@ -5067,13 +5067,25 @@ rules:
               const ver = window.__pageBuild || '旧版';
               const hasPush = (typeof window.liveLastAt === 'number');
               const ago = hasPush ? Math.round((Date.now() - window.liveLastAt) / 1000) : -1;
-              const isLive = hasPush && ago < 15;
-              if (isLive) {
-                const ageTxt = (typeof window.liveAgeS === 'number') ? ('数据 ' + window.liveAgeS + ' 秒前') : '';
+              const ageTxt = (typeof window.liveAgeS === 'number') ? ('数据 ' + window.liveAgeS + ' 秒前') : '';
+
+              if (hasPush && ago <= 40) {
+                // 健康 40 秒内: 绿色
                 hb.innerText = '⚡ 遥测推送 ' + (ago <= 1 ? '刚刚' : ago + ' 秒前')
                   + (ageTxt ? ' · ' + ageTxt : '') + ' · 版本 ' + ver;
+                hb.style.color = '#22c55e';
+              } else if (hasPush && ago <= 70) {
+                // 41 - 70 秒: 蓝色
+                hb.innerText = '⚡ 遥测推送 ' + ago + ' 秒前'
+                  + (ageTxt ? ' · ' + ageTxt : '') + ' · 版本 ' + ver;
                 hb.style.color = '#38bdf8';
+              } else if (hasPush && ago <= 99) {
+                // 71 - 99 秒: 黄色
+                hb.innerText = '⏱ 遥测更新中 · ' + ago + ' 秒前'
+                  + (ageTxt ? ' · ' + ageTxt : '') + ' · 版本 ' + ver;
+                hb.style.color = '#eab308';
               } else {
+                // 100 及 100 以上: 红色
                 hb.innerText = '⚠ 遥测推送中断' + (hasPush ? ' ' + ago + ' 秒' : '') + ' · 版本 ' + ver;
                 hb.style.color = '#ef4444';
               }
