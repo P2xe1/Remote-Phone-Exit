@@ -777,15 +777,39 @@ if [ -n "$RAW" ]; then
   #         让观众所在机房也有新鲜数据。成本 +1 请求/轮 ≈ +1.44 万/天, 在免费额度内。
   # ========================================================
   #   实测(2026-10-06): ${CF_ANCHOR_4} 落 POP2, ${CF_ANCHOR_1} 落 POP1, ${RELAY_TARGET_IP} 稳落 POP3。
-  #   这三个机房覆盖了观众最常见的亚洲核心落点; 采用后台并发发射(即发即弃), 耗时 0ms 绝不拖慢 6 秒主循环。
-  if [ -n "$RESP" ]; then
-    for _seedip in ${CF_ANCHOR_4} ${CF_ANCHOR_1} ${RELAY_TARGET_IP}; do
-      /system/bin/curl --connect-timeout 2 -m 3 -s -o /dev/null -X POST "$WORKER_URL" \
+  # ========================================================
+  # 【2026-10-08 优化 · 方案 2+】每10秒单种子轮巡注入 + 主辅动态容灾
+  #   种子池: POP1(${CF_ANCHOR_1}) -> POP2(${CF_ANCHOR_4}) -> POP3(${RELAY_TARGET_IP})
+  #   每轮只发 1 个种子，带 ?seed=1 标记，Worker 0 读写 KV，极速 204 返回。
+  # ========================================================
+  SEED_IDX_FILE="/data/local/tmp/seed_idx.txt"
+  _CUR_IDX=$(cat "$SEED_IDX_FILE" 2>/dev/null)
+  case "$_CUR_IDX" in 0|1|2) ;; *) _CUR_IDX=0 ;; esac
+
+  case "$_CUR_IDX" in
+    0) _TARGET_SEED="${CF_ANCHOR_1}" ;;
+    1) _TARGET_SEED="${CF_ANCHOR_4}" ;;
+    2) _TARGET_SEED="${RELAY_TARGET_IP}" ;;
+  esac
+
+  _NEXT_IDX=$(( (_CUR_IDX + 1) % 3 ))
+  echo "$_NEXT_IDX" > "$SEED_IDX_FILE"
+
+  if [ -n "$_TARGET_SEED" ]; then
+    if [ -n "$RESP" ]; then
+      /system/bin/curl --connect-timeout 2 -m 3 -s -o /dev/null -X POST "$WORKER_URL?seed=1" \
         -H "Content-Type: application/json" \
         -H "X-Sync-Key: $REPORT_SECRET" \
-        --resolve "${WORKER_HOST}:443:$_seedip" \
+        --resolve "${WORKER_HOST}:443:$_TARGET_SEED" \
         -d @/data/local/tmp/traffic_payload.json >/dev/null 2>&1 &
-    done
+    else
+      # 主请求丢包时，本期种子请求升格为主请求拉取配置指令
+      RESP=$(/system/bin/curl --connect-timeout 2 -m 3 -s -X POST "$WORKER_URL" \
+        -H "Content-Type: application/json" \
+        -H "X-Sync-Key: $REPORT_SECRET" \
+        --resolve "${WORKER_HOST}:443:$_TARGET_SEED" \
+        -d @/data/local/tmp/traffic_payload.json 2>/dev/null)
+    fi
   fi
 fi
 

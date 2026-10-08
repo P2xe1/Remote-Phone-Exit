@@ -484,6 +484,8 @@ async function cachePutJson(name, obj, maxAge) {
 }
 
 let globalMemoryStats = null;
+let lastCmdReadAt = 0;
+let lastCmdCache = null;
 let globalMemoryDaySnapshots = {};
 let userAccumulators = {};
 let accumulatorsAt = 0;   // 上次把累加器落缓存的时间(节流)
@@ -712,30 +714,36 @@ const SNAP_KV_KEY = 'noc:snap:latest';
 //   超出的写被 try/catch 静默吞掉，表现为"全球快照偶尔不更新"。
 //   现在只用一个键：把"谁写的、写于何时、当天写了几次"放进快照自身。
 //   （旧的 noc:snap:meta 键已不再使用，可在控制台删掉。）
-const SNAP_MIN_GAP_MS = 150000;    // 两版快照之间的最小间隔(2.5 分钟)
+const SNAP_MIN_GAP_MS = 480000;    // 两版快照之间的最小间隔(8 分钟)
 // 接管阈值：上一版写入机房"不再收到上报"时，别的机房多久可以接手。
-//   ⚠ 这里踩过一次坑：最初设成 10 分钟，结果手机的上报落点一变（实测 POP4 → POP3/POP2），
-//     全球快照就冻在那儿最长 10 分钟，远离节点的机房会看到"数据 600 秒前"。
-//     现在改成【与最小间隔同量级 + 按机房名错开 0~44 秒】：
-//     谁先到点谁写，写完立刻重置计时，其它机房随即看到"刚写过"而让路 ——
-//     既能在 ~150~195 秒内自动换手，又不会几个机房同时抢写把额度打爆。
-const SNAP_TAKEOVER_BASE_MS = 150000;
+//   与最小间隔同量级 + 按机房名错开 0~44 秒：
+//   谁先到点谁写，写完立刻重置计时，其它机房随即看到"刚写过"而让路 ——
+//   避免机房抢写打爆 KV 额度。
+const SNAP_TAKEOVER_BASE_MS = 480000;
 const SNAP_TAKEOVER_JITTER_MS = 44000;
-const SNAP_DAILY_CAP = 900;        // 本键当天写入硬上限(额度 1000/天，留 100 给用户库)
+const SNAP_DAILY_CAP = 250;        // 本键当天写入硬上限(约180次/天，留750+给用户库与正常操作)
 let syncReqMemory = null;       // 本 isolate 最近一次 sync 请求(供后台页即时显示)
 let phoneMasterInfo = null;     // 手机上报的主库状态(版本/生效名单/确认)
 
 async function readCmd(env) {
   if (!env || !env.SUB_DB) return null;
+  const now = Date.now();
+  if (now - lastCmdReadAt < 10000 && lastCmdCache !== null) {
+    return lastCmdCache;
+  }
+  lastCmdReadAt = now;
   try {
     const raw = await env.SUB_DB.get(CMD_KV_KEY);
-    return raw ? JSON.parse(raw) : null;
+    lastCmdCache = raw ? JSON.parse(raw) : null;
+    return lastCmdCache;
   } catch (e) { return null; }
 }
 
 async function writeCmd(env, type, id) {
   const payload = { type: type, id: id, at: Date.now() };
   if (type === 'sync') syncReqMemory = payload;
+  lastCmdCache = payload;
+  lastCmdReadAt = Date.now();
   let kvOk = true;
   if (env && env.SUB_DB) {
     try { await env.SUB_DB.put(CMD_KV_KEY, JSON.stringify(payload)); } catch (e) { kvOk = false; }
@@ -745,6 +753,8 @@ async function writeCmd(env, type, id) {
 
 async function clearCmd(env, onlyType) {
   if (onlyType === 'sync') syncReqMemory = null;
+  lastCmdCache = null;
+  lastCmdReadAt = Date.now();
   if (env && env.SUB_DB) {
     try { await env.SUB_DB.delete(CMD_KV_KEY); return true; } catch (e) { return false; }
   }
@@ -1257,6 +1267,7 @@ export default {
       }
       try {
         const body = await request.json();
+        const isSeed = url.searchParams.get('seed') === '1';
         // 【2026-10-04 T7.3/T6.5】待下发指令的暂存: 必须在 if 块外声明,
         //   供块外的响应构建代码使用(否则 ReferenceError)。
         let pendingSync = null;
@@ -1465,8 +1476,9 @@ export default {
           // 【2026-10-04 修复 T4.4】只信 KV 权威源: 不再 || syncReqMemory 兜底
           // (isolate 私有内存里的旧指令会在跨 isolate 场景下复活已消费的请求)。
           // 【2026-10-04 修复 T7.3/T6.5】指令改为 ack 后才删除, 未 ack 继续下发。
-          const curReq = await readCmd(env);
-          if (typeof body.phoneVersion === 'string') {
+          // 【2026-10-08 优化 · 方案 2+】种子轻量上报完全不读 KV 也不改写状态
+          const curReq = isSeed ? null : await readCmd(env);
+          if (!isSeed && typeof body.phoneVersion === 'string') {
             await mergePhoneMaster({
               version: body.phoneVersion,
               tokens: Array.isArray(body.phoneTokens) ? body.phoneTokens : [],
@@ -1474,14 +1486,14 @@ export default {
             });
           }
           let syncAcked = false;
-          if (body.syncAck && curReq && curReq.type === 'sync' && curReq.id === body.syncAck) {
+          if (!isSeed && body.syncAck && curReq && curReq.type === 'sync' && curReq.id === body.syncAck) {
             // 手机确认已按指令重新拉取并生效 -> 撤销请求(1 次 KV 删除), 记录确认时间
             syncAcked = true;
             await mergePhoneMaster({ ackedId: body.syncAck, ackedAt: Date.now() });
             await clearCmd(env, 'sync');
           }
           let scanAcked = false;
-          if (body.scanAck && curReq && curReq.type === 'scan' && curReq.id === body.scanAck) {
+          if (!isSeed && body.scanAck && curReq && curReq.type === 'scan' && curReq.id === body.scanAck) {
             scanAcked = true;
             await clearCmd(env, 'scan');
           }
@@ -1647,11 +1659,11 @@ export default {
           //   现在加最底层: 重载荷时写 KV(约 2 次/天), 缺字段时读 KV 并带 cacheTtl=300
           //   (实际 KV 读约 288 次/天, 远低于 10 万/天配额; 写 2 次/天, 远低于 1000/天)。
           const USER_TRAFFIC_KV_KEY = 'noc:user_traffics';
-          if (body.userTraffics && Object.keys(body.userTraffics).length > 0) {
+          if (!isSeed && body.userTraffics && Object.keys(body.userTraffics).length > 0) {
             try { await env.SUB_DB.put(USER_TRAFFIC_KV_KEY, JSON.stringify(body.userTraffics)); } catch (e) {}
           }
           let _kvUserTraffics = null;
-          if (!body.userTraffics
+          if (!isSeed && !body.userTraffics
               && !(globalMemoryStats && globalMemoryStats.userTraffics)
               && !(_prevSnap && _prevSnap.userTraffics)) {
             try {
@@ -1868,6 +1880,10 @@ export default {
                 }
               }));
           } catch (e) {}
+          // 【2026-10-08 优化 · 方案 2+】种子请求喂饱本机房 Cache API 后极速退出 (0 KV 读写，<2ms)
+          if (isSeed) {
+            return new Response(null, { status: 204 });
+          }
           // 【2026-10-05 跨机房治本】再写一份到 KV(全球一致)，供"落在没有实时
           //   数据的机房"的观众回落读取（否则大屏整屏 --）。
           // 【同日修复 · 写入超额】旧实现每桶写【两个键】：
