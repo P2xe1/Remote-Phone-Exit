@@ -2599,11 +2599,15 @@ export default {
       const _coloMap = await getNodeColoMap();
       const DISPLAY_NAMES = buildNodeDisplayNames(_coloMap);
 
+      // 【2026-10-08 方案A】美国洛杉矶 1Gbps 独立出口 (VLESS + Reality)
+      const US_NODE_NAME = "🇺🇸 美国-洛杉矶 1Gbps";
+      const usVlessLink = `vless://${uuid}@107.172.23.174:443?encryption=none&flow=xtls-rprx-vision&security=reality&sni=gateway.icloud.com&fp=chrome&pbk=RDe892xdxI47c1kMjTKdTsp4EKA7YuMTtqo_gj4s3z0&sid=9c2c9c50ce4c3e95&type=tcp#${encodeURIComponent(US_NODE_NAME)}`;
+
       if (type === 'v2ray') {
         const noticeLink = `vless://00000000-0000-0000-0000-000000000000@127.0.0.1:80?encryption=none&security=none&type=xhttp&host=example.com&path=%2F&mode=auto#${encodeURIComponent(NOTICE_NAME)}`;
-        const nodeLinks = RAW_NODES.map((n, i) => {
+        const nodeLinks = [usVlessLink, ...RAW_NODES.map((n, i) => {
           return `vless://${uuid}@${n.server}:443?encryption=none&security=tls&sni=${host}&fp=chrome&type=xhttp&host=${host}&path=${encodeURIComponent(n.path)}&mode=auto#${encodeURIComponent(DISPLAY_NAMES[i])}`;
-        });
+        })];
         return new Response(btoa(unescape(encodeURIComponent([noticeLink, ...nodeLinks].join('\n')))), {
           headers: {
             'Content-Type': 'text/plain; charset=utf-8',
@@ -2614,13 +2618,15 @@ export default {
 
       const noticeClashNode = `  - name: "${NOTICE_NAME}"\n    type: vless\n    server: 127.0.0.1\n    port: 80\n    uuid: 00000000-0000-0000-0000-000000000000\n    udp: false\n    tls: false\n    network: xhttp\n    xhttp-opts:\n      mode: auto\n      path: /\n      host: example.com`;
 
+      const usClashNode = `  - name: "${US_NODE_NAME}"\n    type: vless\n    server: 107.172.23.174\n    port: 443\n    uuid: ${uuid}\n    network: tcp\n    udp: true\n    tls: true\n    flow: xtls-rprx-vision\n    servername: gateway.icloud.com\n    reality-opts:\n      public-key: RDe892xdxI47c1kMjTKdTsp4EKA7YuMTtqo_gj4s3z0\n      short-id: 9c2c9c50ce4c3e95\n    client-fingerprint: chrome`;
+
       const clashProxies = RAW_NODES.map((n, i) => `  - name: "${DISPLAY_NAMES[i]}"\n    type: vless\n    server: ${n.server}\n    port: 443\n    uuid: ${uuid}\n    udp: false\n    tls: true\n    servername: ${host}\n    network: xhttp\n    client-fingerprint: chrome\n    xhttp-opts:\n      mode: auto\n      path: ${n.path}\n      host: ${host}`).join('\n\n');
 
 
       // 【2026-10-05 用户要求】分组精简: 只保留 PROXY / AUTO / FALLBACK 三个,
-      //   其余地区组、专线组全部删除; 节点本身一个不动, 命名统一为 节点所在地01 ~ 节点所在地55。
+      //   节点列表包含美国高速节点与马来 01 ~ 55 全节点。
       const nameAt = i => `"${DISPLAY_NAMES[i]}"`;
-      const nodeNames = RAW_NODES.map((n, i) => nameAt(i));
+      const nodeNames = [`"${US_NODE_NAME}"`, ...RAW_NODES.map((n, i) => nameAt(i))];
 
       const yaml = `port: 7890
 socks-port: 7891
@@ -2644,6 +2650,8 @@ dns:
 
 proxies:
 ${noticeClashNode}
+
+${usClashNode}
 
 ${clashProxies}
 
