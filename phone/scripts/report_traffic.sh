@@ -196,9 +196,6 @@ fi
 # ========================================================
 RAW=$(/data/local/tmp/xray api statsquery --server=$API_SERVER 2>/dev/null)
 
-# 【新增】从 awk 输出里摘出在线名单 -> 每次上报都带（6 秒级新鲜度）
-ONLINE_NOW=$(echo "$RAW" | sed -n 's/.*#ONLINE#//p' | head -n 1)
-RAW=$(echo "$RAW" | sed 's/#ONLINE#.*//')
 ONLINE_USERS_JSON=""
 # 【2026-10-05 修复 · 关键】原来这里依赖 ONLINE_NOW(#ONLINE# 标记, 实际恒空):
 #   名单非空时会走到 else 分支 => 整个字段被省略 => Worker 只能沿用上一次的旧名单,
@@ -432,17 +429,6 @@ END {
     close(onlineCacheFile);
     close(connStateFile);
   }
-
-  # 【新增】把"本次 xray 报的在线名单"原样输出, 供上报使用（权威）
-  printf "\n#ONLINE#";
-  firstOn = 1;
-  for (t in online_set) {
-    if (online_set[t] != 1) continue;
-    if (!firstOn) printf ",";
-    printf "%s", t;
-    firstOn = 0;
-  }
-  printf "\n";
 
   printf "\"userTraffics\":{";
   first = 1;

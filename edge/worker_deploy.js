@@ -3781,37 +3781,6 @@ rules:
               </div>
             </div>
 
-            <!-- 2.5 新增：链路质量评分(B2) + 服务可靠性(B4) -->
-            <div class="grid-2">
-              <div class="card">
-                <div class="card-title">本机接入质量评分 <span class="tag">6 个 CF 锚点综合</span></div>
-                <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;">
-                  <div style="text-align:center;flex-shrink:0;">
-                    <div style="font-size:40px;font-weight:700;line-height:1;color:#22c55e;" id="qualityScore">--</div>
-                    <div style="font-size:10px;color:#777;margin-top:4px;">满分 100</div>
-                  </div>
-                  <div style="flex:1;min-width:190px;">
-                    <div id="qualityGrade" style="font-size:13px;font-weight:700;color:#22c55e;">评测中…</div>
-                    <div style="height:6px;background:#141414;border-radius:3px;margin-top:8px;overflow:hidden;">
-                      <div id="qualityBar" style="height:100%;width:0%;background:#22c55e;transition:width .4s;"></div>
-                    </div>
-                    <div id="qualityDetail" style="font-size:11px;color:#666;margin-top:9px;line-height:1.6;">时延 50% + 抖动 25% + 丢包 25% 加权</div>
-                  </div>
-                </div>
-              </div>
-              <div class="card">
-                <div class="card-title">上报链路可靠性</div>
-                <!-- 【2026-10-04 可读性】小格子最小 96px, 标签不再被挤成竖排 -->
-                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:11px;">
-                  <!-- 【2026-10-04 去重】原"Xray 核心/隧道错误累计/实时数据延迟"三项与
-                       "设备与链路健康"卡、顶栏"数据新鲜度"重复, 已删除; 只保留上报节奏本身。 -->
-                  <div><div class="health-k">上报延迟评分</div><div style="font-size:22px;font-weight:500;color:var(--noc-color-success);" id="relReport">--</div></div>
-                  <div><div class="health-k">手机上报节奏</div><div style="font-size:22px;font-weight:500;color:var(--md-sys-color-on-surface);">6 秒/次</div></div>
-                  <div><div class="health-k">本轮采样覆盖</div><div style="font-size:22px;font-weight:500;color:var(--md-sys-color-on-surface);" id="relCover">--</div></div>
-                </div>
-                <div id="relNote" style="font-size:11px;color:#666;margin-top:11px;line-height:1.6;">手机约每 6 秒上报一次</div>
-              </div>
-            </div>
 
             <!-- ======================================================== -->
             <!-- 3. 核心双栏：真实用户排行榜 + 5地区真实已接入物理流量分布 -->
@@ -4290,6 +4259,12 @@ rules:
                           : (_dFull ? _dFull.upBytes : 0);
                 var tot = (Number(downVal) || 0) + (Number(upVal) || 0);
                 tbEl.innerText = (tot > 0) ? formatBytes(tot) : '未测到';
+                var tEl = document.getElementById('totalBytes');
+                var dEl = document.getElementById('downBytes');
+                var uEl = document.getElementById('upBytes');
+                if (tEl && tot > 0) tEl.innerText = formatBytes(tot);
+                if (dEl && downVal > 0) dEl.innerText = formatBytes(downVal);
+                if (uEl && upVal > 0) uEl.innerText = formatBytes(upVal);
               }
               // ② 两个峰值（手机端统计）
               var bp = d.bwPeak || null;
