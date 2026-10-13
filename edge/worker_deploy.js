@@ -7,17 +7,11 @@
 //   必须与手机端一致（手机从 /api/phone_xray_config 拿同一个值），
 //   否则「当日」的边界两边不同，数字会对不上。
 //   ⚠ 这里必须是普通常量：Worker 模块顶层【没有 env 对象】
-//     （env 只作为 fetch(request, env) 的形参存在）。写成 _cfg('DAY_TZ', '') 会
+//     （env 只作为 fetch(request, env) 的形参存在）。写成 env.DAY_TZ 会
 //     直接 Uncaught ReferenceError，整个 Worker 拒绝部署（实测错误码 10021）。
 //   要改时区就改这一处；导出到公开仓库时它会变成可配置项（.env 的 DAY_TZ）。
-// 【导出修复】日界线时区：今日流量 / 15 分钟窗口 / 当日峰值 按它切分。
-//   必须与手机端一致（手机从 /api/phone_xray_config 拿同一个值），
-//   否则「当日」的边界两边不同，数字会对不上。
-//   支持 IANA 名称（Etc/GMT-8）或 UTC 偏移（+08:00）；要改就在 .env 设 DAY_TZ。
-//   做成函数是必须的：_CFG 在文件靠后处才初始化，
-//   模块加载期直接读它会被拒绝（TDZ）。
-function _dayTz() { return _cfg('DAY_TZ', 'UTC') || 'UTC'; }
-const BUILD_ID = 'b20261006-004417';
+const DAY_TZ = 'Asia/Shanghai';
+const BUILD_ID = 'b20261013-125204';
 // 【2026-10-04 T8.8】Chart.js 源码由 cf_deploy.py 部署时注入(JSON 转义, 安全)。
 // 未注入时为 null, /chart.js 返回 404, 前端回退 CDN。
 const CHART_JS_SOURCE = "/**\n * Skipped minification because the original files appears to be already minified.\n * Original file: /npm/chart.js@4.4.1/dist/chart.umd.js\n *\n * Do NOT use SRI with dynamically generated files! More information: https://www.jsdelivr.com/using-sri-with-dynamic-files\n */\n/*!\n * Chart.js v4.4.1\n * https://www.chartjs.org\n * (c) 2023 Chart.js Contributors\n * Released under the MIT License\n */\n!function(t,e){\"object\"==typeof exports&&\"undefined\"!=typeof module?module.exports=e():\"function\"==typeof define&&define.amd?define(e):(t=\"undefined\"!=typeof globalThis?globalThis:t||self).Chart=e()}(this,(function(){\"use strict\";var t=Object.freeze({__proto__:null,get Colors(){return Go},get Decimation(){return Qo},get Filler(){return ma},get Legend(){return ya},get SubTitle(){return ka},get Title(){return Ma},get Tooltip(){return Ba}});function e(){}const i=(()=>{let t=0;return()=>t++})();function s(t){return null==t}function n(t){if(Array.isArray&&Array.isArray(t))return!0;const e=Object.prototype.toString.call(t);return\"[object\"===e.slice(0,7)&&\"Array]\"===e.slice(-6)}function o(t){return null!==t&&\"[object Object]\"===Object.prototype.toString.call(t)}function a(t){return(\"number\"==typeof t||t instanceof Number)&&isFinite(+t)}function r(t,e){return a(t)?t:e}function l(t,e){return void 0===t?e:t}const h=(t,e)=>\"string\"==typeof t&&t.endsWith(\"%\")?parseFloat(t)/100:+t/e,c=(t,e)=>\"string\"==typeof t&&t.endsWith(\"%\")?parseFloat(t)/100*e:+t;function d(t,e,i){if(t&&\"function\"==typeof t.call)return t.apply(i,e)}function u(t,e,i,s){let a,r,l;if(n(t))if(r=t.length,s)for(a=r-1;a>=0;a--)e.call(i,t[a],a);else for(a=0;a<r;a++)e.call(i,t[a],a);else if(o(t))for(l=Object.keys(t),r=l.length,a=0;a<r;a++)e.call(i,t[l[a]],l[a])}function f(t,e){let i,s,n,o;if(!t||!e||t.length!==e.length)return!1;for(i=0,s=t.length;i<s;++i)if(n=t[i],o=e[i],n.datasetIndex!==o.datasetIndex||n.index!==o.index)return!1;return!0}function g(t){if(n(t))return t.map(g);if(o(t)){const e=Object.create(null),i=Object.keys(t),s=i.length;let n=0;for(;n<s;++n)e[i[n]]=g(t[i[n]]);return e}return t}function p(t){return-1===[\"__proto__\",\"prototype\",\"constructor\"].indexOf(t)}function m(t,e,i,s){if(!p(t))return;const n=e[t],a=i[t];o(n)&&o(a)?b(n,a,s):e[t]=g(a)}function b(t,e,i){const s=n(e)?e:[e],a=s.length;if(!o(t))return t;const r=(i=i||{}).merger||m;let l;for(let e=0;e<a;++e){if(l=s[e],!o(l))continue;const n=Object.keys(l);for(let e=0,s=n.length;e<s;++e)r(n[e],t,l,i)}return t}function x(t,e){return b(t,e,{merger:_})}function _(t,e,i){if(!p(t))return;const s=e[t],n=i[t];o(s)&&o(n)?x(s,n):Object.prototype.hasOwnProperty.call(e,t)||(e[t]=g(n))}const y={\"\":t=>t,x:t=>t.x,y:t=>t.y};function v(t){const e=t.split(\".\"),i=[];let s=\"\";for(const t of e)s+=t,s.endsWith(\"\\\\\")?s=s.slice(0,-1)+\".\":(i.push(s),s=\"\");return i}function M(t,e){const i=y[e]||(y[e]=function(t){const e=v(t);return t=>{for(const i of e){if(\"\"===i)break;t=t&&t[i]}return t}}(e));return i(t)}function w(t){return t.charAt(0).toUpperCase()+t.slice(1)}const k=t=>void 0!==t,S=t=>\"function\"==typeof t,P=(t,e)=>{if(t.size!==e.size)return!1;for(const i of t)if(!e.has(i))return!1;return!0};function D(t){return\"mouseup\"===t.type||\"click\"===t.type||\"contextmenu\"===t.type}const C=Math.PI,O=2*C,A=O+C,T=Number.POSITIVE_INFINITY,L=C/180,E=C/2,R=C/4,I=2*C/3,z=Math.log10,F=Math.sign;function V(t,e,i){return Math.abs(t-e)<i}function B(t){const e=Math.round(t);t=V(t,e,t/1e3)?e:t;const i=Math.pow(10,Math.floor(z(t))),s=t/i;return(s<=1?1:s<=2?2:s<=5?5:10)*i}function W(t){const e=[],i=Math.sqrt(t);let s;for(s=1;s<i;s++)t%s==0&&(e.push(s),e.push(t/s));return i===(0|i)&&e.push(i),e.sort(((t,e)=>t-e)).pop(),e}function N(t){return!isNaN(parseFloat(t))&&isFinite(t)}function H(t,e){const i=Math.round(t);return i-e<=t&&i+e>=t}function j(t,e,i){let s,n,o;for(s=0,n=t.length;s<n;s++)o=t[s][i],isNaN(o)||(e.min=Math.min(e.min,o),e.max=Math.max(e.max,o))}function $(t){return t*(C/180)}function Y(t){return t*(180/C)}function U(t){if(!a(t))return;let e=1,i=0;for(;Math.round(t*e)/e!==t;)e*=10,i++;return i}function X(t,e){const i=e.x-t.x,s=e.y-t.y,n=Math.sqrt(i*i+s*s);let o=Math.atan2(s,i);return o<-.5*C&&(o+=O),{angle:o,distance:n}}function q(t,e){return Math.sqrt(Math.pow(e.x-t.x,2)+Math.pow(e.y-t.y,2))}function K(t,e){return(t-e+A)%O-C}function G(t){return(t%O+O)%O}function Z(t,e,i,s){const n=G(t),o=G(e),a=G(i),r=G(o-n),l=G(a-n),h=G(n-o),c=G(n-a);return n===o||n===a||s&&o===a||r>l&&h<c}function J(t,e,i){return Math.max(e,Math.min(i,t))}function Q(t){return J(t,-32768,32767)}function tt(t,e,i,s=1e-6){return t>=Math.min(e,i)-s&&t<=Math.max(e,i)+s}function et(t,e,i){i=i||(i=>t[i]<e);let s,n=t.length-1,o=0;for(;n-o>1;)s=o+n>>1,i(s)?o=s:n=s;return{lo:o,hi:n}}const it=(t,e,i,s)=>et(t,i,s?s=>{const n=t[s][e];return n<i||n===i&&t[s+1][e]===i}:s=>t[s][e]<i),st=(t,e,i)=>et(t,i,(s=>t[s][e]>=i));function nt(t,e,i){let s=0,n=t.length;for(;s<n&&t[s]<e;)s++;for(;n>s&&t[n-1]>i;)n--;return s>0||n<t.length?t.slice(s,n):t}const ot=[\"push\",\"pop\",\"shift\",\"splice\",\"unshift\"];function at(t,e){t._chartjs?t._chartjs.listeners.push(e):(Object.defineProperty(t,\"_chartjs\",{configurable:!0,enumerable:!1,value:{listeners:[e]}}),ot.forEach((e=>{const i=\"_onData\"+w(e),s=t[e];Object.defineProperty(t,e,{configurable:!0,enumerable:!1,value(...e){const n=s.apply(this,e);return t._chartjs.listeners.forEach((t=>{\"function\"==typeof t[i]&&t[i](...e)})),n}})})))}function rt(t,e){const i=t._chartjs;if(!i)return;const s=i.listeners,n=s.indexOf(e);-1!==n&&s.splice(n,1),s.length>0||(ot.forEach((e=>{delete t[e]})),delete t._chartjs)}function lt(t){const e=new Set(t);return e.size===t.length?t:Array.from(e)}const ht=\"undefined\"==typeof window?function(t){return t()}:window.requestAnimationFrame;function ct(t,e){let i=[],s=!1;return function(...n){i=n,s||(s=!0,ht.call(window,(()=>{s=!1,t.apply(e,i)})))}}function dt(t,e){let i;return function(...s){return e?(clearTimeout(i),i=setTimeout(t,e,s)):t.apply(this,s),e}}const ut=t=>\"start\"===t?\"left\":\"end\"===t?\"right\":\"center\",ft=(t,e,i)=>\"start\"===t?e:\"end\"===t?i:(e+i)/2,gt=(t,e,i,s)=>t===(s?\"left\":\"right\")?i:\"center\"===t?(e+i)/2:e;function pt(t,e,i){const s=e.length;let n=0,o=s;if(t._sorted){const{iScale:a,_parsed:r}=t,l=a.axis,{min:h,max:c,minDefined:d,maxDefined:u}=a.getUserBounds();d&&(n=J(Math.min(it(r,l,h).lo,i?s:it(e,l,a.getPixelForValue(h)).lo),0,s-1)),o=u?J(Math.max(it(r,a.axis,c,!0).hi+1,i?0:it(e,l,a.getPixelForValue(c),!0).hi+1),n,s)-n:s-n}return{start:n,count:o}}function mt(t){const{xScale:e,yScale:i,_scaleRanges:s}=t,n={xmin:e.min,xmax:e.max,ymin:i.min,ymax:i.max};if(!s)return t._scaleRanges=n,!0;const o=s.xmin!==e.min||s.xmax!==e.max||s.ymin!==i.min||s.ymax!==i.max;return Object.assign(s,n),o}class bt{constructor(){this._request=null,this._charts=new Map,this._running=!1,this._lastDate=void 0}_notify(t,e,i,s){const n=e.listeners[s],o=e.duration;n.forEach((s=>s({chart:t,initial:e.initial,numSteps:o,currentStep:Math.min(i-e.start,o)})))}_refresh(){this._request||(this._running=!0,this._request=ht.call(window,(()=>{this._update(),this._request=null,this._running&&this._refresh()})))}_update(t=Date.now()){let e=0;this._charts.forEach(((i,s)=>{if(!i.running||!i.items.length)return;const n=i.items;let o,a=n.length-1,r=!1;for(;a>=0;--a)o=n[a],o._active?(o._total>i.duration&&(i.duration=o._total),o.tick(t),r=!0):(n[a]=n[n.length-1],n.pop());r&&(s.draw(),this._notify(s,i,t,\"progress\")),n.length||(i.running=!1,this._notify(s,i,t,\"complete\"),i.initial=!1),e+=n.length})),this._lastDate=t,0===e&&(this._running=!1)}_getAnims(t){const e=this._charts;let i=e.get(t);return i||(i={running:!1,initial:!0,items:[],listeners:{complete:[],progress:[]}},e.set(t,i)),i}listen(t,e,i){this._getAnims(t).listeners[e].push(i)}add(t,e){e&&e.length&&this._getAnims(t).items.push(...e)}has(t){return this._getAnims(t).items.length>0}start(t){const e=this._charts.get(t);e&&(e.running=!0,e.start=Date.now(),e.duration=e.items.reduce(((t,e)=>Math.max(t,e._duration)),0),this._refresh())}running(t){if(!this._running)return!1;const e=this._charts.get(t);return!!(e&&e.running&&e.items.length)}stop(t){const e=this._charts.get(t);if(!e||!e.items.length)return;const i=e.items;let s=i.length-1;for(;s>=0;--s)i[s].cancel();e.items=[],this._notify(t,e,Date.now(),\"complete\")}remove(t){return this._charts.delete(t)}}var xt=new bt;\n/*!\n * @kurkle/color v0.3.2\n * https://github.com/kurkle/color#readme\n * (c) 2023 Jukka Kurkela\n * Released under the MIT License\n */function _t(t){return t+.5|0}const yt=(t,e,i)=>Math.max(Math.min(t,i),e);function vt(t){return yt(_t(2.55*t),0,255)}function Mt(t){return yt(_t(255*t),0,255)}function wt(t){return yt(_t(t/2.55)/100,0,1)}function kt(t){return yt(_t(100*t),0,100)}const St={0:0,1:1,2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,A:10,B:11,C:12,D:13,E:14,F:15,a:10,b:11,c:12,d:13,e:14,f:15},Pt=[...\"0123456789ABCDEF\"],Dt=t=>Pt[15&t],Ct=t=>Pt[(240&t)>>4]+Pt[15&t],Ot=t=>(240&t)>>4==(15&t);function At(t){var e=(t=>Ot(t.r)&&Ot(t.g)&&Ot(t.b)&&Ot(t.a))(t)?Dt:Ct;return t?\"#\"+e(t.r)+e(t.g)+e(t.b)+((t,e)=>t<255?e(t):\"\")(t.a,e):void 0}const Tt=/^(hsla?|hwb|hsv)\\(\\s*([-+.e\\d]+)(?:deg)?[\\s,]+([-+.e\\d]+)%[\\s,]+([-+.e\\d]+)%(?:[\\s,]+([-+.e\\d]+)(%)?)?\\s*\\)$/;function Lt(t,e,i){const s=e*Math.min(i,1-i),n=(e,n=(e+t/30)%12)=>i-s*Math.max(Math.min(n-3,9-n,1),-1);return[n(0),n(8),n(4)]}function Et(t,e,i){const s=(s,n=(s+t/60)%6)=>i-i*e*Math.max(Math.min(n,4-n,1),0);return[s(5),s(3),s(1)]}function Rt(t,e,i){const s=Lt(t,1,.5);let n;for(e+i>1&&(n=1/(e+i),e*=n,i*=n),n=0;n<3;n++)s[n]*=1-e-i,s[n]+=e;return s}function It(t){const e=t.r/255,i=t.g/255,s=t.b/255,n=Math.max(e,i,s),o=Math.min(e,i,s),a=(n+o)/2;let r,l,h;return n!==o&&(h=n-o,l=a>.5?h/(2-n-o):h/(n+o),r=function(t,e,i,s,n){return t===n?(e-i)/s+(e<i?6:0):e===n?(i-t)/s+2:(t-e)/s+4}(e,i,s,h,n),r=60*r+.5),[0|r,l||0,a]}function zt(t,e,i,s){return(Array.isArray(e)?t(e[0],e[1],e[2]):t(e,i,s)).map(Mt)}function Ft(t,e,i){return zt(Lt,t,e,i)}function Vt(t){return(t%360+360)%360}function Bt(t){const e=Tt.exec(t);let i,s=255;if(!e)return;e[5]!==i&&(s=e[6]?vt(+e[5]):Mt(+e[5]));const n=Vt(+e[2]),o=+e[3]/100,a=+e[4]/100;return i=\"hwb\"===e[1]?function(t,e,i){return zt(Rt,t,e,i)}(n,o,a):\"hsv\"===e[1]?function(t,e,i){return zt(Et,t,e,i)}(n,o,a):Ft(n,o,a),{r:i[0],g:i[1],b:i[2],a:s}}const Wt={x:\"dark\",Z:\"light\",Y:\"re\",X:\"blu\",W:\"gr\",V:\"medium\",U:\"slate\",A:\"ee\",T:\"ol\",S:\"or\",B:\"ra\",C:\"lateg\",D:\"ights\",R:\"in\",Q:\"turquois\",E:\"hi\",P:\"ro\",O:\"al\",N:\"le\",M:\"de\",L:\"yello\",F:\"en\",K:\"ch\",G:\"arks\",H:\"ea\",I:\"ightg\",J:\"wh\"},Nt={OiceXe:\"f0f8ff\",antiquewEte:\"faebd7\",aqua:\"ffff\",aquamarRe:\"7fffd4\",azuY:\"f0ffff\",beige:\"f5f5dc\",bisque:\"ffe4c4\",black:\"0\",blanKedOmond:\"ffebcd\",Xe:\"ff\",XeviTet:\"8a2be2\",bPwn:\"a52a2a\",burlywood:\"deb887\",caMtXe:\"5f9ea0\",KartYuse:\"7fff00\",KocTate:\"d2691e\",cSO:\"ff7f50\",cSnflowerXe:\"6495ed\",cSnsilk:\"fff8dc\",crimson:\"dc143c\",cyan:\"ffff\",xXe:\"8b\",xcyan:\"8b8b\",xgTMnPd:\"b8860b\",xWay:\"a9a9a9\",xgYF:\"6400\",xgYy:\"a9a9a9\",xkhaki:\"bdb76b\",xmagFta:\"8b008b\",xTivegYF:\"556b2f\",xSange:\"ff8c00\",xScEd:\"9932cc\",xYd:\"8b0000\",xsOmon:\"e9967a\",xsHgYF:\"8fbc8f\",xUXe:\"483d8b\",xUWay:\"2f4f4f\",xUgYy:\"2f4f4f\",xQe:\"ced1\",xviTet:\"9400d3\",dAppRk:\"ff1493\",dApskyXe:\"bfff\",dimWay:\"696969\",dimgYy:\"696969\",dodgerXe:\"1e90ff\",fiYbrick:\"b22222\",flSOwEte:\"fffaf0\",foYstWAn:\"228b22\",fuKsia:\"ff00ff\",gaRsbSo:\"dcdcdc\",ghostwEte:\"f8f8ff\",gTd:\"ffd700\",gTMnPd:\"daa520\",Way:\"808080\",gYF:\"8000\",gYFLw:\"adff2f\",gYy:\"808080\",honeyMw:\"f0fff0\",hotpRk:\"ff69b4\",RdianYd:\"cd5c5c\",Rdigo:\"4b0082\",ivSy:\"fffff0\",khaki:\"f0e68c\",lavFMr:\"e6e6fa\",lavFMrXsh:\"fff0f5\",lawngYF:\"7cfc00\",NmoncEffon:\"fffacd\",ZXe:\"add8e6\",ZcSO:\"f08080\",Zcyan:\"e0ffff\",ZgTMnPdLw:\"fafad2\",ZWay:\"d3d3d3\",ZgYF:\"90ee90\",ZgYy:\"d3d3d3\",ZpRk:\"ffb6c1\",ZsOmon:\"ffa07a\",ZsHgYF:\"20b2aa\",ZskyXe:\"87cefa\",ZUWay:\"778899\",ZUgYy:\"778899\",ZstAlXe:\"b0c4de\",ZLw:\"ffffe0\",lime:\"ff00\",limegYF:\"32cd32\",lRF:\"faf0e6\",magFta:\"ff00ff\",maPon:\"800000\",VaquamarRe:\"66cdaa\",VXe:\"cd\",VScEd:\"ba55d3\",VpurpN:\"9370db\",VsHgYF:\"3cb371\",VUXe:\"7b68ee\",VsprRggYF:\"fa9a\",VQe:\"48d1cc\",VviTetYd:\"c71585\",midnightXe:\"191970\",mRtcYam:\"f5fffa\",mistyPse:\"ffe4e1\",moccasR:\"ffe4b5\",navajowEte:\"ffdead\",navy:\"80\",Tdlace:\"fdf5e6\",Tive:\"808000\",TivedBb:\"6b8e23\",Sange:\"ffa500\",SangeYd:\"ff4500\",ScEd:\"da70d6\",pOegTMnPd:\"eee8aa\",pOegYF:\"98fb98\",pOeQe:\"afeeee\",pOeviTetYd:\"db7093\",papayawEp:\"ffefd5\",pHKpuff:\"ffdab9\",peru:\"cd853f\",pRk:\"ffc0cb\",plum:\"dda0dd\",powMrXe:\"b0e0e6\",purpN:\"800080\",YbeccapurpN:\"663399\",Yd:\"ff0000\",Psybrown:\"bc8f8f\",PyOXe:\"4169e1\",saddNbPwn:\"8b4513\",sOmon:\"fa8072\",sandybPwn:\"f4a460\",sHgYF:\"2e8b57\",sHshell:\"fff5ee\",siFna:\"a0522d\",silver:\"c0c0c0\",skyXe:\"87ceeb\",UXe:\"6a5acd\",UWay:\"708090\",UgYy:\"708090\",snow:\"fffafa\",sprRggYF:\"ff7f\",stAlXe:\"4682b4\",tan:\"d2b48c\",teO:\"8080\",tEstN:\"d8bfd8\",tomato:\"ff6347\",Qe:\"40e0d0\",viTet:\"ee82ee\",JHt:\"f5deb3\",wEte:\"ffffff\",wEtesmoke:\"f5f5f5\",Lw:\"ffff00\",LwgYF:\"9acd32\"};let Ht;function jt(t){Ht||(Ht=function(){const t={},e=Object.keys(Nt),i=Object.keys(Wt);let s,n,o,a,r;for(s=0;s<e.length;s++){for(a=r=e[s],n=0;n<i.length;n++)o=i[n],r=r.replace(o,Wt[o]);o=parseInt(Nt[a],16),t[r]=[o>>16&255,o>>8&255,255&o]}return t}(),Ht.transparent=[0,0,0,0]);const e=Ht[t.toLowerCase()];return e&&{r:e[0],g:e[1],b:e[2],a:4===e.length?e[3]:255}}const $t=/^rgba?\\(\\s*([-+.\\d]+)(%)?[\\s,]+([-+.e\\d]+)(%)?[\\s,]+([-+.e\\d]+)(%)?(?:[\\s,/]+([-+.e\\d]+)(%)?)?\\s*\\)$/;const Yt=t=>t<=.0031308?12.92*t:1.055*Math.pow(t,1/2.4)-.055,Ut=t=>t<=.04045?t/12.92:Math.pow((t+.055)/1.055,2.4);function Xt(t,e,i){if(t){let s=It(t);s[e]=Math.max(0,Math.min(s[e]+s[e]*i,0===e?360:1)),s=Ft(s),t.r=s[0],t.g=s[1],t.b=s[2]}}function qt(t,e){return t?Object.assign(e||{},t):t}function Kt(t){var e={r:0,g:0,b:0,a:255};return Array.isArray(t)?t.length>=3&&(e={r:t[0],g:t[1],b:t[2],a:255},t.length>3&&(e.a=Mt(t[3]))):(e=qt(t,{r:0,g:0,b:0,a:1})).a=Mt(e.a),e}function Gt(t){return\"r\"===t.charAt(0)?function(t){const e=$t.exec(t);let i,s,n,o=255;if(e){if(e[7]!==i){const t=+e[7];o=e[8]?vt(t):yt(255*t,0,255)}return i=+e[1],s=+e[3],n=+e[5],i=255&(e[2]?vt(i):yt(i,0,255)),s=255&(e[4]?vt(s):yt(s,0,255)),n=255&(e[6]?vt(n):yt(n,0,255)),{r:i,g:s,b:n,a:o}}}(t):Bt(t)}class Zt{constructor(t){if(t instanceof Zt)return t;const e=typeof t;let i;var s,n,o;\"object\"===e?i=Kt(t):\"string\"===e&&(o=(s=t).length,\"#\"===s[0]&&(4===o||5===o?n={r:255&17*St[s[1]],g:255&17*St[s[2]],b:255&17*St[s[3]],a:5===o?17*St[s[4]]:255}:7!==o&&9!==o||(n={r:St[s[1]]<<4|St[s[2]],g:St[s[3]]<<4|St[s[4]],b:St[s[5]]<<4|St[s[6]],a:9===o?St[s[7]]<<4|St[s[8]]:255})),i=n||jt(t)||Gt(t)),this._rgb=i,this._valid=!!i}get valid(){return this._valid}get rgb(){var t=qt(this._rgb);return t&&(t.a=wt(t.a)),t}set rgb(t){this._rgb=Kt(t)}rgbString(){return this._valid?(t=this._rgb)&&(t.a<255?`rgba(${t.r}, ${t.g}, ${t.b}, ${wt(t.a)})`:`rgb(${t.r}, ${t.g}, ${t.b})`):void 0;var t}hexString(){return this._valid?At(this._rgb):void 0}hslString(){return this._valid?function(t){if(!t)return;const e=It(t),i=e[0],s=kt(e[1]),n=kt(e[2]);return t.a<255?`hsla(${i}, ${s}%, ${n}%, ${wt(t.a)})`:`hsl(${i}, ${s}%, ${n}%)`}(this._rgb):void 0}mix(t,e){if(t){const i=this.rgb,s=t.rgb;let n;const o=e===n?.5:e,a=2*o-1,r=i.a-s.a,l=((a*r==-1?a:(a+r)/(1+a*r))+1)/2;n=1-l,i.r=255&l*i.r+n*s.r+.5,i.g=255&l*i.g+n*s.g+.5,i.b=255&l*i.b+n*s.b+.5,i.a=o*i.a+(1-o)*s.a,this.rgb=i}return this}interpolate(t,e){return t&&(this._rgb=function(t,e,i){const s=Ut(wt(t.r)),n=Ut(wt(t.g)),o=Ut(wt(t.b));return{r:Mt(Yt(s+i*(Ut(wt(e.r))-s))),g:Mt(Yt(n+i*(Ut(wt(e.g))-n))),b:Mt(Yt(o+i*(Ut(wt(e.b))-o))),a:t.a+i*(e.a-t.a)}}(this._rgb,t._rgb,e)),this}clone(){return new Zt(this.rgb)}alpha(t){return this._rgb.a=Mt(t),this}clearer(t){return this._rgb.a*=1-t,this}greyscale(){const t=this._rgb,e=_t(.3*t.r+.59*t.g+.11*t.b);return t.r=t.g=t.b=e,this}opaquer(t){return this._rgb.a*=1+t,this}negate(){const t=this._rgb;return t.r=255-t.r,t.g=255-t.g,t.b=255-t.b,this}lighten(t){return Xt(this._rgb,2,t),this}darken(t){return Xt(this._rgb,2,-t),this}saturate(t){return Xt(this._rgb,1,t),this}desaturate(t){return Xt(this._rgb,1,-t),this}rotate(t){return function(t,e){var i=It(t);i[0]=Vt(i[0]+e),i=Ft(i),t.r=i[0],t.g=i[1],t.b=i[2]}(this._rgb,t),this}}function Jt(t){if(t&&\"object\"==typeof t){const e=t.toString();return\"[object CanvasPattern]\"===e||\"[object CanvasGradient]\"===e}return!1}function Qt(t){return Jt(t)?t:new Zt(t)}function te(t){return Jt(t)?t:new Zt(t).saturate(.5).darken(.1).hexString()}const ee=[\"x\",\"y\",\"borderWidth\",\"radius\",\"tension\"],ie=[\"color\",\"borderColor\",\"backgroundColor\"];const se=new Map;function ne(t,e,i){return function(t,e){e=e||{};const i=t+JSON.stringify(e);let s=se.get(i);return s||(s=new Intl.NumberFormat(t,e),se.set(i,s)),s}(e,i).format(t)}const oe={values:t=>n(t)?t:\"\"+t,numeric(t,e,i){if(0===t)return\"0\";const s=this.chart.options.locale;let n,o=t;if(i.length>1){const e=Math.max(Math.abs(i[0].value),Math.abs(i[i.length-1].value));(e<1e-4||e>1e15)&&(n=\"scientific\"),o=function(t,e){let i=e.length>3?e[2].value-e[1].value:e[1].value-e[0].value;Math.abs(i)>=1&&t!==Math.floor(t)&&(i=t-Math.floor(t));return i}(t,i)}const a=z(Math.abs(o)),r=isNaN(a)?1:Math.max(Math.min(-1*Math.floor(a),20),0),l={notation:n,minimumFractionDigits:r,maximumFractionDigits:r};return Object.assign(l,this.options.ticks.format),ne(t,s,l)},logarithmic(t,e,i){if(0===t)return\"0\";const s=i[e].significand||t/Math.pow(10,Math.floor(z(t)));return[1,2,3,5,10,15].includes(s)||e>.8*i.length?oe.numeric.call(this,t,e,i):\"\"}};var ae={formatters:oe};const re=Object.create(null),le=Object.create(null);function he(t,e){if(!e)return t;const i=e.split(\".\");for(let e=0,s=i.length;e<s;++e){const s=i[e];t=t[s]||(t[s]=Object.create(null))}return t}function ce(t,e,i){return\"string\"==typeof e?b(he(t,e),i):b(he(t,\"\"),e)}class de{constructor(t,e){this.animation=void 0,this.backgroundColor=\"rgba(0,0,0,0.1)\",this.borderColor=\"rgba(0,0,0,0.1)\",this.color=\"#666\",this.datasets={},this.devicePixelRatio=t=>t.chart.platform.getDevicePixelRatio(),this.elements={},this.events=[\"mousemove\",\"mouseout\",\"click\",\"touchstart\",\"touchmove\"],this.font={family:\"'Helvetica Neue', 'Helvetica', 'Arial', sans-serif\",size:12,style:\"normal\",lineHeight:1.2,weight:null},this.hover={},this.hoverBackgroundColor=(t,e)=>te(e.backgroundColor),this.hoverBorderColor=(t,e)=>te(e.borderColor),this.hoverColor=(t,e)=>te(e.color),this.indexAxis=\"x\",this.interaction={mode:\"nearest\",intersect:!0,includeInvisible:!1},this.maintainAspectRatio=!0,this.onHover=null,this.onClick=null,this.parsing=!0,this.plugins={},this.responsive=!0,this.scale=void 0,this.scales={},this.showLine=!0,this.drawActiveElementsOnTop=!0,this.describe(t),this.apply(e)}set(t,e){return ce(this,t,e)}get(t){return he(this,t)}describe(t,e){return ce(le,t,e)}override(t,e){return ce(re,t,e)}route(t,e,i,s){const n=he(this,t),a=he(this,i),r=\"_\"+e;Object.defineProperties(n,{[r]:{value:n[e],writable:!0},[e]:{enumerable:!0,get(){const t=this[r],e=a[s];return o(t)?Object.assign({},e,t):l(t,e)},set(t){this[r]=t}}})}apply(t){t.forEach((t=>t(this)))}}var ue=new de({_scriptable:t=>!t.startsWith(\"on\"),_indexable:t=>\"events\"!==t,hover:{_fallback:\"interaction\"},interaction:{_scriptable:!1,_indexable:!1}},[function(t){t.set(\"animation\",{delay:void 0,duration:1e3,easing:\"easeOutQuart\",fn:void 0,from:void 0,loop:void 0,to:void 0,type:void 0}),t.describe(\"animation\",{_fallback:!1,_indexable:!1,_scriptable:t=>\"onProgress\"!==t&&\"onComplete\"!==t&&\"fn\"!==t}),t.set(\"animations\",{colors:{type:\"color\",properties:ie},numbers:{type:\"number\",properties:ee}}),t.describe(\"animations\",{_fallback:\"animation\"}),t.set(\"transitions\",{active:{animation:{duration:400}},resize:{animation:{duration:0}},show:{animations:{colors:{from:\"transparent\"},visible:{type:\"boolean\",duration:0}}},hide:{animations:{colors:{to:\"transparent\"},visible:{type:\"boolean\",easing:\"linear\",fn:t=>0|t}}}})},function(t){t.set(\"layout\",{autoPadding:!0,padding:{top:0,right:0,bottom:0,left:0}})},function(t){t.set(\"scale\",{display:!0,offset:!1,reverse:!1,beginAtZero:!1,bounds:\"ticks\",clip:!0,grace:0,grid:{display:!0,lineWidth:1,drawOnChartArea:!0,drawTicks:!0,tickLength:8,tickWidth:(t,e)=>e.lineWidth,tickColor:(t,e)=>e.color,offset:!1},border:{display:!0,dash:[],dashOffset:0,width:1},title:{display:!1,text:\"\",padding:{top:4,bottom:4}},ticks:{minRotation:0,maxRotation:50,mirror:!1,textStrokeWidth:0,textStrokeColor:\"\",padding:3,display:!0,autoSkip:!0,autoSkipPadding:3,labelOffset:0,callback:ae.formatters.values,minor:{},major:{},align:\"center\",crossAlign:\"near\",showLabelBackdrop:!1,backdropColor:\"rgba(255, 255, 255, 0.75)\",backdropPadding:2}}),t.route(\"scale.ticks\",\"color\",\"\",\"color\"),t.route(\"scale.grid\",\"color\",\"\",\"borderColor\"),t.route(\"scale.border\",\"color\",\"\",\"borderColor\"),t.route(\"scale.title\",\"color\",\"\",\"color\"),t.describe(\"scale\",{_fallback:!1,_scriptable:t=>!t.startsWith(\"before\")&&!t.startsWith(\"after\")&&\"callback\"!==t&&\"parser\"!==t,_indexable:t=>\"borderDash\"!==t&&\"tickBorderDash\"!==t&&\"dash\"!==t}),t.describe(\"scales\",{_fallback:\"scale\"}),t.describe(\"scale.ticks\",{_scriptable:t=>\"backdropPadding\"!==t&&\"callback\"!==t,_indexable:t=>\"backdropPadding\"!==t})}]);function fe(){return\"undefined\"!=typeof window&&\"undefined\"!=typeof document}function ge(t){let e=t.parentNode;return e&&\"[object ShadowRoot]\"===e.toString()&&(e=e.host),e}function pe(t,e,i){let s;return\"string\"==typeof t?(s=parseInt(t,10),-1!==t.indexOf(\"%\")&&(s=s/100*e.parentNode[i])):s=t,s}const me=t=>t.ownerDocument.defaultView.getComputedStyle(t,null);function be(t,e){return me(t).getPropertyValue(e)}const xe=[\"top\",\"right\",\"bottom\",\"left\"];function _e(t,e,i){const s={};i=i?\"-\"+i:\"\";for(let n=0;n<4;n++){const o=xe[n];s[o]=parseFloat(t[e+\"-\"+o+i])||0}return s.width=s.left+s.right,s.height=s.top+s.bottom,s}const ye=(t,e,i)=>(t>0||e>0)&&(!i||!i.shadowRoot);function ve(t,e){if(\"native\"in t)return t;const{canvas:i,currentDevicePixelRatio:s}=e,n=me(i),o=\"border-box\"===n.boxSizing,a=_e(n,\"padding\"),r=_e(n,\"border\",\"width\"),{x:l,y:h,box:c}=function(t,e){const i=t.touches,s=i&&i.length?i[0]:t,{offsetX:n,offsetY:o}=s;let a,r,l=!1;if(ye(n,o,t.target))a=n,r=o;else{const t=e.getBoundingClientRect();a=s.clientX-t.left,r=s.relay-node.invalid,l=!0}return{x:a,y:r,box:l}}(t,i),d=a.left+(c&&r.left),u=a.top+(c&&r.top);let{width:f,height:g}=e;return o&&(f-=a.width+r.width,g-=a.height+r.height),{x:Math.round((l-d)/f*i.width/s),y:Math.round((h-u)/g*i.height/s)}}const Me=t=>Math.round(10*t)/10;function we(t,e,i,s){const n=me(t),o=_e(n,\"margin\"),a=pe(n.maxWidth,t,\"clientWidth\")||T,r=pe(n.maxHeight,t,\"clientHeight\")||T,l=function(t,e,i){let s,n;if(void 0===e||void 0===i){const o=ge(t);if(o){const t=o.getBoundingClientRect(),a=me(o),r=_e(a,\"border\",\"width\"),l=_e(a,\"padding\");e=t.width-l.width-r.width,i=t.height-l.height-r.height,s=pe(a.maxWidth,o,\"clientWidth\"),n=pe(a.maxHeight,o,\"clientHeight\")}else e=t.clientWidth,i=t.clientHeight}return{width:e,height:i,maxWidth:s||T,maxHeight:n||T}}(t,e,i);let{width:h,height:c}=l;if(\"content-box\"===n.boxSizing){const t=_e(n,\"border\",\"width\"),e=_e(n,\"padding\");h-=e.width+t.width,c-=e.height+t.height}h=Math.max(0,h-o.width),c=Math.max(0,s?h/s:c-o.height),h=Me(Math.min(h,a,l.maxWidth)),c=Me(Math.min(c,r,l.maxHeight)),h&&!c&&(c=Me(h/2));return(void 0!==e||void 0!==i)&&s&&l.height&&c>l.height&&(c=l.height,h=Me(Math.floor(c*s))),{width:h,height:c}}function ke(t,e,i){const s=e||1,n=Math.floor(t.height*s),o=Math.floor(t.width*s);t.height=Math.floor(t.height),t.width=Math.floor(t.width);const a=t.canvas;return a.style&&(i||!a.style.height&&!a.style.width)&&(a.style.height=`${t.height}px`,a.style.width=`${t.width}px`),(t.currentDevicePixelRatio!==s||a.height!==n||a.width!==o)&&(t.currentDevicePixelRatio=s,a.height=n,a.width=o,t.ctx.setTransform(s,0,0,s,0,0),!0)}const Se=function(){let t=!1;try{const e={get passive(){return t=!0,!1}};fe()&&(window.addEventListener(\"test\",null,e),window.removeEventListener(\"test\",null,e))}catch(t){}return t}();function Pe(t,e){const i=be(t,e),s=i&&i.match(/^(\\d+)(\\.\\d+)?px$/);return s?+s[1]:void 0}function De(t){return!t||s(t.size)||s(t.family)?null:(t.style?t.style+\" \":\"\")+(t.weight?t.weight+\" \":\"\")+t.size+\"px \"+t.family}function Ce(t,e,i,s,n){let o=e[n];return o||(o=e[n]=t.measureText(n).width,i.push(n)),o>s&&(s=o),s}function Oe(t,e,i,s){let o=(s=s||{}).data=s.data||{},a=s.garbageCollect=s.garbageCollect||[];s.font!==e&&(o=s.data={},a=s.garbageCollect=[],s.font=e),t.save(),t.font=e;let r=0;const l=i.length;let h,c,d,u,f;for(h=0;h<l;h++)if(u=i[h],null==u||n(u)){if(n(u))for(c=0,d=u.length;c<d;c++)f=u[c],null==f||n(f)||(r=Ce(t,o,a,r,f))}else r=Ce(t,o,a,r,u);t.restore();const g=a.length/2;if(g>i.length){for(h=0;h<g;h++)delete o[a[h]];a.splice(0,g)}return r}function Ae(t,e,i){const s=t.currentDevicePixelRatio,n=0!==i?Math.max(i/2,.5):0;return Math.round((e-n)*s)/s+n}function Te(t,e){(e=e||t.getContext(\"2d\")).save(),e.resetTransform(),e.clearRect(0,0,t.width,t.height),e.restore()}function Le(t,e,i,s){Ee(t,e,i,s,null)}function Ee(t,e,i,s,n){let o,a,r,l,h,c,d,u;const f=e.pointStyle,g=e.rotation,p=e.radius;let m=(g||0)*L;if(f&&\"object\"==typeof f&&(o=f.toString(),\"[object HTMLImageElement]\"===o||\"[object HTMLCanvasElement]\"===o))return t.save(),t.translate(i,s),t.rotate(m),t.drawImage(f,-f.width/2,-f.height/2,f.width,f.height),void t.restore();if(!(isNaN(p)||p<=0)){switch(t.beginPath(),f){default:n?t.ellipse(i,s,n/2,p,0,0,O):t.arc(i,s,p,0,O),t.closePath();break;case\"triangle\":c=n?n/2:p,t.moveTo(i+Math.sin(m)*c,s-Math.cos(m)*p),m+=I,t.lineTo(i+Math.sin(m)*c,s-Math.cos(m)*p),m+=I,t.lineTo(i+Math.sin(m)*c,s-Math.cos(m)*p),t.closePath();break;case\"rectRounded\":h=.516*p,l=p-h,a=Math.cos(m+R)*l,d=Math.cos(m+R)*(n?n/2-h:l),r=Math.sin(m+R)*l,u=Math.sin(m+R)*(n?n/2-h:l),t.arc(i-d,s-r,h,m-C,m-E),t.arc(i+u,s-a,h,m-E,m),t.arc(i+d,s+r,h,m,m+E),t.arc(i-u,s+a,h,m+E,m+C),t.closePath();break;case\"rect\":if(!g){l=Math.SQRT1_2*p,c=n?n/2:l,t.rect(i-c,s-l,2*c,2*l);break}m+=R;case\"rectRot\":d=Math.cos(m)*(n?n/2:p),a=Math.cos(m)*p,r=Math.sin(m)*p,u=Math.sin(m)*(n?n/2:p),t.moveTo(i-d,s-r),t.lineTo(i+u,s-a),t.lineTo(i+d,s+r),t.lineTo(i-u,s+a),t.closePath();break;case\"crossRot\":m+=R;case\"cross\":d=Math.cos(m)*(n?n/2:p),a=Math.cos(m)*p,r=Math.sin(m)*p,u=Math.sin(m)*(n?n/2:p),t.moveTo(i-d,s-r),t.lineTo(i+d,s+r),t.moveTo(i+u,s-a),t.lineTo(i-u,s+a);break;case\"star\":d=Math.cos(m)*(n?n/2:p),a=Math.cos(m)*p,r=Math.sin(m)*p,u=Math.sin(m)*(n?n/2:p),t.moveTo(i-d,s-r),t.lineTo(i+d,s+r),t.moveTo(i+u,s-a),t.lineTo(i-u,s+a),m+=R,d=Math.cos(m)*(n?n/2:p),a=Math.cos(m)*p,r=Math.sin(m)*p,u=Math.sin(m)*(n?n/2:p),t.moveTo(i-d,s-r),t.lineTo(i+d,s+r),t.moveTo(i+u,s-a),t.lineTo(i-u,s+a);break;case\"line\":a=n?n/2:Math.cos(m)*p,r=Math.sin(m)*p,t.moveTo(i-a,s-r),t.lineTo(i+a,s+r);break;case\"dash\":t.moveTo(i,s),t.lineTo(i+Math.cos(m)*(n?n/2:p),s+Math.sin(m)*p);break;case!1:t.closePath()}t.fill(),e.borderWidth>0&&t.stroke()}}function Re(t,e,i){return i=i||.5,!e||t&&t.x>e.left-i&&t.x<e.right+i&&t.y>e.top-i&&t.y<e.bottom+i}function Ie(t,e){t.save(),t.beginPath(),t.rect(e.left,e.top,e.right-e.left,e.relay-node.invalid),t.clip()}function ze(t){t.restore()}function Fe(t,e,i,s,n){if(!e)return t.lineTo(i.x,i.y);if(\"middle\"===n){const s=(e.x+i.x)/2;t.lineTo(s,e.y),t.lineTo(s,i.y)}else\"after\"===n!=!!s?t.lineTo(e.x,i.y):t.lineTo(i.x,e.y);t.lineTo(i.x,i.y)}function Ve(t,e,i,s){if(!e)return t.lineTo(i.x,i.y);t.bezierCurveTo(s?e.cp1x:e.cp2x,s?e.cp1y:e.cp2y,s?i.cp2x:i.cp1x,s?i.cp2y:i.cp1y,i.x,i.y)}function Be(t,e,i,s,n){if(n.strikethrough||n.underline){const o=t.measureText(s),a=e-o.actualBoundingBoxLeft,r=e+o.actualBoundingBoxRight,l=i-o.actualBoundingBoxAscent,h=i+o.actualBoundingBoxDescent,c=n.strikethrough?(l+h)/2:h;t.strokeStyle=t.fillStyle,t.beginPath(),t.lineWidth=n.decorationWidth||2,t.moveTo(a,c),t.lineTo(r,c),t.stroke()}}function We(t,e){const i=t.fillStyle;t.fillStyle=e.color,t.fillRect(e.left,e.top,e.width,e.height),t.fillStyle=i}function Ne(t,e,i,o,a,r={}){const l=n(e)?e:[e],h=r.strokeWidth>0&&\"\"!==r.strokeColor;let c,d;for(t.save(),t.font=a.string,function(t,e){e.translation&&t.translate(e.translation[0],e.translation[1]),s(e.rotation)||t.rotate(e.rotation),e.color&&(t.fillStyle=e.color),e.textAlign&&(t.textAlign=e.textAlign),e.textBaseline&&(t.textBaseline=e.textBaseline)}(t,r),c=0;c<l.length;++c)d=l[c],r.backdrop&&We(t,r.backdrop),h&&(r.strokeColor&&(t.strokeStyle=r.strokeColor),s(r.strokeWidth)||(t.lineWidth=r.strokeWidth),t.strokeText(d,i,o,r.maxWidth)),t.fillText(d,i,o,r.maxWidth),Be(t,i,o,d,r),o+=Number(a.lineHeight);t.restore()}function He(t,e){const{x:i,y:s,w:n,h:o,radius:a}=e;t.arc(i+a.topLeft,s+a.topLeft,a.topLeft,1.5*C,C,!0),t.lineTo(i,s+o-a.bottomLeft),t.arc(i+a.bottomLeft,s+o-a.bottomLeft,a.bottomLeft,C,E,!0),t.lineTo(i+n-a.bottomRight,s+o),t.arc(i+n-a.bottomRight,s+o-a.bottomRight,a.bottomRight,E,0,!0),t.lineTo(i+n,s+a.topRight),t.arc(i+n-a.topRight,s+a.topRight,a.topRight,0,-E,!0),t.lineTo(i+a.topLeft,s)}function je(t,e=[\"\"],i,s,n=(()=>t[0])){const o=i||t;void 0===s&&(s=ti(\"_fallback\",t));const a={[Symbol.toStringTag]:\"Object\",_cacheable:!0,_scopes:t,_rootScopes:o,_fallback:s,_getTarget:n,override:i=>je([i,...t],e,o,s)};return new Proxy(a,{deleteProperty:(e,i)=>(delete e[i],delete e._keys,delete t[0][i],!0),get:(i,s)=>qe(i,s,(()=>function(t,e,i,s){let n;for(const o of e)if(n=ti(Ue(o,t),i),void 0!==n)return Xe(t,n)?Je(i,s,t,n):n}(s,e,t,i))),getOwnPropertyDescriptor:(t,e)=>Reflect.getOwnPropertyDescriptor(t._scopes[0],e),getPrototypeOf:()=>Reflect.getPrototypeOf(t[0]),has:(t,e)=>ei(t).includes(e),ownKeys:t=>ei(t),set(t,e,i){const s=t._storage||(t._storage=n());return t[e]=s[e]=i,delete t._keys,!0}})}function $e(t,e,i,s){const a={_cacheable:!1,_proxy:t,_context:e,_subProxy:i,_stack:new Set,_descriptors:Ye(t,s),setContext:e=>$e(t,e,i,s),override:n=>$e(t.override(n),e,i,s)};return new Proxy(a,{deleteProperty:(e,i)=>(delete e[i],delete t[i],!0),get:(t,e,i)=>qe(t,e,(()=>function(t,e,i){const{_proxy:s,_context:a,_subProxy:r,_descriptors:l}=t;let h=s[e];S(h)&&l.isScriptable(e)&&(h=function(t,e,i,s){const{_proxy:n,_context:o,_subProxy:a,_stack:r}=i;if(r.has(t))throw new Error(\"Recursion detected: \"+Array.from(r).join(\"->\")+\"->\"+t);r.add(t);let l=e(o,a||s);r.delete(t),Xe(t,l)&&(l=Je(n._scopes,n,t,l));return l}(e,h,t,i));n(h)&&h.length&&(h=function(t,e,i,s){const{_proxy:n,_context:a,_subProxy:r,_descriptors:l}=i;if(void 0!==a.index&&s(t))return e[a.index%e.length];if(o(e[0])){const i=e,s=n._scopes.filter((t=>t!==i));e=[];for(const o of i){const i=Je(s,n,t,o);e.push($e(i,a,r&&r[t],l))}}return e}(e,h,t,l.isIndexable));Xe(e,h)&&(h=$e(h,a,r&&r[e],l));return h}(t,e,i))),getOwnPropertyDescriptor:(e,i)=>e._descriptors.allKeys?Reflect.has(t,i)?{enumerable:!0,configurable:!0}:void 0:Reflect.getOwnPropertyDescriptor(t,i),getPrototypeOf:()=>Reflect.getPrototypeOf(t),has:(e,i)=>Reflect.has(t,i),ownKeys:()=>Reflect.ownKeys(t),set:(e,i,s)=>(t[i]=s,delete e[i],!0)})}function Ye(t,e={scriptable:!0,indexable:!0}){const{_scriptable:i=e.scriptable,_indexable:s=e.indexable,_allKeys:n=e.allKeys}=t;return{allKeys:n,scriptable:i,indexable:s,isScriptable:S(i)?i:()=>i,isIndexable:S(s)?s:()=>s}}const Ue=(t,e)=>t?t+w(e):e,Xe=(t,e)=>o(e)&&\"adapters\"!==t&&(null===Object.getPrototypeOf(e)||e.constructor===Object);function qe(t,e,i){if(Object.prototype.hasOwnProperty.call(t,e))return t[e];const s=i();return t[e]=s,s}function Ke(t,e,i){return S(t)?t(e,i):t}const Ge=(t,e)=>!0===t?e:\"string\"==typeof t?M(e,t):void 0;function Ze(t,e,i,s,n){for(const o of e){const e=Ge(i,o);if(e){t.add(e);const o=Ke(e._fallback,i,n);if(void 0!==o&&o!==i&&o!==s)return o}else if(!1===e&&void 0!==s&&i!==s)return null}return!1}function Je(t,e,i,s){const a=e._rootScopes,r=Ke(e._fallback,i,s),l=[...t,...a],h=new Set;h.add(s);let c=Qe(h,l,i,r||i,s);return null!==c&&((void 0===r||r===i||(c=Qe(h,l,r,c,s),null!==c))&&je(Array.from(h),[\"\"],a,r,(()=>function(t,e,i){const s=t._getTarget();e in s||(s[e]={});const a=s[e];if(n(a)&&o(i))return i;return a||{}}(e,i,s))))}function Qe(t,e,i,s,n){for(;i;)i=Ze(t,e,i,s,n);return i}function ti(t,e){for(const i of e){if(!i)continue;const e=i[t];if(void 0!==e)return e}}function ei(t){let e=t._keys;return e||(e=t._keys=function(t){const e=new Set;for(const i of t)for(const t of Object.keys(i).filter((t=>!t.startsWith(\"_\"))))e.add(t);return Array.from(e)}(t._scopes)),e}function ii(t,e,i,s){const{iScale:n}=t,{key:o=\"r\"}=this._parsing,a=new Array(s);let r,l,h,c;for(r=0,l=s;r<l;++r)h=r+i,c=e[h],a[r]={r:n.parse(M(c,o),h)};return a}const si=Number.EPSILON||1e-14,ni=(t,e)=>e<t.length&&!t[e].skip&&t[e],oi=t=>\"x\"===t?\"y\":\"x\";function ai(t,e,i,s){const n=t.skip?e:t,o=e,a=i.skip?e:i,r=q(o,n),l=q(a,o);let h=r/(r+l),c=l/(r+l);h=isNaN(h)?0:h,c=isNaN(c)?0:c;const d=s*h,u=s*c;return{previous:{x:o.x-d*(a.x-n.x),y:o.y-d*(a.y-n.y)},next:{x:o.x+u*(a.x-n.x),y:o.y+u*(a.y-n.y)}}}function ri(t,e=\"x\"){const i=oi(e),s=t.length,n=Array(s).fill(0),o=Array(s);let a,r,l,h=ni(t,0);for(a=0;a<s;++a)if(r=l,l=h,h=ni(t,a+1),l){if(h){const t=h[e]-l[e];n[a]=0!==t?(h[i]-l[i])/t:0}o[a]=r?h?F(n[a-1])!==F(n[a])?0:(n[a-1]+n[a])/2:n[a-1]:n[a]}!function(t,e,i){const s=t.length;let n,o,a,r,l,h=ni(t,0);for(let c=0;c<s-1;++c)l=h,h=ni(t,c+1),l&&h&&(V(e[c],0,si)?i[c]=i[c+1]=0:(n=i[c]/e[c],o=i[c+1]/e[c],r=Math.pow(n,2)+Math.pow(o,2),r<=9||(a=3/Math.sqrt(r),i[c]=n*a*e[c],i[c+1]=o*a*e[c])))}(t,n,o),function(t,e,i=\"x\"){const s=oi(i),n=t.length;let o,a,r,l=ni(t,0);for(let h=0;h<n;++h){if(a=r,r=l,l=ni(t,h+1),!r)continue;const n=r[i],c=r[s];a&&(o=(n-a[i])/3,r[`cp1${i}`]=n-o,r[`cp1${s}`]=c-o*e[h]),l&&(o=(l[i]-n)/3,r[`cp2${i}`]=n+o,r[`cp2${s}`]=c+o*e[h])}}(t,o,e)}function li(t,e,i){return Math.max(Math.min(t,i),e)}function hi(t,e,i,s,n){let o,a,r,l;if(e.spanGaps&&(t=t.filter((t=>!t.skip))),\"monotone\"===e.cubicInterpolationMode)ri(t,n);else{let i=s?t[t.length-1]:t[0];for(o=0,a=t.length;o<a;++o)r=t[o],l=ai(i,r,t[Math.min(o+1,a-(s?0:1))%a],e.tension),r.cp1x=l.previous.x,r.cp1y=l.previous.y,r.cp2x=l.next.x,r.cp2y=l.next.y,i=r}e.capBezierPoints&&function(t,e){let i,s,n,o,a,r=Re(t[0],e);for(i=0,s=t.length;i<s;++i)a=o,o=r,r=i<s-1&&Re(t[i+1],e),o&&(n=t[i],a&&(n.cp1x=li(n.cp1x,e.left,e.right),n.cp1y=li(n.cp1y,e.top,e.bottom)),r&&(n.cp2x=li(n.cp2x,e.left,e.right),n.cp2y=li(n.cp2y,e.top,e.bottom)))}(t,i)}const ci=t=>0===t||1===t,di=(t,e,i)=>-Math.pow(2,10*(t-=1))*Math.sin((t-e)*O/i),ui=(t,e,i)=>Math.pow(2,-10*t)*Math.sin((t-e)*O/i)+1,fi={linear:t=>t,easeInQuad:t=>t*t,easeOutQuad:t=>-t*(t-2),easeInOutQuad:t=>(t/=.5)<1?.5*t*t:-.5*(--t*(t-2)-1),easeInCubic:t=>t*t*t,easeOutCubic:t=>(t-=1)*t*t+1,easeInOutCubic:t=>(t/=.5)<1?.5*t*t*t:.5*((t-=2)*t*t+2),easeInQuart:t=>t*t*t*t,easeOutQuart:t=>-((t-=1)*t*t*t-1),easeInOutQuart:t=>(t/=.5)<1?.5*t*t*t*t:-.5*((t-=2)*t*t*t-2),easeInQuint:t=>t*t*t*t*t,easeOutQuint:t=>(t-=1)*t*t*t*t+1,easeInOutQuint:t=>(t/=.5)<1?.5*t*t*t*t*t:.5*((t-=2)*t*t*t*t+2),easeInSine:t=>1-Math.cos(t*E),easeOutSine:t=>Math.sin(t*E),easeInOutSine:t=>-.5*(Math.cos(C*t)-1),easeInExpo:t=>0===t?0:Math.pow(2,10*(t-1)),easeOutExpo:t=>1===t?1:1-Math.pow(2,-10*t),easeInOutExpo:t=>ci(t)?t:t<.5?.5*Math.pow(2,10*(2*t-1)):.5*(2-Math.pow(2,-10*(2*t-1))),easeInCirc:t=>t>=1?t:-(Math.sqrt(1-t*t)-1),easeOutCirc:t=>Math.sqrt(1-(t-=1)*t),easeInOutCirc:t=>(t/=.5)<1?-.5*(Math.sqrt(1-t*t)-1):.5*(Math.sqrt(1-(t-=2)*t)+1),easeInElastic:t=>ci(t)?t:di(t,.075,.3),easeOutElastic:t=>ci(t)?t:ui(t,.075,.3),easeInOutElastic(t){const e=.1125;return ci(t)?t:t<.5?.5*di(2*t,e,.45):.5+.5*ui(2*t-1,e,.45)},easeInBack(t){const e=1.70158;return t*t*((e+1)*t-e)},easeOutBack(t){const e=1.70158;return(t-=1)*t*((e+1)*t+e)+1},easeInOutBack(t){let e=1.70158;return(t/=.5)<1?t*t*((1+(e*=1.525))*t-e)*.5:.5*((t-=2)*t*((1+(e*=1.525))*t+e)+2)},easeInBounce:t=>1-fi.easeOutBounce(1-t),easeOutBounce(t){const e=7.5625,i=2.75;return t<1/i?e*t*t:t<2/i?e*(t-=1.5/i)*t+.75:t<2.5/i?e*(t-=2.25/i)*t+.9375:e*(t-=2.625/i)*t+.984375},easeInOutBounce:t=>t<.5?.5*fi.easeInBounce(2*t):.5*fi.easeOutBounce(2*t-1)+.5};function gi(t,e,i,s){return{x:t.x+i*(e.x-t.x),y:t.y+i*(e.y-t.y)}}function pi(t,e,i,s){return{x:t.x+i*(e.x-t.x),y:\"middle\"===s?i<.5?t.y:e.y:\"after\"===s?i<1?t.y:e.y:i>0?e.y:t.y}}function mi(t,e,i,s){const n={x:t.cp2x,y:t.cp2y},o={x:e.cp1x,y:e.cp1y},a=gi(t,n,i),r=gi(n,o,i),l=gi(o,e,i),h=gi(a,r,i),c=gi(r,l,i);return gi(h,c,i)}const bi=/^(normal|(\\d+(?:\\.\\d+)?)(px|em|%)?)$/,xi=/^(normal|italic|initial|inherit|unset|(oblique( -?[0-9]?[0-9]deg)?))$/;function _i(t,e){const i=(\"\"+t).match(bi);if(!i||\"normal\"===i[1])return 1.2*e;switch(t=+i[2],i[3]){case\"px\":return t;case\"%\":t/=100}return e*t}const yi=t=>+t||0;function vi(t,e){const i={},s=o(e),n=s?Object.keys(e):e,a=o(t)?s?i=>l(t[i],t[e[i]]):e=>t[e]:()=>t;for(const t of n)i[t]=yi(a(t));return i}function Mi(t){return vi(t,{top:\"y\",right:\"x\",bottom:\"y\",left:\"x\"})}function wi(t){return vi(t,[\"topLeft\",\"topRight\",\"bottomLeft\",\"bottomRight\"])}function ki(t){const e=Mi(t);return e.width=e.left+e.right,e.height=e.top+e.bottom,e}function Si(t,e){t=t||{},e=e||ue.font;let i=l(t.size,e.size);\"string\"==typeof i&&(i=parseInt(i,10));let s=l(t.style,e.style);s&&!(\"\"+s).match(xi)&&(console.warn('Invalid font style specified: \"'+s+'\"'),s=void 0);const n={family:l(t.family,e.family),lineHeight:_i(l(t.lineHeight,e.lineHeight),i),size:i,style:s,weight:l(t.weight,e.weight),string:\"\"};return n.string=De(n),n}function Pi(t,e,i,s){let o,a,r,l=!0;for(o=0,a=t.length;o<a;++o)if(r=t[o],void 0!==r&&(void 0!==e&&\"function\"==typeof r&&(r=r(e),l=!1),void 0!==i&&n(r)&&(r=r[i%r.length],l=!1),void 0!==r))return s&&!l&&(s.cacheable=!1),r}function Di(t,e,i){const{min:s,max:n}=t,o=c(e,(n-s)/2),a=(t,e)=>i&&0===t?0:t+e;return{min:a(s,-Math.abs(o)),max:a(n,o)}}function Ci(t,e){return Object.assign(Object.create(t),e)}function Oi(t,e,i){return t?function(t,e){return{x:i=>t+t+e-i,setWidth(t){e=t},textAlign:t=>\"center\"===t?t:\"right\"===t?\"left\":\"right\",xPlus:(t,e)=>t-e,leftForLtr:(t,e)=>t-e}}(e,i):{x:t=>t,setWidth(t){},textAlign:t=>t,xPlus:(t,e)=>t+e,leftForLtr:(t,e)=>t}}function Ai(t,e){let i,s;\"ltr\"!==e&&\"rtl\"!==e||(i=t.canvas.style,s=[i.getPropertyValue(\"direction\"),i.getPropertyPriority(\"direction\")],i.setProperty(\"direction\",e,\"important\"),t.prevTextDirection=s)}function Ti(t,e){void 0!==e&&(delete t.prevTextDirection,t.canvas.style.setProperty(\"direction\",e[0],e[1]))}function Li(t){return\"angle\"===t?{between:Z,compare:K,normalize:G}:{between:tt,compare:(t,e)=>t-e,normalize:t=>t}}function Ei({start:t,end:e,count:i,loop:s,style:n}){return{start:t%i,end:e%i,loop:s&&(e-t+1)%i==0,style:n}}function Ri(t,e,i){if(!i)return[t];const{property:s,start:n,end:o}=i,a=e.length,{compare:r,between:l,normalize:h}=Li(s),{start:c,end:d,loop:u,style:f}=function(t,e,i){const{property:s,start:n,end:o}=i,{between:a,normalize:r}=Li(s),l=e.length;let h,c,{start:d,end:u,loop:f}=t;if(f){for(d+=l,u+=l,h=0,c=l;h<c&&a(r(e[d%l][s]),n,o);++h)d--,u--;d%=l,u%=l}return u<d&&(u+=l),{start:d,end:u,loop:f,style:t.style}}(t,e,i),g=[];let p,m,b,x=!1,_=null;const y=()=>x||l(n,b,p)&&0!==r(n,b),v=()=>!x||0===r(o,p)||l(o,b,p);for(let t=c,i=c;t<=d;++t)m=e[t%a],m.skip||(p=h(m[s]),p!==b&&(x=l(p,n,o),null===_&&y()&&(_=0===r(p,n)?t:i),null!==_&&v()&&(g.push(Ei({start:_,end:t,loop:u,count:a,style:f})),_=null),i=t,b=p));return null!==_&&g.push(Ei({start:_,end:d,loop:u,count:a,style:f})),g}function Ii(t,e){const i=[],s=t.segments;for(let n=0;n<s.length;n++){const o=Ri(s[n],t.points,e);o.length&&i.push(...o)}return i}function zi(t,e){const i=t.points,s=t.options.spanGaps,n=i.length;if(!n)return[];const o=!!t._loop,{start:a,end:r}=function(t,e,i,s){let n=0,o=e-1;if(i&&!s)for(;n<e&&!t[n].skip;)n++;for(;n<e&&t[n].skip;)n++;for(n%=e,i&&(o+=n);o>n&&t[o%e].skip;)o--;return o%=e,{start:n,end:o}}(i,n,o,s);if(!0===s)return Fi(t,[{start:a,end:r,loop:o}],i,e);return Fi(t,function(t,e,i,s){const n=t.length,o=[];let a,r=e,l=t[e];for(a=e+1;a<=i;++a){const i=t[a%n];i.skip||i.stop?l.skip||(s=!1,o.push({start:e%n,end:(a-1)%n,loop:s}),e=r=i.stop?a:null):(r=a,l.skip&&(e=a)),l=i}return null!==r&&o.push({start:e%n,end:r%n,loop:s}),o}(i,a,r<a?r+n:r,!!t._fullLoop&&0===a&&r===n-1),i,e)}function Fi(t,e,i,s){return s&&s.setContext&&i?function(t,e,i,s){const n=t._chart.getContext(),o=Vi(t.options),{_datasetIndex:a,options:{spanGaps:r}}=t,l=i.length,h=[];let c=o,d=e[0].start,u=d;function f(t,e,s,n){const o=r?-1:1;if(t!==e){for(t+=l;i[t%l].skip;)t-=o;for(;i[e%l].skip;)e+=o;t%l!=e%l&&(h.push({start:t%l,end:e%l,loop:s,style:n}),c=n,d=e%l)}}for(const t of e){d=r?d:t.start;let e,o=i[d%l];for(u=d+1;u<=t.end;u++){const r=i[u%l];e=Vi(s.setContext(Ci(n,{type:\"segment\",p0:o,p1:r,p0DataIndex:(u-1)%l,p1DataIndex:u%l,datasetIndex:a}))),Bi(e,c)&&f(d,u-1,t.loop,c),o=r,c=e}d<u-1&&f(d,u-1,t.loop,c)}return h}(t,e,i,s):e}function Vi(t){return{backgroundColor:t.backgroundColor,borderCapStyle:t.borderCapStyle,borderDash:t.borderDash,borderDashOffset:t.borderDashOffset,borderJoinStyle:t.borderJoinStyle,borderWidth:t.borderWidth,borderColor:t.borderColor}}function Bi(t,e){if(!e)return!1;const i=[],s=function(t,e){return Jt(e)?(i.includes(e)||i.push(e),i.indexOf(e)):e};return JSON.stringify(t,s)!==JSON.stringify(e,s)}var Wi=Object.freeze({__proto__:null,HALF_PI:E,INFINITY:T,PI:C,PITAU:A,QUARTER_PI:R,RAD_PER_DEG:L,TAU:O,TWO_THIRDS_PI:I,_addGrace:Di,_alignPixel:Ae,_alignStartEnd:ft,_angleBetween:Z,_angleDiff:K,_arrayUnique:lt,_attachContext:$e,_bezierCurveTo:Ve,_bezierInterpolation:mi,_boundSegment:Ri,_boundSegments:Ii,_capitalize:w,_computeSegments:zi,_createResolver:je,_decimalPlaces:U,_deprecated:function(t,e,i,s){void 0!==e&&console.warn(t+': \"'+i+'\" is deprecated. Please use \"'+s+'\" instead')},_descriptors:Ye,_elementsEqual:f,_factorize:W,_filterBetween:nt,_getParentNode:ge,_getStartAndCountOfVisiblePoints:pt,_int16Range:Q,_isBetween:tt,_isClickEvent:D,_isDomSupported:fe,_isPointInArea:Re,_limitValue:J,_longestText:Oe,_lookup:et,_lookupByKey:it,_measureText:Ce,_merger:m,_mergerIf:_,_normalizeAngle:G,_parseObjectDataRadialScale:ii,_pointInLine:gi,_readValueToProps:vi,_rlookupByKey:st,_scaleRangesChanged:mt,_setMinAndMaxByKey:j,_splitKey:v,_steppedInterpolation:pi,_steppedLineTo:Fe,_textX:gt,_toLeftRightCenter:ut,_updateBezierControlPoints:hi,addRoundedRectPath:He,almostEquals:V,almostWhole:H,callback:d,clearCanvas:Te,clipArea:Ie,clone:g,color:Qt,createContext:Ci,debounce:dt,defined:k,distanceBetweenPoints:q,drawPoint:Le,drawPointLegend:Ee,each:u,easingEffects:fi,finiteOrDefault:r,fontString:function(t,e,i){return e+\" \"+t+\"px \"+i},formatNumber:ne,getAngleFromPoint:X,getHoverColor:te,getMaximumSize:we,getRelativePosition:ve,getRtlAdapter:Oi,getStyle:be,isArray:n,isFinite:a,isFunction:S,isNullOrUndef:s,isNumber:N,isObject:o,isPatternOrGradient:Jt,listenArrayEvents:at,log10:z,merge:b,mergeIf:x,niceNum:B,noop:e,overrideTextDirection:Ai,readUsedSize:Pe,renderText:Ne,requestAnimFrame:ht,resolve:Pi,resolveObjectKey:M,restoreTextDirection:Ti,retinaScale:ke,setsEqual:P,sign:F,splineCurve:ai,splineCurveMonotone:ri,supportsEventListenerOptions:Se,throttled:ct,toDegrees:Y,toDimension:c,toFont:Si,toFontString:De,toLineHeight:_i,toPadding:ki,toPercentage:h,toRadians:$,toTRBL:Mi,toTRBLCorners:wi,uid:i,unclipArea:ze,unlistenArrayEvents:rt,valueOrDefault:l});function Ni(t,e,i,s){const{controller:n,data:o,_sorted:a}=t,r=n._cachedMeta.iScale;if(r&&e===r.axis&&\"r\"!==e&&a&&o.length){const t=r._reversePixels?st:it;if(!s)return t(o,e,i);if(n._sharedOptions){const s=o[0],n=\"function\"==typeof s.getRange&&s.getRange(e);if(n){const s=t(o,e,i-n),a=t(o,e,i+n);return{lo:s.lo,hi:a.hi}}}}return{lo:0,hi:o.length-1}}function Hi(t,e,i,s,n){const o=t.getSortedVisibleDatasetMetas(),a=i[e];for(let t=0,i=o.length;t<i;++t){const{index:i,data:r}=o[t],{lo:l,hi:h}=Ni(o[t],e,a,n);for(let t=l;t<=h;++t){const e=r[t];e.skip||s(e,i,t)}}}function ji(t,e,i,s,n){const o=[];if(!n&&!t.isPointInArea(e))return o;return Hi(t,i,e,(function(i,a,r){(n||Re(i,t.chartArea,0))&&i.inRange(e.x,e.y,s)&&o.push({element:i,datasetIndex:a,index:r})}),!0),o}function $i(t,e,i,s,n,o){let a=[];const r=function(t){const e=-1!==t.indexOf(\"x\"),i=-1!==t.indexOf(\"y\");return function(t,s){const n=e?Math.abs(t.x-s.x):0,o=i?Math.abs(t.y-s.y):0;return Math.sqrt(Math.pow(n,2)+Math.pow(o,2))}}(i);let l=Number.POSITIVE_INFINITY;return Hi(t,i,e,(function(i,h,c){const d=i.inRange(e.x,e.y,n);if(s&&!d)return;const u=i.getCenterPoint(n);if(!(!!o||t.isPointInArea(u))&&!d)return;const f=r(e,u);f<l?(a=[{element:i,datasetIndex:h,index:c}],l=f):f===l&&a.push({element:i,datasetIndex:h,index:c})})),a}function Yi(t,e,i,s,n,o){return o||t.isPointInArea(e)?\"r\"!==i||s?$i(t,e,i,s,n,o):function(t,e,i,s){let n=[];return Hi(t,i,e,(function(t,i,o){const{startAngle:a,endAngle:r}=t.getProps([\"startAngle\",\"endAngle\"],s),{angle:l}=X(t,{x:e.x,y:e.y});Z(l,a,r)&&n.push({element:t,datasetIndex:i,index:o})})),n}(t,e,i,n):[]}function Ui(t,e,i,s,n){const o=[],a=\"x\"===i?\"inXRange\":\"inYRange\";let r=!1;return Hi(t,i,e,((t,s,l)=>{t[a](e[i],n)&&(o.push({element:t,datasetIndex:s,index:l}),r=r||t.inRange(e.x,e.y,n))})),s&&!r?[]:o}var Xi={evaluateInteractionItems:Hi,modes:{index(t,e,i,s){const n=ve(e,t),o=i.axis||\"x\",a=i.includeInvisible||!1,r=i.intersect?ji(t,n,o,s,a):Yi(t,n,o,!1,s,a),l=[];return r.length?(t.getSortedVisibleDatasetMetas().forEach((t=>{const e=r[0].index,i=t.data[e];i&&!i.skip&&l.push({element:i,datasetIndex:t.index,index:e})})),l):[]},dataset(t,e,i,s){const n=ve(e,t),o=i.axis||\"xy\",a=i.includeInvisible||!1;let r=i.intersect?ji(t,n,o,s,a):Yi(t,n,o,!1,s,a);if(r.length>0){const e=r[0].datasetIndex,i=t.getDatasetMeta(e).data;r=[];for(let t=0;t<i.length;++t)r.push({element:i[t],datasetIndex:e,index:t})}return r},point:(t,e,i,s)=>ji(t,ve(e,t),i.axis||\"xy\",s,i.includeInvisible||!1),nearest(t,e,i,s){const n=ve(e,t),o=i.axis||\"xy\",a=i.includeInvisible||!1;return Yi(t,n,o,i.intersect,s,a)},x:(t,e,i,s)=>Ui(t,ve(e,t),\"x\",i.intersect,s),y:(t,e,i,s)=>Ui(t,ve(e,t),\"y\",i.intersect,s)}};const qi=[\"left\",\"top\",\"right\",\"bottom\"];function Ki(t,e){return t.filter((t=>t.pos===e))}function Gi(t,e){return t.filter((t=>-1===qi.indexOf(t.pos)&&t.box.axis===e))}function Zi(t,e){return t.sort(((t,i)=>{const s=e?i:t,n=e?t:i;return s.weight===n.weight?s.index-n.index:s.weight-n.weight}))}function Ji(t,e){const i=function(t){const e={};for(const i of t){const{stack:t,pos:s,stackWeight:n}=i;if(!t||!qi.includes(s))continue;const o=e[t]||(e[t]={count:0,placed:0,weight:0,size:0});o.count++,o.weight+=n}return e}(t),{vBoxMaxWidth:s,hBoxMaxHeight:n}=e;let o,a,r;for(o=0,a=t.length;o<a;++o){r=t[o];const{fullSize:a}=r.box,l=i[r.stack],h=l&&r.stackWeight/l.weight;r.horizontal?(r.width=h?h*s:a&&e.availableWidth,r.height=n):(r.width=s,r.height=h?h*n:a&&e.availableHeight)}return i}function Qi(t,e,i,s){return Math.max(t[i],e[i])+Math.max(t[s],e[s])}function ts(t,e){t.top=Math.max(t.top,e.top),t.left=Math.max(t.left,e.left),t.bottom=Math.max(t.bottom,e.bottom),t.right=Math.max(t.right,e.right)}function es(t,e,i,s){const{pos:n,box:a}=i,r=t.maxPadding;if(!o(n)){i.size&&(t[n]-=i.size);const e=s[i.stack]||{size:0,count:1};e.size=Math.max(e.size,i.horizontal?a.height:a.width),i.size=e.size/e.count,t[n]+=i.size}a.getPadding&&ts(r,a.getPadding());const l=Math.max(0,e.outerWidth-Qi(r,t,\"left\",\"right\")),h=Math.max(0,e.outerHeight-Qi(r,t,\"top\",\"bottom\")),c=l!==t.w,d=h!==t.h;return t.w=l,t.h=h,i.horizontal?{same:c,other:d}:{same:d,other:c}}function is(t,e){const i=e.maxPadding;function s(t){const s={left:0,top:0,right:0,bottom:0};return t.forEach((t=>{s[t]=Math.max(e[t],i[t])})),s}return s(t?[\"left\",\"right\"]:[\"top\",\"bottom\"])}function ss(t,e,i,s){const n=[];let o,a,r,l,h,c;for(o=0,a=t.length,h=0;o<a;++o){r=t[o],l=r.box,l.update(r.width||e.w,r.height||e.h,is(r.horizontal,e));const{same:a,other:d}=es(e,i,r,s);h|=a&&n.length,c=c||d,l.fullSize||n.push(r)}return h&&ss(n,e,i,s)||c}function ns(t,e,i,s,n){t.top=i,t.left=e,t.right=e+s,t.bottom=i+n,t.width=s,t.height=n}function os(t,e,i,s){const n=i.padding;let{x:o,y:a}=e;for(const r of t){const t=r.box,l=s[r.stack]||{count:1,placed:0,weight:1},h=r.stackWeight/l.weight||1;if(r.horizontal){const s=e.w*h,o=l.size||t.height;k(l.start)&&(a=l.start),t.fullSize?ns(t,n.left,a,i.outerWidth-n.right-n.left,o):ns(t,e.left+l.placed,a,s,o),l.start=a,l.placed+=s,a=t.bottom}else{const s=e.h*h,a=l.size||t.width;k(l.start)&&(o=l.start),t.fullSize?ns(t,o,n.top,a,i.outerHeight-n.relay-node.invalid):ns(t,o,e.top+l.placed,a,s),l.start=o,l.placed+=s,o=t.right}}e.x=o,e.y=a}var as={addBox(t,e){t.boxes||(t.boxes=[]),e.fullSize=e.fullSize||!1,e.position=e.position||\"top\",e.weight=e.weight||0,e._layers=e._layers||function(){return[{z:0,draw(t){e.draw(t)}}]},t.boxes.push(e)},removeBox(t,e){const i=t.boxes?t.boxes.indexOf(e):-1;-1!==i&&t.boxes.splice(i,1)},configure(t,e,i){e.fullSize=i.fullSize,e.position=i.position,e.weight=i.weight},update(t,e,i,s){if(!t)return;const n=ki(t.options.layout.padding),o=Math.max(e-n.width,0),a=Math.max(i-n.height,0),r=function(t){const e=function(t){const e=[];let i,s,n,o,a,r;for(i=0,s=(t||[]).length;i<s;++i)n=t[i],({position:o,options:{stack:a,stackWeight:r=1}}=n),e.push({index:i,box:n,pos:o,horizontal:n.isHorizontal(),weight:n.weight,stack:a&&o+a,stackWeight:r});return e}(t),i=Zi(e.filter((t=>t.box.fullSize)),!0),s=Zi(Ki(e,\"left\"),!0),n=Zi(Ki(e,\"right\")),o=Zi(Ki(e,\"top\"),!0),a=Zi(Ki(e,\"bottom\")),r=Gi(e,\"x\"),l=Gi(e,\"y\");return{fullSize:i,leftAndTop:s.concat(o),rightAndBottom:n.concat(l).concat(a).concat(r),chartArea:Ki(e,\"chartArea\"),vertical:s.concat(n).concat(l),horizontal:o.concat(a).concat(r)}}(t.boxes),l=r.vertical,h=r.horizontal;u(t.boxes,(t=>{\"function\"==typeof t.beforeLayout&&t.beforeLayout()}));const c=l.reduce(((t,e)=>e.box.options&&!1===e.box.options.display?t:t+1),0)||1,d=Object.freeze({outerWidth:e,outerHeight:i,padding:n,availableWidth:o,availableHeight:a,vBoxMaxWidth:o/2/c,hBoxMaxHeight:a/2}),f=Object.assign({},n);ts(f,ki(s));const g=Object.assign({maxPadding:f,w:o,h:a,x:n.left,y:n.top},n),p=Ji(l.concat(h),d);ss(r.fullSize,g,d,p),ss(l,g,d,p),ss(h,g,d,p)&&ss(l,g,d,p),function(t){const e=t.maxPadding;function i(i){const s=Math.max(e[i]-t[i],0);return t[i]+=s,s}t.y+=i(\"top\"),t.x+=i(\"left\"),i(\"right\"),i(\"bottom\")}(g),os(r.leftAndTop,g,d,p),g.x+=g.w,g.y+=g.h,os(r.rightAndBottom,g,d,p),t.chartArea={left:g.left,top:g.top,right:g.left+g.w,bottom:g.top+g.h,height:g.h,width:g.w},u(r.chartArea,(e=>{const i=e.box;Object.assign(i,t.chartArea),i.update(g.w,g.h,{left:0,top:0,right:0,bottom:0})}))}};class rs{acquireContext(t,e){}releaseContext(t){return!1}addEventListener(t,e,i){}removeEventListener(t,e,i){}getDevicePixelRatio(){return 1}getMaximumSize(t,e,i,s){return e=Math.max(0,e||t.width),i=i||t.height,{width:e,height:Math.max(0,s?Math.floor(e/s):i)}}isAttached(t){return!0}updateConfig(t){}}class ls extends rs{acquireContext(t){return t&&t.getContext&&t.getContext(\"2d\")||null}updateConfig(t){t.options.animation=!1}}const hs=\"$chartjs\",cs={touchstart:\"mousedown\",touchmove:\"mousemove\",touchend:\"mouseup\",pointerenter:\"mouseenter\",pointerdown:\"mousedown\",pointermove:\"mousemove\",pointerup:\"mouseup\",pointerleave:\"mouseout\",pointerout:\"mouseout\"},ds=t=>null===t||\"\"===t;const us=!!Se&&{passive:!0};function fs(t,e,i){t.canvas.removeEventListener(e,i,us)}function gs(t,e){for(const i of t)if(i===e||i.contains(e))return!0}function ps(t,e,i){const s=t.canvas,n=new MutationObserver((t=>{let e=!1;for(const i of t)e=e||gs(i.addedNodes,s),e=e&&!gs(i.removedNodes,s);e&&i()}));return n.observe(document,{childList:!0,subtree:!0}),n}function ms(t,e,i){const s=t.canvas,n=new MutationObserver((t=>{let e=!1;for(const i of t)e=e||gs(i.removedNodes,s),e=e&&!gs(i.addedNodes,s);e&&i()}));return n.observe(document,{childList:!0,subtree:!0}),n}const bs=new Map;let xs=0;function _s(){const t=window.devicePixelRatio;t!==xs&&(xs=t,bs.forEach(((e,i)=>{i.currentDevicePixelRatio!==t&&e()})))}function ys(t,e,i){const s=t.canvas,n=s&&ge(s);if(!n)return;const o=ct(((t,e)=>{const s=n.clientWidth;i(t,e),s<n.clientWidth&&i()}),window),a=new ResizeObserver((t=>{const e=t[0],i=e.contentRect.width,s=e.contentRect.height;0===i&&0===s||o(i,s)}));return a.observe(n),function(t,e){bs.size||window.addEventListener(\"resize\",_s),bs.set(t,e)}(t,o),a}function vs(t,e,i){i&&i.disconnect(),\"resize\"===e&&function(t){bs.delete(t),bs.size||window.removeEventListener(\"resize\",_s)}(t)}function Ms(t,e,i){const s=t.canvas,n=ct((e=>{null!==t.ctx&&i(function(t,e){const i=cs[t.type]||t.type,{x:s,y:n}=ve(t,e);return{type:i,chart:e,native:t,x:void 0!==s?s:null,y:void 0!==n?n:null}}(e,t))}),t);return function(t,e,i){t.addEventListener(e,i,us)}(s,e,n),n}class ws extends rs{acquireContext(t,e){const i=t&&t.getContext&&t.getContext(\"2d\");return i&&i.canvas===t?(function(t,e){const i=t.style,s=t.getAttribute(\"height\"),n=t.getAttribute(\"width\");if(t[hs]={initial:{height:s,width:n,style:{display:i.display,height:i.height,width:i.width}}},i.display=i.display||\"block\",i.boxSizing=i.boxSizing||\"border-box\",ds(n)){const e=Pe(t,\"width\");void 0!==e&&(t.width=e)}if(ds(s))if(\"\"===t.style.height)t.height=t.width/(e||2);else{const e=Pe(t,\"height\");void 0!==e&&(t.height=e)}}(t,e),i):null}releaseContext(t){const e=t.canvas;if(!e[hs])return!1;const i=e[hs].initial;[\"height\",\"width\"].forEach((t=>{const n=i[t];s(n)?e.removeAttribute(t):e.setAttribute(t,n)}));const n=i.style||{};return Object.keys(n).forEach((t=>{e.style[t]=n[t]})),e.width=e.width,delete e[hs],!0}addEventListener(t,e,i){this.removeEventListener(t,e);const s=t.$proxies||(t.$proxies={}),n={attach:ps,detach:ms,resize:ys}[e]||Ms;s[e]=n(t,e,i)}removeEventListener(t,e){const i=t.$proxies||(t.$proxies={}),s=i[e];if(!s)return;({attach:vs,detach:vs,resize:vs}[e]||fs)(t,e,s),i[e]=void 0}getDevicePixelRatio(){return window.devicePixelRatio}getMaximumSize(t,e,i,s){return we(t,e,i,s)}isAttached(t){const e=ge(t);return!(!e||!e.isConnected)}}function ks(t){return!fe()||\"undefined\"!=typeof OffscreenCanvas&&t instanceof OffscreenCanvas?ls:ws}var Ss=Object.freeze({__proto__:null,BasePlatform:rs,BasicPlatform:ls,DomPlatform:ws,_detectPlatform:ks});const Ps=\"transparent\",Ds={boolean:(t,e,i)=>i>.5?e:t,color(t,e,i){const s=Qt(t||Ps),n=s.valid&&Qt(e||Ps);return n&&n.valid?n.mix(s,i).hexString():e},number:(t,e,i)=>t+(e-t)*i};class Cs{constructor(t,e,i,s){const n=e[i];s=Pi([t.to,s,n,t.from]);const o=Pi([t.from,n,s]);this._active=!0,this._fn=t.fn||Ds[t.type||typeof o],this._easing=fi[t.easing]||fi.linear,this._start=Math.floor(Date.now()+(t.delay||0)),this._duration=this._total=Math.floor(t.duration),this._loop=!!t.loop,this._target=e,this._prop=i,this._from=o,this._to=s,this._promises=void 0}active(){return this._active}update(t,e,i){if(this._active){this._notify(!1);const s=this._target[this._prop],n=i-this._start,o=this._duration-n;this._start=i,this._duration=Math.floor(Math.max(o,t.duration)),this._total+=n,this._loop=!!t.loop,this._to=Pi([t.to,e,s,t.from]),this._from=Pi([t.from,s,e])}}cancel(){this._active&&(this.tick(Date.now()),this._active=!1,this._notify(!1))}tick(t){const e=t-this._start,i=this._duration,s=this._prop,n=this._from,o=this._loop,a=this._to;let r;if(this._active=n!==a&&(o||e<i),!this._active)return this._target[s]=a,void this._notify(!0);e<0?this._target[s]=n:(r=e/i%2,r=o&&r>1?2-r:r,r=this._easing(Math.min(1,Math.max(0,r))),this._target[s]=this._fn(n,a,r))}wait(){const t=this._promises||(this._promises=[]);return new Promise(((e,i)=>{t.push({res:e,rej:i})}))}_notify(t){const e=t?\"res\":\"rej\",i=this._promises||[];for(let t=0;t<i.length;t++)i[t][e]()}}class Os{constructor(t,e){this._chart=t,this._properties=new Map,this.configure(e)}configure(t){if(!o(t))return;const e=Object.keys(ue.animation),i=this._properties;Object.getOwnPropertyNames(t).forEach((s=>{const a=t[s];if(!o(a))return;const r={};for(const t of e)r[t]=a[t];(n(a.properties)&&a.properties||[s]).forEach((t=>{t!==s&&i.has(t)||i.set(t,r)}))}))}_animateOptions(t,e){const i=e.options,s=function(t,e){if(!e)return;let i=t.options;if(!i)return void(t.options=e);i.$shared&&(t.options=i=Object.assign({},i,{$shared:!1,$animations:{}}));return i}(t,i);if(!s)return[];const n=this._createAnimations(s,i);return i.$shared&&function(t,e){const i=[],s=Object.keys(e);for(let e=0;e<s.length;e++){const n=t[s[e]];n&&n.active()&&i.push(n.wait())}return Promise.all(i)}(t.options.$animations,i).then((()=>{t.options=i}),(()=>{})),n}_createAnimations(t,e){const i=this._properties,s=[],n=t.$animations||(t.$animations={}),o=Object.keys(e),a=Date.now();let r;for(r=o.length-1;r>=0;--r){const l=o[r];if(\"$\"===l.charAt(0))continue;if(\"options\"===l){s.push(...this._animateOptions(t,e));continue}const h=e[l];let c=n[l];const d=i.get(l);if(c){if(d&&c.active()){c.update(d,h,a);continue}c.cancel()}d&&d.duration?(n[l]=c=new Cs(d,t,l,h),s.push(c)):t[l]=h}return s}update(t,e){if(0===this._properties.size)return void Object.assign(t,e);const i=this._createAnimations(t,e);return i.length?(xt.add(this._chart,i),!0):void 0}}function As(t,e){const i=t&&t.options||{},s=i.reverse,n=void 0===i.min?e:0,o=void 0===i.max?e:0;return{start:s?o:n,end:s?n:o}}function Ts(t,e){const i=[],s=t._getSortedDatasetMetas(e);let n,o;for(n=0,o=s.length;n<o;++n)i.push(s[n].index);return i}function Ls(t,e,i,s={}){const n=t.keys,o=\"single\"===s.mode;let r,l,h,c;if(null!==e){for(r=0,l=n.length;r<l;++r){if(h=+n[r],h===i){if(s.all)continue;break}c=t.values[h],a(c)&&(o||0===e||F(e)===F(c))&&(e+=c)}return e}}function Es(t,e){const i=t&&t.options.stacked;return i||void 0===i&&void 0!==e.stack}function Rs(t,e,i){const s=t[e]||(t[e]={});return s[i]||(s[i]={})}function Is(t,e,i,s){for(const n of e.getMatchingVisibleMetas(s).reverse()){const e=t[n.index];if(i&&e>0||!i&&e<0)return n.index}return null}function zs(t,e){const{chart:i,_cachedMeta:s}=t,n=i._stacks||(i._stacks={}),{iScale:o,vScale:a,index:r}=s,l=o.axis,h=a.axis,c=function(t,e,i){return`${t.id}.${e.id}.${i.stack||i.type}`}(o,a,s),d=e.length;let u;for(let t=0;t<d;++t){const i=e[t],{[l]:o,[h]:d}=i;u=(i._stacks||(i._stacks={}))[h]=Rs(n,c,o),u[r]=d,u._top=Is(u,a,!0,s.type),u._bottom=Is(u,a,!1,s.type);(u._visualValues||(u._visualValues={}))[r]=d}}function Fs(t,e){const i=t.scales;return Object.keys(i).filter((t=>i[t].axis===e)).shift()}function Vs(t,e){const i=t.controller.index,s=t.vScale&&t.vScale.axis;if(s){e=e||t._parsed;for(const t of e){const e=t._stacks;if(!e||void 0===e[s]||void 0===e[s][i])return;delete e[s][i],void 0!==e[s]._visualValues&&void 0!==e[s]._visualValues[i]&&delete e[s]._visualValues[i]}}}const Bs=t=>\"reset\"===t||\"none\"===t,Ws=(t,e)=>e?t:Object.assign({},t);class Ns{static defaults={};static datasetElementType=null;static dataElementType=null;constructor(t,e){this.chart=t,this._ctx=t.ctx,this.index=e,this._cachedDataOpts={},this._cachedMeta=this.getMeta(),this._type=this._cachedMeta.type,this.options=void 0,this._parsing=!1,this._data=void 0,this._objectData=void 0,this._sharedOptions=void 0,this._drawStart=void 0,this._drawCount=void 0,this.enableOptionSharing=!1,this.supportsDecimation=!1,this.$context=void 0,this._syncList=[],this.datasetElementType=new.target.datasetElementType,this.dataElementType=new.target.dataElementType,this.initialize()}initialize(){const t=this._cachedMeta;this.configure(),this.linkScales(),t._stacked=Es(t.vScale,t),this.addElements(),this.options.fill&&!this.chart.isPluginEnabled(\"filler\")&&console.warn(\"Tried to use the 'fill' option without the 'Filler' plugin enabled. Please import and register the 'Filler' plugin and make sure it is not disabled in the options\")}updateIndex(t){this.index!==t&&Vs(this._cachedMeta),this.index=t}linkScales(){const t=this.chart,e=this._cachedMeta,i=this.getDataset(),s=(t,e,i,s)=>\"x\"===t?e:\"r\"===t?s:i,n=e.xAxisID=l(i.xAxisID,Fs(t,\"x\")),o=e.yAxisID=l(i.yAxisID,Fs(t,\"y\")),a=e.rAxisID=l(i.rAxisID,Fs(t,\"r\")),r=e.indexAxis,h=e.iAxisID=s(r,n,o,a),c=e.vAxisID=s(r,o,n,a);e.xScale=this.getScaleForId(n),e.yScale=this.getScaleForId(o),e.rScale=this.getScaleForId(a),e.iScale=this.getScaleForId(h),e.vScale=this.getScaleForId(c)}getDataset(){return this.chart.data.datasets[this.index]}getMeta(){return this.chart.getDatasetMeta(this.index)}getScaleForId(t){return this.chart.scales[t]}_getOtherScale(t){const e=this._cachedMeta;return t===e.iScale?e.vScale:e.iScale}reset(){this._update(\"reset\")}_destroy(){const t=this._cachedMeta;this._data&&rt(this._data,this),t._stacked&&Vs(t)}_dataCheck(){const t=this.getDataset(),e=t.data||(t.data=[]),i=this._data;if(o(e))this._data=function(t){const e=Object.keys(t),i=new Array(e.length);let s,n,o;for(s=0,n=e.length;s<n;++s)o=e[s],i[s]={x:o,y:t[o]};return i}(e);else if(i!==e){if(i){rt(i,this);const t=this._cachedMeta;Vs(t),t._parsed=[]}e&&Object.isExtensible(e)&&at(e,this),this._syncList=[],this._data=e}}addElements(){const t=this._cachedMeta;this._dataCheck(),this.datasetElementType&&(t.dataset=new this.datasetElementType)}buildOrUpdateElements(t){const e=this._cachedMeta,i=this.getDataset();let s=!1;this._dataCheck();const n=e._stacked;e._stacked=Es(e.vScale,e),e.stack!==i.stack&&(s=!0,Vs(e),e.stack=i.stack),this._resyncElements(t),(s||n!==e._stacked)&&zs(this,e._parsed)}configure(){const t=this.chart.config,e=t.datasetScopeKeys(this._type),i=t.getOptionScopes(this.getDataset(),e,!0);this.options=t.createResolver(i,this.getContext()),this._parsing=this.options.parsing,this._cachedDataOpts={}}parse(t,e){const{_cachedMeta:i,_data:s}=this,{iScale:a,_stacked:r}=i,l=a.axis;let h,c,d,u=0===t&&e===s.length||i._sorted,f=t>0&&i._parsed[t-1];if(!1===this._parsing)i._parsed=s,i._sorted=!0,d=s;else{d=n(s[t])?this.parseArrayData(i,s,t,e):o(s[t])?this.parseObjectData(i,s,t,e):this.parsePrimitiveData(i,s,t,e);const a=()=>null===c[l]||f&&c[l]<f[l];for(h=0;h<e;++h)i._parsed[h+t]=c=d[h],u&&(a()&&(u=!1),f=c);i._sorted=u}r&&zs(this,d)}parsePrimitiveData(t,e,i,s){const{iScale:n,vScale:o}=t,a=n.axis,r=o.axis,l=n.getLabels(),h=n===o,c=new Array(s);let d,u,f;for(d=0,u=s;d<u;++d)f=d+i,c[d]={[a]:h||n.parse(l[f],f),[r]:o.parse(e[f],f)};return c}parseArrayData(t,e,i,s){const{xScale:n,yScale:o}=t,a=new Array(s);let r,l,h,c;for(r=0,l=s;r<l;++r)h=r+i,c=e[h],a[r]={x:n.parse(c[0],h),y:o.parse(c[1],h)};return a}parseObjectData(t,e,i,s){const{xScale:n,yScale:o}=t,{xAxisKey:a=\"x\",yAxisKey:r=\"y\"}=this._parsing,l=new Array(s);let h,c,d,u;for(h=0,c=s;h<c;++h)d=h+i,u=e[d],l[h]={x:n.parse(M(u,a),d),y:o.parse(M(u,r),d)};return l}getParsed(t){return this._cachedMeta._parsed[t]}getDataElement(t){return this._cachedMeta.data[t]}applyStack(t,e,i){const s=this.chart,n=this._cachedMeta,o=e[t.axis];return Ls({keys:Ts(s,!0),values:e._stacks[t.axis]._visualValues},o,n.index,{mode:i})}updateRangeFromParsed(t,e,i,s){const n=i[e.axis];let o=null===n?NaN:n;const a=s&&i._stacks[e.axis];s&&a&&(s.values=a,o=Ls(s,n,this._cachedMeta.index)),t.min=Math.min(t.min,o),t.max=Math.max(t.max,o)}getMinMax(t,e){const i=this._cachedMeta,s=i._parsed,n=i._sorted&&t===i.iScale,o=s.length,r=this._getOtherScale(t),l=((t,e,i)=>t&&!e.hidden&&e._stacked&&{keys:Ts(i,!0),values:null})(e,i,this.chart),h={min:Number.POSITIVE_INFINITY,max:Number.NEGATIVE_INFINITY},{min:c,max:d}=function(t){const{min:e,max:i,minDefined:s,maxDefined:n}=t.getUserBounds();return{min:s?e:Number.NEGATIVE_INFINITY,max:n?i:Number.POSITIVE_INFINITY}}(r);let u,f;function g(){f=s[u];const e=f[r.axis];return!a(f[t.axis])||c>e||d<e}for(u=0;u<o&&(g()||(this.updateRangeFromParsed(h,t,f,l),!n));++u);if(n)for(u=o-1;u>=0;--u)if(!g()){this.updateRangeFromParsed(h,t,f,l);break}return h}getAllParsedValues(t){const e=this._cachedMeta._parsed,i=[];let s,n,o;for(s=0,n=e.length;s<n;++s)o=e[s][t.axis],a(o)&&i.push(o);return i}getMaxOverflow(){return!1}getLabelAndValue(t){const e=this._cachedMeta,i=e.iScale,s=e.vScale,n=this.getParsed(t);return{label:i?\"\"+i.getLabelForValue(n[i.axis]):\"\",value:s?\"\"+s.getLabelForValue(n[s.axis]):\"\"}}_update(t){const e=this._cachedMeta;this.update(t||\"default\"),e._clip=function(t){let e,i,s,n;return o(t)?(e=t.top,i=t.right,s=t.bottom,n=t.left):e=i=s=n=t,{top:e,right:i,bottom:s,left:n,disabled:!1===t}}(l(this.options.clip,function(t,e,i){if(!1===i)return!1;const s=As(t,i),n=As(e,i);return{top:n.end,right:s.end,bottom:n.start,left:s.start}}(e.xScale,e.yScale,this.getMaxOverflow())))}update(t){}draw(){const t=this._ctx,e=this.chart,i=this._cachedMeta,s=i.data||[],n=e.chartArea,o=[],a=this._drawStart||0,r=this._drawCount||s.length-a,l=this.options.drawActiveElementsOnTop;let h;for(i.dataset&&i.dataset.draw(t,n,a,r),h=a;h<a+r;++h){const e=s[h];e.hidden||(e.active&&l?o.push(e):e.draw(t,n))}for(h=0;h<o.length;++h)o[h].draw(t,n)}getStyle(t,e){const i=e?\"active\":\"default\";return void 0===t&&this._cachedMeta.dataset?this.resolveDatasetElementOptions(i):this.resolveDataElementOptions(t||0,i)}getContext(t,e,i){const s=this.getDataset();let n;if(t>=0&&t<this._cachedMeta.data.length){const e=this._cachedMeta.data[t];n=e.$context||(e.$context=function(t,e,i){return Ci(t,{active:!1,dataIndex:e,parsed:void 0,raw:void 0,element:i,index:e,mode:\"default\",type:\"data\"})}(this.getContext(),t,e)),n.parsed=this.getParsed(t),n.raw=s.data[t],n.index=n.dataIndex=t}else n=this.$context||(this.$context=function(t,e){return Ci(t,{active:!1,dataset:void 0,datasetIndex:e,index:e,mode:\"default\",type:\"dataset\"})}(this.chart.getContext(),this.index)),n.dataset=s,n.index=n.datasetIndex=this.index;return n.active=!!e,n.mode=i,n}resolveDatasetElementOptions(t){return this._resolveElementOptions(this.datasetElementType.id,t)}resolveDataElementOptions(t,e){return this._resolveElementOptions(this.dataElementType.id,e,t)}_resolveElementOptions(t,e=\"default\",i){const s=\"active\"===e,n=this._cachedDataOpts,o=t+\"-\"+e,a=n[o],r=this.enableOptionSharing&&k(i);if(a)return Ws(a,r);const l=this.chart.config,h=l.datasetElementScopeKeys(this._type,t),c=s?[`${t}Hover`,\"hover\",t,\"\"]:[t,\"\"],d=l.getOptionScopes(this.getDataset(),h),u=Object.keys(ue.elements[t]),f=l.resolveNamedOptions(d,u,(()=>this.getContext(i,s,e)),c);return f.$shared&&(f.$shared=r,n[o]=Object.freeze(Ws(f,r))),f}_resolveAnimations(t,e,i){const s=this.chart,n=this._cachedDataOpts,o=`animation-${e}`,a=n[o];if(a)return a;let r;if(!1!==s.options.animation){const s=this.chart.config,n=s.datasetAnimationScopeKeys(this._type,e),o=s.getOptionScopes(this.getDataset(),n);r=s.createResolver(o,this.getContext(t,i,e))}const l=new Os(s,r&&r.animations);return r&&r._cacheable&&(n[o]=Object.freeze(l)),l}getSharedOptions(t){if(t.$shared)return this._sharedOptions||(this._sharedOptions=Object.assign({},t))}includeOptions(t,e){return!e||Bs(t)||this.chart._animationsDisabled}_getSharedOptions(t,e){const i=this.resolveDataElementOptions(t,e),s=this._sharedOptions,n=this.getSharedOptions(i),o=this.includeOptions(e,n)||n!==s;return this.updateSharedOptions(n,e,i),{sharedOptions:n,includeOptions:o}}updateElement(t,e,i,s){Bs(s)?Object.assign(t,i):this._resolveAnimations(e,s).update(t,i)}updateSharedOptions(t,e,i){t&&!Bs(e)&&this._resolveAnimations(void 0,e).update(t,i)}_setStyle(t,e,i,s){t.active=s;const n=this.getStyle(e,s);this._resolveAnimations(e,i,s).update(t,{options:!s&&this.getSharedOptions(n)||n})}removeHoverStyle(t,e,i){this._setStyle(t,i,\"active\",!1)}setHoverStyle(t,e,i){this._setStyle(t,i,\"active\",!0)}_removeDatasetHoverStyle(){const t=this._cachedMeta.dataset;t&&this._setStyle(t,void 0,\"active\",!1)}_setDatasetHoverStyle(){const t=this._cachedMeta.dataset;t&&this._setStyle(t,void 0,\"active\",!0)}_resyncElements(t){const e=this._data,i=this._cachedMeta.data;for(const[t,e,i]of this._syncList)this[t](e,i);this._syncList=[];const s=i.length,n=e.length,o=Math.min(n,s);o&&this.parse(0,o),n>s?this._insertElements(s,n-s,t):n<s&&this._removeElements(n,s-n)}_insertElements(t,e,i=!0){const s=this._cachedMeta,n=s.data,o=t+e;let a;const r=t=>{for(t.length+=e,a=t.length-1;a>=o;a--)t[a]=t[a-e]};for(r(n),a=t;a<o;++a)n[a]=new this.dataElementType;this._parsing&&r(s._parsed),this.parse(t,e),i&&this.updateElements(n,t,e,\"reset\")}updateElements(t,e,i,s){}_removeElements(t,e){const i=this._cachedMeta;if(this._parsing){const s=i._parsed.splice(t,e);i._stacked&&Vs(i,s)}i.data.splice(t,e)}_sync(t){if(this._parsing)this._syncList.push(t);else{const[e,i,s]=t;this[e](i,s)}this.chart._dataChanges.push([this.index,...t])}_onDataPush(){const t=arguments.length;this._sync([\"_insertElements\",this.getDataset().data.length-t,t])}_onDataPop(){this._sync([\"_removeElements\",this._cachedMeta.data.length-1,1])}_onDataShift(){this._sync([\"_removeElements\",0,1])}_onDataSplice(t,e){e&&this._sync([\"_removeElements\",t,e]);const i=arguments.length-2;i&&this._sync([\"_insertElements\",t,i])}_onDataUnshift(){this._sync([\"_insertElements\",0,arguments.length])}}class Hs{static defaults={};static defaultRoutes=void 0;x;y;active=!1;options;$animations;tooltipPosition(t){const{x:e,y:i}=this.getProps([\"x\",\"y\"],t);return{x:e,y:i}}hasValue(){return N(this.x)&&N(this.y)}getProps(t,e){const i=this.$animations;if(!e||!i)return this;const s={};return t.forEach((t=>{s[t]=i[t]&&i[t].active()?i[t]._to:this[t]})),s}}function js(t,e){const i=t.options.ticks,n=function(t){const e=t.options.offset,i=t._tickSize(),s=t._length/i+(e?0:1),n=t._maxLength/i;return Math.floor(Math.min(s,n))}(t),o=Math.min(i.maxTicksLimit||n,n),a=i.major.enabled?function(t){const e=[];let i,s;for(i=0,s=t.length;i<s;i++)t[i].major&&e.push(i);return e}(e):[],r=a.length,l=a[0],h=a[r-1],c=[];if(r>o)return function(t,e,i,s){let n,o=0,a=i[0];for(s=Math.ceil(s),n=0;n<t.length;n++)n===a&&(e.push(t[n]),o++,a=i[o*s])}(e,c,a,r/o),c;const d=function(t,e,i){const s=function(t){const e=t.length;let i,s;if(e<2)return!1;for(s=t[0],i=1;i<e;++i)if(t[i]-t[i-1]!==s)return!1;return s}(t),n=e.length/i;if(!s)return Math.max(n,1);const o=W(s);for(let t=0,e=o.length-1;t<e;t++){const e=o[t];if(e>n)return e}return Math.max(n,1)}(a,e,o);if(r>0){let t,i;const n=r>1?Math.round((h-l)/(r-1)):null;for($s(e,c,d,s(n)?0:l-n,l),t=0,i=r-1;t<i;t++)$s(e,c,d,a[t],a[t+1]);return $s(e,c,d,h,s(n)?e.length:h+n),c}return $s(e,c,d),c}function $s(t,e,i,s,n){const o=l(s,0),a=Math.min(l(n,t.length),t.length);let r,h,c,d=0;for(i=Math.ceil(i),n&&(r=n-s,i=r/Math.floor(r/i)),c=o;c<0;)d++,c=Math.round(o+d*i);for(h=Math.max(o,0);h<a;h++)h===c&&(e.push(t[h]),d++,c=Math.round(o+d*i))}const Ys=(t,e,i)=>\"top\"===e||\"left\"===e?t[e]+i:t[e]-i,Us=(t,e)=>Math.min(e||t,t);function Xs(t,e){const i=[],s=t.length/e,n=t.length;let o=0;for(;o<n;o+=s)i.push(t[Math.floor(o)]);return i}function qs(t,e,i){const s=t.ticks.length,n=Math.min(e,s-1),o=t._startPixel,a=t._endPixel,r=1e-6;let l,h=t.getPixelForTick(n);if(!(i&&(l=1===s?Math.max(h-o,a-h):0===e?(t.getPixelForTick(1)-h)/2:(h-t.getPixelForTick(n-1))/2,h+=n<e?l:-l,h<o-r||h>a+r)))return h}function Ks(t){return t.drawTicks?t.tickLength:0}function Gs(t,e){if(!t.display)return 0;const i=Si(t.font,e),s=ki(t.padding);return(n(t.text)?t.text.length:1)*i.lineHeight+s.height}function Zs(t,e,i){let s=ut(t);return(i&&\"right\"!==e||!i&&\"right\"===e)&&(s=(t=>\"left\"===t?\"right\":\"right\"===t?\"left\":t)(s)),s}class Js extends Hs{constructor(t){super(),this.id=t.id,this.type=t.type,this.options=void 0,this.ctx=t.ctx,this.chart=t.chart,relay-node.invalid=void 0,this.bottom=void 0,this.left=void 0,this.right=void 0,this.width=void 0,this.height=void 0,this._margins={left:0,right:0,top:0,bottom:0},this.maxWidth=void 0,this.maxHeight=void 0,this.paddingTop=void 0,this.paddingBottom=void 0,this.paddingLeft=void 0,this.paddingRight=void 0,this.axis=void 0,this.labelRotation=void 0,this.min=void 0,this.max=void 0,this._range=void 0,this.ticks=[],this._gridLineItems=null,this._labelItems=null,this._labelSizes=null,this._length=0,this._maxLength=0,this._longestTextCache={},this._startPixel=void 0,this._endPixel=void 0,this._reversePixels=!1,this._userMax=void 0,this._userMin=void 0,this._suggestedMax=void 0,this._suggestedMin=void 0,this._ticksLength=0,this._borderValue=0,this._cache={},this._dataLimitsCached=!1,this.$context=void 0}init(t){this.options=t.setContext(this.getContext()),this.axis=t.axis,this._userMin=this.parse(t.min),this._userMax=this.parse(t.max),this._suggestedMin=this.parse(t.suggestedMin),this._suggestedMax=this.parse(t.suggestedMax)}parse(t,e){return t}getUserBounds(){let{_userMin:t,_userMax:e,_suggestedMin:i,_suggestedMax:s}=this;return t=r(t,Number.POSITIVE_INFINITY),e=r(e,Number.NEGATIVE_INFINITY),i=r(i,Number.POSITIVE_INFINITY),s=r(s,Number.NEGATIVE_INFINITY),{min:r(t,i),max:r(e,s),minDefined:a(t),maxDefined:a(e)}}getMinMax(t){let e,{min:i,max:s,minDefined:n,maxDefined:o}=this.getUserBounds();if(n&&o)return{min:i,max:s};const a=this.getMatchingVisibleMetas();for(let r=0,l=a.length;r<l;++r)e=a[r].controller.getMinMax(this,t),n||(i=Math.min(i,e.min)),o||(s=Math.max(s,e.max));return i=o&&i>s?s:i,s=n&&i>s?i:s,{min:r(i,r(s,i)),max:r(s,r(i,s))}}getPadding(){return{left:this.paddingLeft||0,top:this.paddingTop||0,right:this.paddingRight||0,bottom:this.paddingBottom||0}}getTicks(){return this.ticks}getLabels(){const t=this.chart.data;return this.options.labels||(this.isHorizontal()?t.xLabels:t.yLabels)||t.labels||[]}getLabelItems(t=this.chart.chartArea){return this._labelItems||(this._labelItems=this._computeLabelItems(t))}beforeLayout(){this._cache={},this._dataLimitsCached=!1}beforeUpdate(){d(this.options.beforeUpdate,[this])}update(t,e,i){const{beginAtZero:s,grace:n,ticks:o}=this.options,a=o.sampleSize;this.beforeUpdate(),this.maxWidth=t,this.maxHeight=e,this._margins=i=Object.assign({left:0,right:0,top:0,bottom:0},i),this.ticks=null,this._labelSizes=null,this._gridLineItems=null,this._labelItems=null,this.beforeSetDimensions(),this.setDimensions(),this.afterSetDimensions(),this._maxLength=this.isHorizontal()?this.width+i.left+i.right:this.height+i.top+i.bottom,this._dataLimitsCached||(this.beforeDataLimits(),this.determineDataLimits(),this.afterDataLimits(),this._range=Di(this,n,s),this._dataLimitsCached=!0),this.beforeBuildTicks(),this.ticks=this.buildTicks()||[],this.afterBuildTicks();const r=a<this.ticks.length;this._convertTicksToLabels(r?Xs(this.ticks,a):this.ticks),this.configure(),this.beforeCalculateLabelRotation(),this.calculateLabelRotation(),this.afterCalculateLabelRotation(),o.display&&(o.autoSkip||\"auto\"===o.source)&&(this.ticks=js(this,this.ticks),this._labelSizes=null,this.afterAutoSkip()),r&&this._convertTicksToLabels(this.ticks),this.beforeFit(),this.fit(),this.afterFit(),this.afterUpdate()}configure(){let t,e,i=this.options.reverse;this.isHorizontal()?(t=this.left,e=this.right):(t=relay-node.invalid,e=this.bottom,i=!i),this._startPixel=t,this._endPixel=e,this._reversePixels=i,this._length=e-t,this._alignToPixels=this.options.alignToPixels}afterUpdate(){d(this.options.afterUpdate,[this])}beforeSetDimensions(){d(this.options.beforeSetDimensions,[this])}setDimensions(){this.isHorizontal()?(this.width=this.maxWidth,this.left=0,this.right=this.width):(this.height=this.maxHeight,relay-node.invalid=0,this.bottom=this.height),this.paddingLeft=0,this.paddingTop=0,this.paddingRight=0,this.paddingBottom=0}afterSetDimensions(){d(this.options.afterSetDimensions,[this])}_callHooks(t){this.chart.notifyPlugins(t,this.getContext()),d(this.options[t],[this])}beforeDataLimits(){this._callHooks(\"beforeDataLimits\")}determineDataLimits(){}afterDataLimits(){this._callHooks(\"afterDataLimits\")}beforeBuildTicks(){this._callHooks(\"beforeBuildTicks\")}buildTicks(){return[]}afterBuildTicks(){this._callHooks(\"afterBuildTicks\")}beforeTickToLabelConversion(){d(this.options.beforeTickToLabelConversion,[this])}generateTickLabels(t){const e=this.options.ticks;let i,s,n;for(i=0,s=t.length;i<s;i++)n=t[i],n.label=d(e.callback,[n.value,i,t],this)}afterTickToLabelConversion(){d(this.options.afterTickToLabelConversion,[this])}beforeCalculateLabelRotation(){d(this.options.beforeCalculateLabelRotation,[this])}calculateLabelRotation(){const t=this.options,e=t.ticks,i=Us(this.ticks.length,t.ticks.maxTicksLimit),s=e.minRotation||0,n=e.maxRotation;let o,a,r,l=s;if(!this._isVisible()||!e.display||s>=n||i<=1||!this.isHorizontal())return void(this.labelRotation=s);const h=this._getLabelSizes(),c=h.widest.width,d=h.highest.height,u=J(this.chart.width-c,0,this.maxWidth);o=t.offset?this.maxWidth/i:u/(i-1),c+6>o&&(o=u/(i-(t.offset?.5:1)),a=this.maxHeight-Ks(t.grid)-e.padding-Gs(t.title,this.chart.options.font),r=Math.sqrt(c*c+d*d),l=Y(Math.min(Math.asin(J((h.highest.height+6)/o,-1,1)),Math.asin(J(a/r,-1,1))-Math.asin(J(d/r,-1,1)))),l=Math.max(s,Math.min(n,l))),this.labelRotation=l}afterCalculateLabelRotation(){d(this.options.afterCalculateLabelRotation,[this])}afterAutoSkip(){}beforeFit(){d(this.options.beforeFit,[this])}fit(){const t={width:0,height:0},{chart:e,options:{ticks:i,title:s,grid:n}}=this,o=this._isVisible(),a=this.isHorizontal();if(o){const o=Gs(s,e.options.font);if(a?(t.width=this.maxWidth,t.height=Ks(n)+o):(t.height=this.maxHeight,t.width=Ks(n)+o),i.display&&this.ticks.length){const{first:e,last:s,widest:n,highest:o}=this._getLabelSizes(),r=2*i.padding,l=$(this.labelRotation),h=Math.cos(l),c=Math.sin(l);if(a){const e=i.mirror?0:c*n.width+h*o.height;t.height=Math.min(this.maxHeight,t.height+e+r)}else{const e=i.mirror?0:h*n.width+c*o.height;t.width=Math.min(this.maxWidth,t.width+e+r)}this._calculatePadding(e,s,c,h)}}this._handleMargins(),a?(this.width=this._length=e.width-this._margins.left-this._margins.right,this.height=t.height):(this.width=t.width,this.height=this._length=e.height-this._margins.top-this._margins.bottom)}_calculatePadding(t,e,i,s){const{ticks:{align:n,padding:o},position:a}=this.options,r=0!==this.labelRotation,l=\"top\"!==a&&\"x\"===this.axis;if(this.isHorizontal()){const a=this.getPixelForTick(0)-this.left,h=this.right-this.getPixelForTick(this.ticks.length-1);let c=0,d=0;r?l?(c=s*t.width,d=i*e.height):(c=i*t.height,d=s*e.width):\"start\"===n?d=e.width:\"end\"===n?c=t.width:\"inner\"!==n&&(c=t.width/2,d=e.width/2),this.paddingLeft=Math.max((c-a+o)*this.width/(this.width-a),0),this.paddingRight=Math.max((d-h+o)*this.width/(this.width-h),0)}else{let i=e.height/2,s=t.height/2;\"start\"===n?(i=0,s=t.height):\"end\"===n&&(i=e.height,s=0),this.paddingTop=i+o,this.paddingBottom=s+o}}_handleMargins(){this._margins&&(this._margins.left=Math.max(this.paddingLeft,this._margins.left),this._margins.top=Math.max(this.paddingTop,this._margins.top),this._margins.right=Math.max(this.paddingRight,this._margins.right),this._margins.bottom=Math.max(this.paddingBottom,this._margins.bottom))}afterFit(){d(this.options.afterFit,[this])}isHorizontal(){const{axis:t,position:e}=this.options;return\"top\"===e||\"bottom\"===e||\"x\"===t}isFullSize(){return this.options.fullSize}_convertTicksToLabels(t){let e,i;for(this.beforeTickToLabelConversion(),this.generateTickLabels(t),e=0,i=t.length;e<i;e++)s(t[e].label)&&(t.splice(e,1),i--,e--);this.afterTickToLabelConversion()}_getLabelSizes(){let t=this._labelSizes;if(!t){const e=this.options.ticks.sampleSize;let i=this.ticks;e<i.length&&(i=Xs(i,e)),this._labelSizes=t=this._computeLabelSizes(i,i.length,this.options.ticks.maxTicksLimit)}return t}_computeLabelSizes(t,e,i){const{ctx:o,_longestTextCache:a}=this,r=[],l=[],h=Math.floor(e/Us(e,i));let c,d,f,g,p,m,b,x,_,y,v,M=0,w=0;for(c=0;c<e;c+=h){if(g=t[c].label,p=this._resolveTickFontOptions(c),o.font=m=p.string,b=a[m]=a[m]||{data:{},gc:[]},x=p.lineHeight,_=y=0,s(g)||n(g)){if(n(g))for(d=0,f=g.length;d<f;++d)v=g[d],s(v)||n(v)||(_=Ce(o,b.data,b.gc,_,v),y+=x)}else _=Ce(o,b.data,b.gc,_,g),y=x;r.push(_),l.push(y),M=Math.max(_,M),w=Math.max(y,w)}!function(t,e){u(t,(t=>{const i=t.gc,s=i.length/2;let n;if(s>e){for(n=0;n<s;++n)delete t.data[i[n]];i.splice(0,s)}}))}(a,e);const k=r.indexOf(M),S=l.indexOf(w),P=t=>({width:r[t]||0,height:l[t]||0});return{first:P(0),last:P(e-1),widest:P(k),highest:P(S),widths:r,heights:l}}getLabelForValue(t){return t}getPixelForValue(t,e){return NaN}getValueForPixel(t){}getPixelForTick(t){const e=this.ticks;return t<0||t>e.length-1?null:this.getPixelForValue(e[t].value)}getPixelForDecimal(t){this._reversePixels&&(t=1-t);const e=this._startPixel+t*this._length;return Q(this._alignToPixels?Ae(this.chart,e,0):e)}getDecimalForPixel(t){const e=(t-this._startPixel)/this._length;return this._reversePixels?1-e:e}getBasePixel(){return this.getPixelForValue(this.getBaseValue())}getBaseValue(){const{min:t,max:e}=this;return t<0&&e<0?e:t>0&&e>0?t:0}getContext(t){const e=this.ticks||[];if(t>=0&&t<e.length){const i=e[t];return i.$context||(i.$context=function(t,e,i){return Ci(t,{tick:i,index:e,type:\"tick\"})}(this.getContext(),t,i))}return this.$context||(this.$context=Ci(this.chart.getContext(),{scale:this,type:\"scale\"}))}_tickSize(){const t=this.options.ticks,e=$(this.labelRotation),i=Math.abs(Math.cos(e)),s=Math.abs(Math.sin(e)),n=this._getLabelSizes(),o=t.autoSkipPadding||0,a=n?n.widest.width+o:0,r=n?n.highest.height+o:0;return this.isHorizontal()?r*i>a*s?a/i:r/s:r*s<a*i?r/i:a/s}_isVisible(){const t=this.options.display;return\"auto\"!==t?!!t:this.getMatchingVisibleMetas().length>0}_computeGridLineItems(t){const e=this.axis,i=this.chart,s=this.options,{grid:n,position:a,border:r}=s,h=n.offset,c=this.isHorizontal(),d=this.ticks.length+(h?1:0),u=Ks(n),f=[],g=r.setContext(this.getContext()),p=g.display?g.width:0,m=p/2,b=function(t){return Ae(i,t,p)};let x,_,y,v,M,w,k,S,P,D,C,O;if(\"top\"===a)x=b(this.bottom),w=this.bottom-u,S=x-m,D=b(t.top)+m,O=t.bottom;else if(\"bottom\"===a)x=b(relay-node.invalid),D=t.top,O=b(t.bottom)-m,w=x+m,S=relay-node.invalid+u;else if(\"left\"===a)x=b(this.right),M=this.right-u,k=x-m,P=b(t.left)+m,C=t.right;else if(\"right\"===a)x=b(this.left),P=t.left,C=b(t.right)-m,M=x+m,k=this.left+u;else if(\"x\"===e){if(\"center\"===a)x=b((t.top+t.bottom)/2+.5);else if(o(a)){const t=Object.keys(a)[0],e=a[t];x=b(this.chart.scales[t].getPixelForValue(e))}D=t.top,O=t.bottom,w=x+m,S=w+u}else if(\"y\"===e){if(\"center\"===a)x=b((t.left+t.right)/2);else if(o(a)){const t=Object.keys(a)[0],e=a[t];x=b(this.chart.scales[t].getPixelForValue(e))}M=x-m,k=M-u,P=t.left,C=t.right}const A=l(s.ticks.maxTicksLimit,d),T=Math.max(1,Math.ceil(d/A));for(_=0;_<d;_+=T){const t=this.getContext(_),e=n.setContext(t),s=r.setContext(t),o=e.lineWidth,a=e.color,l=s.dash||[],d=s.dashOffset,u=e.tickWidth,g=e.tickColor,p=e.tickBorderDash||[],m=e.tickBorderDashOffset;y=qs(this,_,h),void 0!==y&&(v=Ae(i,y,o),c?M=k=P=C=v:w=S=D=O=v,f.push({tx1:M,ty1:w,tx2:k,ty2:S,x1:P,y1:D,x2:C,y2:O,width:o,color:a,borderDash:l,borderDashOffset:d,tickWidth:u,tickColor:g,tickBorderDash:p,tickBorderDashOffset:m}))}return this._ticksLength=d,this._borderValue=x,f}_computeLabelItems(t){const e=this.axis,i=this.options,{position:s,ticks:a}=i,r=this.isHorizontal(),l=this.ticks,{align:h,crossAlign:c,padding:d,mirror:u}=a,f=Ks(i.grid),g=f+d,p=u?-d:g,m=-$(this.labelRotation),b=[];let x,_,y,v,M,w,k,S,P,D,C,O,A=\"middle\";if(\"top\"===s)w=this.bottom-p,k=this._getXAxisLabelAlignment();else if(\"bottom\"===s)w=relay-node.invalid+p,k=this._getXAxisLabelAlignment();else if(\"left\"===s){const t=this._getYAxisLabelAlignment(f);k=t.textAlign,M=t.x}else if(\"right\"===s){const t=this._getYAxisLabelAlignment(f);k=t.textAlign,M=t.x}else if(\"x\"===e){if(\"center\"===s)w=(t.top+t.bottom)/2+g;else if(o(s)){const t=Object.keys(s)[0],e=s[t];w=this.chart.scales[t].getPixelForValue(e)+g}k=this._getXAxisLabelAlignment()}else if(\"y\"===e){if(\"center\"===s)M=(t.left+t.right)/2-g;else if(o(s)){const t=Object.keys(s)[0],e=s[t];M=this.chart.scales[t].getPixelForValue(e)}k=this._getYAxisLabelAlignment(f).textAlign}\"y\"===e&&(\"start\"===h?A=\"top\":\"end\"===h&&(A=\"bottom\"));const T=this._getLabelSizes();for(x=0,_=l.length;x<_;++x){y=l[x],v=y.label;const t=a.setContext(this.getContext(x));S=this.getPixelForTick(x)+a.labelOffset,P=this._resolveTickFontOptions(x),D=P.lineHeight,C=n(v)?v.length:1;const e=C/2,i=t.color,o=t.textStrokeColor,h=t.textStrokeWidth;let d,f=k;if(r?(M=S,\"inner\"===k&&(f=x===_-1?this.options.reverse?\"left\":\"right\":0===x?this.options.reverse?\"right\":\"left\":\"center\"),O=\"top\"===s?\"near\"===c||0!==m?-C*D+D/2:\"center\"===c?-T.highest.height/2-e*D+D:-T.highest.height+D/2:\"near\"===c||0!==m?D/2:\"center\"===c?T.highest.height/2-e*D:T.highest.height-C*D,u&&(O*=-1),0===m||t.showLabelBackdrop||(M+=D/2*Math.sin(m))):(w=S,O=(1-C)*D/2),t.showLabelBackdrop){const e=ki(t.backdropPadding),i=T.heights[x],s=T.widths[x];let n=relay-node.invalid,o=0-e.left;switch(A){case\"middle\":n-=i/2;break;case\"bottom\":n-=i}switch(k){case\"center\":o-=s/2;break;case\"right\":o-=s;break;case\"inner\":x===_-1?o-=s:x>0&&(o-=s/2)}d={left:o,top:n,width:s+e.width,height:i+e.height,color:t.backdropColor}}b.push({label:v,font:P,textOffset:O,options:{rotation:m,color:i,strokeColor:o,strokeWidth:h,textAlign:f,textBaseline:A,translation:[M,w],backdrop:d}})}return b}_getXAxisLabelAlignment(){const{position:t,ticks:e}=this.options;if(-$(this.labelRotation))return\"top\"===t?\"left\":\"right\";let i=\"center\";return\"start\"===e.align?i=\"left\":\"end\"===e.align?i=\"right\":\"inner\"===e.align&&(i=\"inner\"),i}_getYAxisLabelAlignment(t){const{position:e,ticks:{crossAlign:i,mirror:s,padding:n}}=this.options,o=t+n,a=this._getLabelSizes().widest.width;let r,l;return\"left\"===e?s?(l=this.right+n,\"near\"===i?r=\"left\":\"center\"===i?(r=\"center\",l+=a/2):(r=\"right\",l+=a)):(l=this.right-o,\"near\"===i?r=\"right\":\"center\"===i?(r=\"center\",l-=a/2):(r=\"left\",l=this.left)):\"right\"===e?s?(l=this.left+n,\"near\"===i?r=\"right\":\"center\"===i?(r=\"center\",l-=a/2):(r=\"left\",l-=a)):(l=this.left+o,\"near\"===i?r=\"left\":\"center\"===i?(r=\"center\",l+=a/2):(r=\"right\",l=this.right)):r=\"right\",{textAlign:r,x:l}}_computeLabelArea(){if(this.options.ticks.mirror)return;const t=this.chart,e=this.options.position;return\"left\"===e||\"right\"===e?{top:0,left:this.left,bottom:t.height,right:this.right}:\"top\"===e||\"bottom\"===e?{top:relay-node.invalid,left:0,bottom:this.bottom,right:t.width}:void 0}drawBackground(){const{ctx:t,options:{backgroundColor:e},left:i,top:s,width:n,height:o}=this;e&&(t.save(),t.fillStyle=e,t.fillRect(i,s,n,o),t.restore())}getLineWidthForValue(t){const e=this.options.grid;if(!this._isVisible()||!e.display)return 0;const i=this.ticks.findIndex((e=>e.value===t));if(i>=0){return e.setContext(this.getContext(i)).lineWidth}return 0}drawGrid(t){const e=this.options.grid,i=this.ctx,s=this._gridLineItems||(this._gridLineItems=this._computeGridLineItems(t));let n,o;const a=(t,e,s)=>{s.width&&s.color&&(i.save(),i.lineWidth=s.width,i.strokeStyle=s.color,i.setLineDash(s.borderDash||[]),i.lineDashOffset=s.borderDashOffset,i.beginPath(),i.moveTo(t.x,t.y),i.lineTo(e.x,e.y),i.stroke(),i.restore())};if(e.display)for(n=0,o=s.length;n<o;++n){const t=s[n];e.drawOnChartArea&&a({x:t.x1,y:t.y1},{x:t.x2,y:t.y2},t),e.drawTicks&&a({x:t.tx1,y:t.ty1},{x:t.tx2,y:t.ty2},{color:t.tickColor,width:t.tickWidth,borderDash:t.tickBorderDash,borderDashOffset:t.tickBorderDashOffset})}}drawBorder(){const{chart:t,ctx:e,options:{border:i,grid:s}}=this,n=i.setContext(this.getContext()),o=i.display?n.width:0;if(!o)return;const a=s.setContext(this.getContext(0)).lineWidth,r=this._borderValue;let l,h,c,d;this.isHorizontal()?(l=Ae(t,this.left,o)-o/2,h=Ae(t,this.right,a)+a/2,c=d=r):(c=Ae(t,relay-node.invalid,o)-o/2,d=Ae(t,this.bottom,a)+a/2,l=h=r),e.save(),e.lineWidth=n.width,e.strokeStyle=n.color,e.beginPath(),e.moveTo(l,c),e.lineTo(h,d),e.stroke(),e.restore()}drawLabels(t){if(!this.options.ticks.display)return;const e=this.ctx,i=this._computeLabelArea();i&&Ie(e,i);const s=this.getLabelItems(t);for(const t of s){const i=t.options,s=t.font;Ne(e,t.label,0,t.textOffset,s,i)}i&&ze(e)}drawTitle(){const{ctx:t,options:{position:e,title:i,reverse:s}}=this;if(!i.display)return;const a=Si(i.font),r=ki(i.padding),l=i.align;let h=a.lineHeight/2;\"bottom\"===e||\"center\"===e||o(e)?(h+=r.bottom,n(i.text)&&(h+=a.lineHeight*(i.text.length-1))):h+=r.top;const{titleX:c,titleY:d,maxWidth:u,rotation:f}=function(t,e,i,s){const{top:n,left:a,bottom:r,right:l,chart:h}=t,{chartArea:c,scales:d}=h;let u,f,g,p=0;const m=r-n,b=l-a;if(t.isHorizontal()){if(f=ft(s,a,l),o(i)){const t=Object.keys(i)[0],s=i[t];g=d[t].getPixelForValue(s)+m-e}else g=\"center\"===i?(c.bottom+c.top)/2+m-e:Ys(t,i,e);u=l-a}else{if(o(i)){const t=Object.keys(i)[0],s=i[t];f=d[t].getPixelForValue(s)-b+e}else f=\"center\"===i?(c.left+c.right)/2-b+e:Ys(t,i,e);g=ft(s,r,n),p=\"left\"===i?-E:E}return{titleX:f,titleY:g,maxWidth:u,rotation:p}}(this,h,e,l);Ne(t,i.text,0,0,a,{color:i.color,maxWidth:u,rotation:f,textAlign:Zs(l,e,s),textBaseline:\"middle\",translation:[c,d]})}draw(t){this._isVisible()&&(this.drawBackground(),this.drawGrid(t),this.drawBorder(),this.drawTitle(),this.drawLabels(t))}_layers(){const t=this.options,e=t.ticks&&t.ticks.z||0,i=l(t.grid&&t.grid.z,-1),s=l(t.border&&t.border.z,0);return this._isVisible()&&this.draw===Js.prototype.draw?[{z:i,draw:t=>{this.drawBackground(),this.drawGrid(t),this.drawTitle()}},{z:s,draw:()=>{this.drawBorder()}},{z:e,draw:t=>{this.drawLabels(t)}}]:[{z:e,draw:t=>{this.draw(t)}}]}getMatchingVisibleMetas(t){const e=this.chart.getSortedVisibleDatasetMetas(),i=this.axis+\"AxisID\",s=[];let n,o;for(n=0,o=e.length;n<o;++n){const o=e[n];o[i]!==this.id||t&&o.type!==t||s.push(o)}return s}_resolveTickFontOptions(t){return Si(this.options.ticks.setContext(this.getContext(t)).font)}_maxDigits(){const t=this._resolveTickFontOptions(0).lineHeight;return(this.isHorizontal()?this.width:this.height)/t}}class Qs{constructor(t,e,i){this.type=t,this.scope=e,this.override=i,this.items=Object.create(null)}isForType(t){return Object.prototype.isPrototypeOf.call(this.type.prototype,t.prototype)}register(t){const e=Object.getPrototypeOf(t);let i;(function(t){return\"id\"in t&&\"defaults\"in t})(e)&&(i=this.register(e));const s=this.items,n=t.id,o=this.scope+\".\"+n;if(!n)throw new Error(\"class does not have id: \"+t);return n in s||(s[n]=t,function(t,e,i){const s=b(Object.create(null),[i?ue.get(i):{},ue.get(e),t.defaults]);ue.set(e,s),t.defaultRoutes&&function(t,e){Object.keys(e).forEach((i=>{const s=i.split(\".\"),n=s.pop(),o=[t].concat(s).join(\".\"),a=e[i].split(\".\"),r=a.pop(),l=a.join(\".\");ue.route(o,n,l,r)}))}(e,t.defaultRoutes);t.descriptors&&ue.describe(e,t.descriptors)}(t,o,i),this.override&&ue.override(t.id,t.overrides)),o}get(t){return this.items[t]}unregister(t){const e=this.items,i=t.id,s=this.scope;i in e&&delete e[i],s&&i in ue[s]&&(delete ue[s][i],this.override&&delete re[i])}}class tn{constructor(){this.controllers=new Qs(Ns,\"datasets\",!0),this.elements=new Qs(Hs,\"elements\"),this.plugins=new Qs(Object,\"plugins\"),this.scales=new Qs(Js,\"scales\"),this._typedRegistries=[this.controllers,this.scales,this.elements]}add(...t){this._each(\"register\",t)}remove(...t){this._each(\"unregister\",t)}addControllers(...t){this._each(\"register\",t,this.controllers)}addElements(...t){this._each(\"register\",t,this.elements)}addPlugins(...t){this._each(\"register\",t,this.plugins)}addScales(...t){this._each(\"register\",t,this.scales)}getController(t){return this._get(t,this.controllers,\"controller\")}getElement(t){return this._get(t,this.elements,\"element\")}getPlugin(t){return this._get(t,this.plugins,\"plugin\")}getScale(t){return this._get(t,this.scales,\"scale\")}removeControllers(...t){this._each(\"unregister\",t,this.controllers)}removeElements(...t){this._each(\"unregister\",t,this.elements)}removePlugins(...t){this._each(\"unregister\",t,this.plugins)}removeScales(...t){this._each(\"unregister\",t,this.scales)}_each(t,e,i){[...e].forEach((e=>{const s=i||this._getRegistryForType(e);i||s.isForType(e)||s===this.plugins&&e.id?this._exec(t,s,e):u(e,(e=>{const s=i||this._getRegistryForType(e);this._exec(t,s,e)}))}))}_exec(t,e,i){const s=w(t);d(i[\"before\"+s],[],i),e[t](i),d(i[\"after\"+s],[],i)}_getRegistryForType(t){for(let e=0;e<this._typedRegistries.length;e++){const i=this._typedRegistries[e];if(i.isForType(t))return i}return this.plugins}_get(t,e,i){const s=e.get(t);if(void 0===s)throw new Error('\"'+t+'\" is not a registered '+i+\".\");return s}}var en=new tn;class sn{constructor(){this._init=[]}notify(t,e,i,s){\"beforeInit\"===e&&(this._init=this._createDescriptors(t,!0),this._notify(this._init,t,\"install\"));const n=s?this._descriptors(t).filter(s):this._descriptors(t),o=this._notify(n,t,e,i);return\"afterDestroy\"===e&&(this._notify(n,t,\"stop\"),this._notify(this._init,t,\"uninstall\")),o}_notify(t,e,i,s){s=s||{};for(const n of t){const t=n.plugin;if(!1===d(t[i],[e,s,n.options],t)&&s.cancelable)return!1}return!0}invalidate(){s(this._cache)||(this._oldCache=this._cache,this._cache=void 0)}_descriptors(t){if(this._cache)return this._cache;const e=this._cache=this._createDescriptors(t);return this._notifyStateChanges(t),e}_createDescriptors(t,e){const i=t&&t.config,s=l(i.options&&i.options.plugins,{}),n=function(t){const e={},i=[],s=Object.keys(en.plugins.items);for(let t=0;t<s.length;t++)i.push(en.getPlugin(s[t]));const n=t.plugins||[];for(let t=0;t<n.length;t++){const s=n[t];-1===i.indexOf(s)&&(i.push(s),e[s.id]=!0)}return{plugins:i,localIds:e}}(i);return!1!==s||e?function(t,{plugins:e,localIds:i},s,n){const o=[],a=t.getContext();for(const r of e){const e=r.id,l=nn(s[e],n);null!==l&&o.push({plugin:r,options:on(t.config,{plugin:r,local:i[e]},l,a)})}return o}(t,n,s,e):[]}_notifyStateChanges(t){const e=this._oldCache||[],i=this._cache,s=(t,e)=>t.filter((t=>!e.some((e=>t.plugin.id===e.plugin.id))));this._notify(s(e,i),t,\"stop\"),this._notify(s(i,e),t,\"start\")}}function nn(t,e){return e||!1!==t?!0===t?{}:t:null}function on(t,{plugin:e,local:i},s,n){const o=t.pluginScopeKeys(e),a=t.getOptionScopes(s,o);return i&&e.defaults&&a.push(e.defaults),t.createResolver(a,n,[\"\"],{scriptable:!1,indexable:!1,allKeys:!0})}function an(t,e){const i=ue.datasets[t]||{};return((e.datasets||{})[t]||{}).indexAxis||e.indexAxis||i.indexAxis||\"x\"}function rn(t){if(\"x\"===t||\"y\"===t||\"r\"===t)return t}function ln(t,...e){if(rn(t))return t;for(const s of e){const e=s.axis||(\"top\"===(i=s.position)||\"bottom\"===i?\"x\":\"left\"===i||\"right\"===i?\"y\":void 0)||t.length>1&&rn(t[0].toLowerCase());if(e)return e}var i;throw new Error(`Cannot determine type of '${t}' axis. Please provide 'axis' or 'position' option.`)}function hn(t,e,i){if(i[e+\"AxisID\"]===t)return{axis:e}}function cn(t,e){const i=re[t.type]||{scales:{}},s=e.scales||{},n=an(t.type,e),a=Object.create(null);return Object.keys(s).forEach((e=>{const r=s[e];if(!o(r))return console.error(`Invalid scale configuration for scale: ${e}`);if(r._proxy)return console.warn(`Ignoring resolver passed as options for scale: ${e}`);const l=ln(e,r,function(t,e){if(e.data&&e.data.datasets){const i=e.data.datasets.filter((e=>e.xAxisID===t||e.yAxisID===t));if(i.length)return hn(t,\"x\",i[0])||hn(t,\"y\",i[0])}return{}}(e,t),ue.scales[r.type]),h=function(t,e){return t===e?\"_index_\":\"_value_\"}(l,n),c=i.scales||{};a[e]=x(Object.create(null),[{axis:l},r,c[l],c[h]])})),t.data.datasets.forEach((i=>{const n=i.type||t.type,o=i.indexAxis||an(n,e),r=(re[n]||{}).scales||{};Object.keys(r).forEach((t=>{const e=function(t,e){let i=t;return\"_index_\"===t?i=e:\"_value_\"===t&&(i=\"x\"===e?\"y\":\"x\"),i}(t,o),n=i[e+\"AxisID\"]||e;a[n]=a[n]||Object.create(null),x(a[n],[{axis:e},s[n],r[t]])}))})),Object.keys(a).forEach((t=>{const e=a[t];x(e,[ue.scales[e.type],ue.scale])})),a}function dn(t){const e=t.options||(t.options={});e.plugins=l(e.plugins,{}),e.scales=cn(t,e)}function un(t){return(t=t||{}).datasets=t.datasets||[],t.labels=t.labels||[],t}const fn=new Map,gn=new Set;function pn(t,e){let i=fn.get(t);return i||(i=e(),fn.set(t,i),gn.add(i)),i}const mn=(t,e,i)=>{const s=M(e,i);void 0!==s&&t.add(s)};class bn{constructor(t){this._config=function(t){return(t=t||{}).data=un(t.data),dn(t),t}(t),this._scopeCache=new Map,this._resolverCache=new Map}get platform(){return this._config.platform}get type(){return this._config.type}set type(t){this._config.type=t}get data(){return this._config.data}set data(t){this._config.data=un(t)}get options(){return this._config.options}set options(t){this._config.options=t}get plugins(){return this._config.plugins}update(){const t=this._config;this.clearCache(),dn(t)}clearCache(){this._scopeCache.clear(),this._resolverCache.clear()}datasetScopeKeys(t){return pn(t,(()=>[[`datasets.${t}`,\"\"]]))}datasetAnimationScopeKeys(t,e){return pn(`${t}.transition.${e}`,(()=>[[`datasets.${t}.transitions.${e}`,`transitions.${e}`],[`datasets.${t}`,\"\"]]))}datasetElementScopeKeys(t,e){return pn(`${t}-${e}`,(()=>[[`datasets.${t}.elements.${e}`,`datasets.${t}`,`elements.${e}`,\"\"]]))}pluginScopeKeys(t){const e=t.id;return pn(`${this.type}-plugin-${e}`,(()=>[[`plugins.${e}`,...t.additionalOptionScopes||[]]]))}_cachedScopes(t,e){const i=this._scopeCache;let s=i.get(t);return s&&!e||(s=new Map,i.set(t,s)),s}getOptionScopes(t,e,i){const{options:s,type:n}=this,o=this._cachedScopes(t,i),a=o.get(e);if(a)return a;const r=new Set;e.forEach((e=>{t&&(r.add(t),e.forEach((e=>mn(r,t,e)))),e.forEach((t=>mn(r,s,t))),e.forEach((t=>mn(r,re[n]||{},t))),e.forEach((t=>mn(r,ue,t))),e.forEach((t=>mn(r,le,t)))}));const l=Array.from(r);return 0===l.length&&l.push(Object.create(null)),gn.has(e)&&o.set(e,l),l}chartOptionScopes(){const{options:t,type:e}=this;return[t,re[e]||{},ue.datasets[e]||{},{type:e},ue,le]}resolveNamedOptions(t,e,i,s=[\"\"]){const o={$shared:!0},{resolver:a,subPrefixes:r}=xn(this._resolverCache,t,s);let l=a;if(function(t,e){const{isScriptable:i,isIndexable:s}=Ye(t);for(const o of e){const e=i(o),a=s(o),r=(a||e)&&t[o];if(e&&(S(r)||_n(r))||a&&n(r))return!0}return!1}(a,e)){o.$shared=!1;l=$e(a,i=S(i)?i():i,this.createResolver(t,i,r))}for(const t of e)o[t]=l[t];return o}createResolver(t,e,i=[\"\"],s){const{resolver:n}=xn(this._resolverCache,t,i);return o(e)?$e(n,e,void 0,s):n}}function xn(t,e,i){let s=t.get(e);s||(s=new Map,t.set(e,s));const n=i.join();let o=s.get(n);if(!o){o={resolver:je(e,i),subPrefixes:i.filter((t=>!t.toLowerCase().includes(\"hover\")))},s.set(n,o)}return o}const _n=t=>o(t)&&Object.getOwnPropertyNames(t).some((e=>S(t[e])));const yn=[\"top\",\"bottom\",\"left\",\"right\",\"chartArea\"];function vn(t,e){return\"top\"===t||\"bottom\"===t||-1===yn.indexOf(t)&&\"x\"===e}function Mn(t,e){return function(i,s){return i[t]===s[t]?i[e]-s[e]:i[t]-s[t]}}function wn(t){const e=t.chart,i=e.options.animation;e.notifyPlugins(\"afterRender\"),d(i&&i.onComplete,[t],e)}function kn(t){const e=t.chart,i=e.options.animation;d(i&&i.onProgress,[t],e)}function Sn(t){return fe()&&\"string\"==typeof t?t=document.getElementById(t):t&&t.length&&(t=t[0]),t&&t.canvas&&(t=t.canvas),t}const Pn={},Dn=t=>{const e=Sn(t);return Object.values(Pn).filter((t=>t.canvas===e)).pop()};function Cn(t,e,i){const s=Object.keys(t);for(const n of s){const s=+n;if(s>=e){const o=t[n];delete t[n],(i>0||s>e)&&(t[s+i]=o)}}}function On(t,e,i){return t.options.clip?t[i]:e[i]}class An{static defaults=ue;static instances=Pn;static overrides=re;static registry=en;static version=\"4.4.1\";static getChart=Dn;static register(...t){en.add(...t),Tn()}static unregister(...t){en.remove(...t),Tn()}constructor(t,e){const s=this.config=new bn(e),n=Sn(t),o=Dn(n);if(o)throw new Error(\"Canvas is already in use. Chart with ID '\"+o.id+\"' must be destroyed before the canvas with ID '\"+o.canvas.id+\"' can be reused.\");const a=s.createResolver(s.chartOptionScopes(),this.getContext());this.platform=new(s.platform||ks(n)),this.platform.updateConfig(s);const r=this.platform.acquireContext(n,a.aspectRatio),l=r&&r.canvas,h=l&&l.height,c=l&&l.width;this.id=i(),this.ctx=r,this.canvas=l,this.width=c,this.height=h,this._options=a,this._aspectRatio=this.aspectRatio,this._layers=[],this._metasets=[],this._stacks=void 0,this.boxes=[],this.currentDevicePixelRatio=void 0,this.chartArea=void 0,this._active=[],this._lastEvent=void 0,this._listeners={},this._responsiveListeners=void 0,this._sortedMetasets=[],this.scales={},this._plugins=new sn,this.$proxies={},this._hiddenIndices={},this.attached=!1,this._animationsDisabled=void 0,this.$context=void 0,this._doResize=dt((t=>this.update(t)),a.resizeDelay||0),this._dataChanges=[],Pn[this.id]=this,r&&l?(xt.listen(this,\"complete\",wn),xt.listen(this,\"progress\",kn),this._initialize(),this.attached&&this.update()):console.error(\"Failed to create chart: can't acquire context from the given item\")}get aspectRatio(){const{options:{aspectRatio:t,maintainAspectRatio:e},width:i,height:n,_aspectRatio:o}=this;return s(t)?e&&o?o:n?i/n:null:t}get data(){return this.config.data}set data(t){this.config.data=t}get options(){return this._options}set options(t){this.config.options=t}get registry(){return en}_initialize(){return this.notifyPlugins(\"beforeInit\"),this.options.responsive?this.resize():ke(this,this.options.devicePixelRatio),this.bindEvents(),this.notifyPlugins(\"afterInit\"),this}clear(){return Te(this.canvas,this.ctx),this}stop(){return xt.stop(this),this}resize(t,e){xt.running(this)?this._resizeBeforeDraw={width:t,height:e}:this._resize(t,e)}_resize(t,e){const i=this.options,s=this.canvas,n=i.maintainAspectRatio&&this.aspectRatio,o=this.platform.getMaximumSize(s,t,e,n),a=i.devicePixelRatio||this.platform.getDevicePixelRatio(),r=this.width?\"resize\":\"attach\";this.width=o.width,this.height=o.height,this._aspectRatio=this.aspectRatio,ke(this,a,!0)&&(this.notifyPlugins(\"resize\",{size:o}),d(i.onResize,[this,o],this),this.attached&&this._doResize(r)&&this.render())}ensureScalesHaveIDs(){u(this.options.scales||{},((t,e)=>{t.id=e}))}buildOrUpdateScales(){const t=this.options,e=t.scales,i=this.scales,s=Object.keys(i).reduce(((t,e)=>(t[e]=!1,t)),{});let n=[];e&&(n=n.concat(Object.keys(e).map((t=>{const i=e[t],s=ln(t,i),n=\"r\"===s,o=\"x\"===s;return{options:i,dposition:n?\"chartArea\":o?\"bottom\":\"left\",dtype:n?\"radialLinear\":o?\"category\":\"linear\"}})))),u(n,(e=>{const n=e.options,o=n.id,a=ln(o,n),r=l(n.type,e.dtype);void 0!==n.position&&vn(n.position,a)===vn(e.dposition)||(n.position=e.dposition),s[o]=!0;let h=null;if(o in i&&i[o].type===r)h=i[o];else{h=new(en.getScale(r))({id:o,type:r,ctx:this.ctx,chart:this}),i[h.id]=h}h.init(n,t)})),u(s,((t,e)=>{t||delete i[e]})),u(i,(t=>{as.configure(this,t,t.options),as.addBox(this,t)}))}_updateMetasets(){const t=this._metasets,e=this.data.datasets.length,i=t.length;if(t.sort(((t,e)=>t.index-e.index)),i>e){for(let t=e;t<i;++t)this._destroyDatasetMeta(t);t.splice(e,i-e)}this._sortedMetasets=t.slice(0).sort(Mn(\"order\",\"index\"))}_removeUnreferencedMetasets(){const{_metasets:t,data:{datasets:e}}=this;t.length>e.length&&delete this._stacks,t.forEach(((t,i)=>{0===e.filter((e=>e===t._dataset)).length&&this._destroyDatasetMeta(i)}))}buildOrUpdateControllers(){const t=[],e=this.data.datasets;let i,s;for(this._removeUnreferencedMetasets(),i=0,s=e.length;i<s;i++){const s=e[i];let n=this.getDatasetMeta(i);const o=s.type||this.config.type;if(n.type&&n.type!==o&&(this._destroyDatasetMeta(i),n=this.getDatasetMeta(i)),n.type=o,n.indexAxis=s.indexAxis||an(o,this.options),n.order=s.order||0,n.index=i,n.label=\"\"+s.label,n.visible=this.isDatasetVisible(i),n.controller)n.controller.updateIndex(i),n.controller.linkScales();else{const e=en.getController(o),{datasetElementType:s,dataElementType:a}=ue.datasets[o];Object.assign(e,{dataElementType:en.getElement(a),datasetElementType:s&&en.getElement(s)}),n.controller=new e(this,i),t.push(n.controller)}}return this._updateMetasets(),t}_resetElements(){u(this.data.datasets,((t,e)=>{this.getDatasetMeta(e).controller.reset()}),this)}reset(){this._resetElements(),this.notifyPlugins(\"reset\")}update(t){const e=this.config;e.update();const i=this._options=e.createResolver(e.chartOptionScopes(),this.getContext()),s=this._animationsDisabled=!i.animation;if(this._updateScales(),this._checkEventBindings(),this._updateHiddenIndices(),this._plugins.invalidate(),!1===this.notifyPlugins(\"beforeUpdate\",{mode:t,cancelable:!0}))return;const n=this.buildOrUpdateControllers();this.notifyPlugins(\"beforeElementsUpdate\");let o=0;for(let t=0,e=this.data.datasets.length;t<e;t++){const{controller:e}=this.getDatasetMeta(t),i=!s&&-1===n.indexOf(e);e.buildOrUpdateElements(i),o=Math.max(+e.getMaxOverflow(),o)}o=this._minPadding=i.layout.autoPadding?o:0,this._updateLayout(o),s||u(n,(t=>{t.reset()})),this._updateDatasets(t),this.notifyPlugins(\"afterUpdate\",{mode:t}),this._layers.sort(Mn(\"z\",\"_idx\"));const{_active:a,_lastEvent:r}=this;r?this._eventHandler(r,!0):a.length&&this._updateHoverStyles(a,a,!0),this.render()}_updateScales(){u(this.scales,(t=>{as.removeBox(this,t)})),this.ensureScalesHaveIDs(),this.buildOrUpdateScales()}_checkEventBindings(){const t=this.options,e=new Set(Object.keys(this._listeners)),i=new Set(t.events);P(e,i)&&!!this._responsiveListeners===t.responsive||(this.unbindEvents(),this.bindEvents())}_updateHiddenIndices(){const{_hiddenIndices:t}=this,e=this._getUniformDataChanges()||[];for(const{method:i,start:s,count:n}of e){Cn(t,s,\"_removeElements\"===i?-n:n)}}_getUniformDataChanges(){const t=this._dataChanges;if(!t||!t.length)return;this._dataChanges=[];const e=this.data.datasets.length,i=e=>new Set(t.filter((t=>t[0]===e)).map(((t,e)=>e+\",\"+t.splice(1).join(\",\")))),s=i(0);for(let t=1;t<e;t++)if(!P(s,i(t)))return;return Array.from(s).map((t=>t.split(\",\"))).map((t=>({method:t[1],start:+t[2],count:+t[3]})))}_updateLayout(t){if(!1===this.notifyPlugins(\"beforeLayout\",{cancelable:!0}))return;as.update(this,this.width,this.height,t);const e=this.chartArea,i=e.width<=0||e.height<=0;this._layers=[],u(this.boxes,(t=>{i&&\"chartArea\"===t.position||(t.configure&&t.configure(),this._layers.push(...t._layers()))}),this),this._layers.forEach(((t,e)=>{t._idx=e})),this.notifyPlugins(\"afterLayout\")}_updateDatasets(t){if(!1!==this.notifyPlugins(\"beforeDatasetsUpdate\",{mode:t,cancelable:!0})){for(let t=0,e=this.data.datasets.length;t<e;++t)this.getDatasetMeta(t).controller.configure();for(let e=0,i=this.data.datasets.length;e<i;++e)this._updateDataset(e,S(t)?t({datasetIndex:e}):t);this.notifyPlugins(\"afterDatasetsUpdate\",{mode:t})}}_updateDataset(t,e){const i=this.getDatasetMeta(t),s={meta:i,index:t,mode:e,cancelable:!0};!1!==this.notifyPlugins(\"beforeDatasetUpdate\",s)&&(i.controller._update(e),s.cancelable=!1,this.notifyPlugins(\"afterDatasetUpdate\",s))}render(){!1!==this.notifyPlugins(\"beforeRender\",{cancelable:!0})&&(xt.has(this)?this.attached&&!xt.running(this)&&xt.start(this):(this.draw(),wn({chart:this})))}draw(){let t;if(this._resizeBeforeDraw){const{width:t,height:e}=this._resizeBeforeDraw;this._resize(t,e),this._resizeBeforeDraw=null}if(this.clear(),this.width<=0||this.height<=0)return;if(!1===this.notifyPlugins(\"beforeDraw\",{cancelable:!0}))return;const e=this._layers;for(t=0;t<e.length&&e[t].z<=0;++t)e[t].draw(this.chartArea);for(this._drawDatasets();t<e.length;++t)e[t].draw(this.chartArea);this.notifyPlugins(\"afterDraw\")}_getSortedDatasetMetas(t){const e=this._sortedMetasets,i=[];let s,n;for(s=0,n=e.length;s<n;++s){const n=e[s];t&&!n.visible||i.push(n)}return i}getSortedVisibleDatasetMetas(){return this._getSortedDatasetMetas(!0)}_drawDatasets(){if(!1===this.notifyPlugins(\"beforeDatasetsDraw\",{cancelable:!0}))return;const t=this.getSortedVisibleDatasetMetas();for(let e=t.length-1;e>=0;--e)this._drawDataset(t[e]);this.notifyPlugins(\"afterDatasetsDraw\")}_drawDataset(t){const e=this.ctx,i=t._clip,s=!i.disabled,n=function(t,e){const{xScale:i,yScale:s}=t;return i&&s?{left:On(i,e,\"left\"),right:On(i,e,\"right\"),top:On(s,e,\"top\"),bottom:On(s,e,\"bottom\")}:e}(t,this.chartArea),o={meta:t,index:t.index,cancelable:!0};!1!==this.notifyPlugins(\"beforeDatasetDraw\",o)&&(s&&Ie(e,{left:!1===i.left?0:n.left-i.left,right:!1===i.right?this.width:n.right+i.right,top:!1===i.top?0:n.relay-node.invalid,bottom:!1===i.bottom?this.height:n.bottom+i.bottom}),t.controller.draw(),s&&ze(e),o.cancelable=!1,this.notifyPlugins(\"afterDatasetDraw\",o))}isPointInArea(t){return Re(t,this.chartArea,this._minPadding)}getElementsAtEventForMode(t,e,i,s){const n=Xi.modes[e];return\"function\"==typeof n?n(this,t,i,s):[]}getDatasetMeta(t){const e=this.data.datasets[t],i=this._metasets;let s=i.filter((t=>t&&t._dataset===e)).pop();return s||(s={type:null,data:[],dataset:null,controller:null,hidden:null,xAxisID:null,yAxisID:null,order:e&&e.order||0,index:t,_dataset:e,_parsed:[],_sorted:!1},i.push(s)),s}getContext(){return this.$context||(this.$context=Ci(null,{chart:this,type:\"chart\"}))}getVisibleDatasetCount(){return this.getSortedVisibleDatasetMetas().length}isDatasetVisible(t){const e=this.data.datasets[t];if(!e)return!1;const i=this.getDatasetMeta(t);return\"boolean\"==typeof i.hidden?!i.hidden:!e.hidden}setDatasetVisibility(t,e){this.getDatasetMeta(t).hidden=!e}toggleDataVisibility(t){this._hiddenIndices[t]=!this._hiddenIndices[t]}getDataVisibility(t){return!this._hiddenIndices[t]}_updateVisibility(t,e,i){const s=i?\"show\":\"hide\",n=this.getDatasetMeta(t),o=n.controller._resolveAnimations(void 0,s);k(e)?(n.data[e].hidden=!i,this.update()):(this.setDatasetVisibility(t,i),o.update(n,{visible:i}),this.update((e=>e.datasetIndex===t?s:void 0)))}hide(t,e){this._updateVisibility(t,e,!1)}show(t,e){this._updateVisibility(t,e,!0)}_destroyDatasetMeta(t){const e=this._metasets[t];e&&e.controller&&e.controller._destroy(),delete this._metasets[t]}_stop(){let t,e;for(this.stop(),xt.remove(this),t=0,e=this.data.datasets.length;t<e;++t)this._destroyDatasetMeta(t)}destroy(){this.notifyPlugins(\"beforeDestroy\");const{canvas:t,ctx:e}=this;this._stop(),this.config.clearCache(),t&&(this.unbindEvents(),Te(t,e),this.platform.releaseContext(e),this.canvas=null,this.ctx=null),delete Pn[this.id],this.notifyPlugins(\"afterDestroy\")}toBase64Image(...t){return this.canvas.toDataURL(...t)}bindEvents(){this.bindUserEvents(),this.options.responsive?this.bindResponsiveEvents():this.attached=!0}bindUserEvents(){const t=this._listeners,e=this.platform,i=(i,s)=>{e.addEventListener(this,i,s),t[i]=s},s=(t,e,i)=>{t.offsetX=e,t.offsetY=i,this._eventHandler(t)};u(this.options.events,(t=>i(t,s)))}bindResponsiveEvents(){this._responsiveListeners||(this._responsiveListeners={});const t=this._responsiveListeners,e=this.platform,i=(i,s)=>{e.addEventListener(this,i,s),t[i]=s},s=(i,s)=>{t[i]&&(e.removeEventListener(this,i,s),delete t[i])},n=(t,e)=>{this.canvas&&this.resize(t,e)};let o;const a=()=>{s(\"attach\",a),this.attached=!0,this.resize(),i(\"resize\",n),i(\"detach\",o)};o=()=>{this.attached=!1,s(\"resize\",n),this._stop(),this._resize(0,0),i(\"attach\",a)},e.isAttached(this.canvas)?a():o()}unbindEvents(){u(this._listeners,((t,e)=>{this.platform.removeEventListener(this,e,t)})),this._listeners={},u(this._responsiveListeners,((t,e)=>{this.platform.removeEventListener(this,e,t)})),this._responsiveListeners=void 0}updateHoverStyle(t,e,i){const s=i?\"set\":\"remove\";let n,o,a,r;for(\"dataset\"===e&&(n=this.getDatasetMeta(t[0].datasetIndex),n.controller[\"_\"+s+\"DatasetHoverStyle\"]()),a=0,r=t.length;a<r;++a){o=t[a];const e=o&&this.getDatasetMeta(o.datasetIndex).controller;e&&e[s+\"HoverStyle\"](o.element,o.datasetIndex,o.index)}}getActiveElements(){return this._active||[]}setActiveElements(t){const e=this._active||[],i=t.map((({datasetIndex:t,index:e})=>{const i=this.getDatasetMeta(t);if(!i)throw new Error(\"No dataset found at index \"+t);return{datasetIndex:t,element:i.data[e],index:e}}));!f(i,e)&&(this._active=i,this._lastEvent=null,this._updateHoverStyles(i,e))}notifyPlugins(t,e,i){return this._plugins.notify(this,t,e,i)}isPluginEnabled(t){return 1===this._plugins._cache.filter((e=>e.plugin.id===t)).length}_updateHoverStyles(t,e,i){const s=this.options.hover,n=(t,e)=>t.filter((t=>!e.some((e=>t.datasetIndex===e.datasetIndex&&t.index===e.index)))),o=n(e,t),a=i?t:n(t,e);o.length&&this.updateHoverStyle(o,s.mode,!1),a.length&&s.mode&&this.updateHoverStyle(a,s.mode,!0)}_eventHandler(t,e){const i={event:t,replay:e,cancelable:!0,inChartArea:this.isPointInArea(t)},s=e=>(e.options.events||this.options.events).includes(t.native.type);if(!1===this.notifyPlugins(\"beforeEvent\",i,s))return;const n=this._handleEvent(t,e,i.inChartArea);return i.cancelable=!1,this.notifyPlugins(\"afterEvent\",i,s),(n||i.changed)&&this.render(),this}_handleEvent(t,e,i){const{_active:s=[],options:n}=this,o=e,a=this._getActiveElements(t,s,i,o),r=D(t),l=function(t,e,i,s){return i&&\"mouseout\"!==t.type?s?e:t:null}(t,this._lastEvent,i,r);i&&(this._lastEvent=null,d(n.onHover,[t,a,this],this),r&&d(n.onClick,[t,a,this],this));const h=!f(a,s);return(h||e)&&(this._active=a,this._updateHoverStyles(a,s,e)),this._lastEvent=l,h}_getActiveElements(t,e,i,s){if(\"mouseout\"===t.type)return[];if(!i)return e;const n=this.options.hover;return this.getElementsAtEventForMode(t,n.mode,n,s)}}function Tn(){return u(An.instances,(t=>t._plugins.invalidate()))}function Ln(){throw new Error(\"This method is not implemented: Check that a complete date adapter is provided.\")}class En{static override(t){Object.assign(En.prototype,t)}options;constructor(t){this.options=t||{}}init(){}formats(){return Ln()}parse(){return Ln()}format(){return Ln()}add(){return Ln()}diff(){return Ln()}startOf(){return Ln()}endOf(){return Ln()}}var Rn={_date:En};function In(t){const e=t.iScale,i=function(t,e){if(!t._cache.$bar){const i=t.getMatchingVisibleMetas(e);let s=[];for(let e=0,n=i.length;e<n;e++)s=s.concat(i[e].controller.getAllParsedValues(t));t._cache.$bar=lt(s.sort(((t,e)=>t-e)))}return t._cache.$bar}(e,t.type);let s,n,o,a,r=e._length;const l=()=>{32767!==o&&-32768!==o&&(k(a)&&(r=Math.min(r,Math.abs(o-a)||r)),a=o)};for(s=0,n=i.length;s<n;++s)o=e.getPixelForValue(i[s]),l();for(a=void 0,s=0,n=e.ticks.length;s<n;++s)o=e.getPixelForTick(s),l();return r}function zn(t,e,i,s){return n(t)?function(t,e,i,s){const n=i.parse(t[0],s),o=i.parse(t[1],s),a=Math.min(n,o),r=Math.max(n,o);let l=a,h=r;Math.abs(a)>Math.abs(r)&&(l=r,h=a),e[i.axis]=h,e._custom={barStart:l,barEnd:h,start:n,end:o,min:a,max:r}}(t,e,i,s):e[i.axis]=i.parse(t,s),e}function Fn(t,e,i,s){const n=t.iScale,o=t.vScale,a=n.getLabels(),r=n===o,l=[];let h,c,d,u;for(h=i,c=i+s;h<c;++h)u=e[h],d={},d[n.axis]=r||n.parse(a[h],h),l.push(zn(u,d,o,h));return l}function Vn(t){return t&&void 0!==t.barStart&&void 0!==t.barEnd}function Bn(t,e,i,s){let n=e.borderSkipped;const o={};if(!n)return void(t.borderSkipped=o);if(!0===n)return void(t.borderSkipped={top:!0,right:!0,bottom:!0,left:!0});const{start:a,end:r,reverse:l,top:h,bottom:c}=function(t){let e,i,s,n,o;return t.horizontal?(e=t.base>t.x,i=\"left\",s=\"right\"):(e=t.base<t.y,i=\"bottom\",s=\"top\"),e?(n=\"end\",o=\"start\"):(n=\"start\",o=\"end\"),{start:i,end:s,reverse:e,top:n,bottom:o}}(t);\"middle\"===n&&i&&(t.enableBorderRadius=!0,(i._top||0)===s?n=h:(i._bottom||0)===s?n=c:(o[Wn(c,a,r,l)]=!0,n=h)),o[Wn(n,a,r,l)]=!0,t.borderSkipped=o}function Wn(t,e,i,s){var n,o,a;return s?(a=i,t=Nn(t=(n=t)===(o=e)?a:n===a?o:n,i,e)):t=Nn(t,e,i),t}function Nn(t,e,i){return\"start\"===t?e:\"end\"===t?i:t}function Hn(t,{inflateAmount:e},i){t.inflateAmount=\"auto\"===e?1===i?.33:0:e}class jn extends Ns{static id=\"doughnut\";static defaults={datasetElementType:!1,dataElementType:\"arc\",animation:{animateRotate:!0,animateScale:!1},animations:{numbers:{type:\"number\",properties:[\"circumference\",\"endAngle\",\"innerRadius\",\"outerRadius\",\"startAngle\",\"x\",\"y\",\"offset\",\"borderWidth\",\"spacing\"]}},cutout:\"50%\",rotation:0,circumference:360,radius:\"100%\",spacing:0,indexAxis:\"r\"};static descriptors={_scriptable:t=>\"spacing\"!==t,_indexable:t=>\"spacing\"!==t&&!t.startsWith(\"borderDash\")&&!t.startsWith(\"hoverBorderDash\")};static overrides={aspectRatio:1,plugins:{legend:{labels:{generateLabels(t){const e=t.data;if(e.labels.length&&e.datasets.length){const{labels:{pointStyle:i,color:s}}=t.legend.options;return e.labels.map(((e,n)=>{const o=t.getDatasetMeta(0).controller.getStyle(n);return{text:e,fillStyle:o.backgroundColor,strokeStyle:o.borderColor,fontColor:s,lineWidth:o.borderWidth,pointStyle:i,hidden:!t.getDataVisibility(n),index:n}}))}return[]}},onClick(t,e,i){i.chart.toggleDataVisibility(e.index),i.chart.update()}}}};constructor(t,e){super(t,e),this.enableOptionSharing=!0,this.innerRadius=void 0,this.outerRadius=void 0,this.offsetX=void 0,this.offsetY=void 0}linkScales(){}parse(t,e){const i=this.getDataset().data,s=this._cachedMeta;if(!1===this._parsing)s._parsed=i;else{let n,a,r=t=>+i[t];if(o(i[t])){const{key:t=\"value\"}=this._parsing;r=e=>+M(i[e],t)}for(n=t,a=t+e;n<a;++n)s._parsed[n]=r(n)}}_getRotation(){return $(this.options.rotation-90)}_getCircumference(){return $(this.options.circumference)}_getRotationExtents(){let t=O,e=-O;for(let i=0;i<this.chart.data.datasets.length;++i)if(this.chart.isDatasetVisible(i)&&this.chart.getDatasetMeta(i).type===this._type){const s=this.chart.getDatasetMeta(i).controller,n=s._getRotation(),o=s._getCircumference();t=Math.min(t,n),e=Math.max(e,n+o)}return{rotation:t,circumference:e-t}}update(t){const e=this.chart,{chartArea:i}=e,s=this._cachedMeta,n=s.data,o=this.getMaxBorderWidth()+this.getMaxOffset(n)+this.options.spacing,a=Math.max((Math.min(i.width,i.height)-o)/2,0),r=Math.min(h(this.options.cutout,a),1),l=this._getRingWeight(this.index),{circumference:d,rotation:u}=this._getRotationExtents(),{ratioX:f,ratioY:g,offsetX:p,offsetY:m}=function(t,e,i){let s=1,n=1,o=0,a=0;if(e<O){const r=t,l=r+e,h=Math.cos(r),c=Math.sin(r),d=Math.cos(l),u=Math.sin(l),f=(t,e,s)=>Z(t,r,l,!0)?1:Math.max(e,e*i,s,s*i),g=(t,e,s)=>Z(t,r,l,!0)?-1:Math.min(e,e*i,s,s*i),p=f(0,h,d),m=f(E,c,u),b=g(C,h,d),x=g(C+E,c,u);s=(p-b)/2,n=(m-x)/2,o=-(p+b)/2,a=-(m+x)/2}return{ratioX:s,ratioY:n,offsetX:o,offsetY:a}}(u,d,r),b=(i.width-o)/f,x=(i.height-o)/g,_=Math.max(Math.min(b,x)/2,0),y=c(this.options.radius,_),v=(y-Math.max(y*r,0))/this._getVisibleDatasetWeightTotal();this.offsetX=p*y,this.offsetY=m*y,s.total=this.calculateTotal(),this.outerRadius=y-v*this._getRingWeightOffset(this.index),this.innerRadius=Math.max(this.outerRadius-v*l,0),this.updateElements(n,0,n.length,t)}_circumference(t,e){const i=this.options,s=this._cachedMeta,n=this._getCircumference();return e&&i.animation.animateRotate||!this.chart.getDataVisibility(t)||null===s._parsed[t]||s.data[t].hidden?0:this.calculateCircumference(s._parsed[t]*n/O)}updateElements(t,e,i,s){const n=\"reset\"===s,o=this.chart,a=o.chartArea,r=o.options.animation,l=(a.left+a.right)/2,h=(a.top+a.bottom)/2,c=n&&r.animateScale,d=c?0:this.innerRadius,u=c?0:this.outerRadius,{sharedOptions:f,includeOptions:g}=this._getSharedOptions(e,s);let p,m=this._getRotation();for(p=0;p<e;++p)m+=this._circumference(p,n);for(p=e;p<e+i;++p){const e=this._circumference(p,n),i=t[p],o={x:l+this.offsetX,y:h+this.offsetY,startAngle:m,endAngle:m+e,circumference:e,outerRadius:u,innerRadius:d};g&&(o.options=f||this.resolveDataElementOptions(p,i.active?\"active\":s)),m+=e,this.updateElement(i,p,o,s)}}calculateTotal(){const t=this._cachedMeta,e=t.data;let i,s=0;for(i=0;i<e.length;i++){const n=t._parsed[i];null===n||isNaN(n)||!this.chart.getDataVisibility(i)||e[i].hidden||(s+=Math.abs(n))}return s}calculateCircumference(t){const e=this._cachedMeta.total;return e>0&&!isNaN(t)?O*(Math.abs(t)/e):0}getLabelAndValue(t){const e=this._cachedMeta,i=this.chart,s=i.data.labels||[],n=ne(e._parsed[t],i.options.locale);return{label:s[t]||\"\",value:n}}getMaxBorderWidth(t){let e=0;const i=this.chart;let s,n,o,a,r;if(!t)for(s=0,n=i.data.datasets.length;s<n;++s)if(i.isDatasetVisible(s)){o=i.getDatasetMeta(s),t=o.data,a=o.controller;break}if(!t)return 0;for(s=0,n=t.length;s<n;++s)r=a.resolveDataElementOptions(s),\"inner\"!==r.borderAlign&&(e=Math.max(e,r.borderWidth||0,r.hoverBorderWidth||0));return e}getMaxOffset(t){let e=0;for(let i=0,s=t.length;i<s;++i){const t=this.resolveDataElementOptions(i);e=Math.max(e,t.offset||0,t.hoverOffset||0)}return e}_getRingWeightOffset(t){let e=0;for(let i=0;i<t;++i)this.chart.isDatasetVisible(i)&&(e+=this._getRingWeight(i));return e}_getRingWeight(t){return Math.max(l(this.chart.data.datasets[t].weight,1),0)}_getVisibleDatasetWeightTotal(){return this._getRingWeightOffset(this.chart.data.datasets.length)||1}}class $n extends Ns{static id=\"polarArea\";static defaults={dataElementType:\"arc\",animation:{animateRotate:!0,animateScale:!0},animations:{numbers:{type:\"number\",properties:[\"x\",\"y\",\"startAngle\",\"endAngle\",\"innerRadius\",\"outerRadius\"]}},indexAxis:\"r\",startAngle:0};static overrides={aspectRatio:1,plugins:{legend:{labels:{generateLabels(t){const e=t.data;if(e.labels.length&&e.datasets.length){const{labels:{pointStyle:i,color:s}}=t.legend.options;return e.labels.map(((e,n)=>{const o=t.getDatasetMeta(0).controller.getStyle(n);return{text:e,fillStyle:o.backgroundColor,strokeStyle:o.borderColor,fontColor:s,lineWidth:o.borderWidth,pointStyle:i,hidden:!t.getDataVisibility(n),index:n}}))}return[]}},onClick(t,e,i){i.chart.toggleDataVisibility(e.index),i.chart.update()}}},scales:{r:{type:\"radialLinear\",angleLines:{display:!1},beginAtZero:!0,grid:{circular:!0},pointLabels:{display:!1},startAngle:0}}};constructor(t,e){super(t,e),this.innerRadius=void 0,this.outerRadius=void 0}getLabelAndValue(t){const e=this._cachedMeta,i=this.chart,s=i.data.labels||[],n=ne(e._parsed[t].r,i.options.locale);return{label:s[t]||\"\",value:n}}parseObjectData(t,e,i,s){return ii.bind(this)(t,e,i,s)}update(t){const e=this._cachedMeta.data;this._updateRadius(),this.updateElements(e,0,e.length,t)}getMinMax(){const t=this._cachedMeta,e={min:Number.POSITIVE_INFINITY,max:Number.NEGATIVE_INFINITY};return t.data.forEach(((t,i)=>{const s=this.getParsed(i).r;!isNaN(s)&&this.chart.getDataVisibility(i)&&(s<e.min&&(e.min=s),s>e.max&&(e.max=s))})),e}_updateRadius(){const t=this.chart,e=t.chartArea,i=t.options,s=Math.min(e.right-e.left,e.relay-node.invalid),n=Math.max(s/2,0),o=(n-Math.max(i.cutoutPercentage?n/100*i.cutoutPercentage:1,0))/t.getVisibleDatasetCount();this.outerRadius=n-o*this.index,this.innerRadius=this.outerRadius-o}updateElements(t,e,i,s){const n=\"reset\"===s,o=this.chart,a=o.options.animation,r=this._cachedMeta.rScale,l=r.xCenter,h=r.yCenter,c=r.getIndexAngle(0)-.5*C;let d,u=c;const f=360/this.countVisibleElements();for(d=0;d<e;++d)u+=this._computeAngle(d,s,f);for(d=e;d<e+i;d++){const e=t[d];let i=u,g=u+this._computeAngle(d,s,f),p=o.getDataVisibility(d)?r.getDistanceFromCenterForValue(this.getParsed(d).r):0;u=g,n&&(a.animateScale&&(p=0),a.animateRotate&&(i=g=c));const m={x:l,y:h,innerRadius:0,outerRadius:p,startAngle:i,endAngle:g,options:this.resolveDataElementOptions(d,e.active?\"active\":s)};this.updateElement(e,d,m,s)}}countVisibleElements(){const t=this._cachedMeta;let e=0;return t.data.forEach(((t,i)=>{!isNaN(this.getParsed(i).r)&&this.chart.getDataVisibility(i)&&e++})),e}_computeAngle(t,e,i){return this.chart.getDataVisibility(t)?$(this.resolveDataElementOptions(t,e).angle||i):0}}var Yn=Object.freeze({__proto__:null,BarController:class extends Ns{static id=\"bar\";static defaults={datasetElementType:!1,dataElementType:\"bar\",categoryPercentage:.8,barPercentage:.9,grouped:!0,animations:{numbers:{type:\"number\",properties:[\"x\",\"y\",\"base\",\"width\",\"height\"]}}};static overrides={scales:{_index_:{type:\"category\",offset:!0,grid:{offset:!0}},_value_:{type:\"linear\",beginAtZero:!0}}};parsePrimitiveData(t,e,i,s){return Fn(t,e,i,s)}parseArrayData(t,e,i,s){return Fn(t,e,i,s)}parseObjectData(t,e,i,s){const{iScale:n,vScale:o}=t,{xAxisKey:a=\"x\",yAxisKey:r=\"y\"}=this._parsing,l=\"x\"===n.axis?a:r,h=\"x\"===o.axis?a:r,c=[];let d,u,f,g;for(d=i,u=i+s;d<u;++d)g=e[d],f={},f[n.axis]=n.parse(M(g,l),d),c.push(zn(M(g,h),f,o,d));return c}updateRangeFromParsed(t,e,i,s){super.updateRangeFromParsed(t,e,i,s);const n=i._custom;n&&e===this._cachedMeta.vScale&&(t.min=Math.min(t.min,n.min),t.max=Math.max(t.max,n.max))}getMaxOverflow(){return 0}getLabelAndValue(t){const e=this._cachedMeta,{iScale:i,vScale:s}=e,n=this.getParsed(t),o=n._custom,a=Vn(o)?\"[\"+o.start+\", \"+o.end+\"]\":\"\"+s.getLabelForValue(n[s.axis]);return{label:\"\"+i.getLabelForValue(n[i.axis]),value:a}}initialize(){this.enableOptionSharing=!0,super.initialize();this._cachedMeta.stack=this.getDataset().stack}update(t){const e=this._cachedMeta;this.updateElements(e.data,0,e.data.length,t)}updateElements(t,e,i,n){const o=\"reset\"===n,{index:a,_cachedMeta:{vScale:r}}=this,l=r.getBasePixel(),h=r.isHorizontal(),c=this._getRuler(),{sharedOptions:d,includeOptions:u}=this._getSharedOptions(e,n);for(let f=e;f<e+i;f++){const e=this.getParsed(f),i=o||s(e[r.axis])?{base:l,head:l}:this._calculateBarValuePixels(f),g=this._calculateBarIndexPixels(f,c),p=(e._stacks||{})[r.axis],m={horizontal:h,base:i.base,enableBorderRadius:!p||Vn(e._custom)||a===p._top||a===p._bottom,x:h?i.head:g.center,y:h?g.center:i.head,height:h?g.size:Math.abs(i.size),width:h?Math.abs(i.size):g.size};u&&(m.options=d||this.resolveDataElementOptions(f,t[f].active?\"active\":n));const b=m.options||t[f].options;Bn(m,b,p,a),Hn(m,b,c.ratio),this.updateElement(t[f],f,m,n)}}_getStacks(t,e){const{iScale:i}=this._cachedMeta,n=i.getMatchingVisibleMetas(this._type).filter((t=>t.controller.options.grouped)),o=i.options.stacked,a=[],r=t=>{const i=t.controller.getParsed(e),n=i&&i[t.vScale.axis];if(s(n)||isNaN(n))return!0};for(const i of n)if((void 0===e||!r(i))&&((!1===o||-1===a.indexOf(i.stack)||void 0===o&&void 0===i.stack)&&a.push(i.stack),i.index===t))break;return a.length||a.push(void 0),a}_getStackCount(t){return this._getStacks(void 0,t).length}_getStackIndex(t,e,i){const s=this._getStacks(t,i),n=void 0!==e?s.indexOf(e):-1;return-1===n?s.length-1:n}_getRuler(){const t=this.options,e=this._cachedMeta,i=e.iScale,s=[];let n,o;for(n=0,o=e.data.length;n<o;++n)s.push(i.getPixelForValue(this.getParsed(n)[i.axis],n));const a=t.barThickness;return{min:a||In(e),pixels:s,start:i._startPixel,end:i._endPixel,stackCount:this._getStackCount(),scale:i,grouped:t.grouped,ratio:a?1:t.categoryPercentage*t.barPercentage}}_calculateBarValuePixels(t){const{_cachedMeta:{vScale:e,_stacked:i,index:n},options:{base:o,minBarLength:a}}=this,r=o||0,l=this.getParsed(t),h=l._custom,c=Vn(h);let d,u,f=l[e.axis],g=0,p=i?this.applyStack(e,l,i):f;p!==f&&(g=p-f,p=f),c&&(f=h.barStart,p=h.barEnd-h.barStart,0!==f&&F(f)!==F(h.barEnd)&&(g=0),g+=f);const m=s(o)||c?g:o;let b=e.getPixelForValue(m);if(d=this.chart.getDataVisibility(t)?e.getPixelForValue(g+p):b,u=d-b,Math.abs(u)<a){u=function(t,e,i){return 0!==t?F(t):(e.isHorizontal()?1:-1)*(e.min>=i?1:-1)}(u,e,r)*a,f===r&&(b-=u/2);const t=e.getPixelForDecimal(0),s=e.getPixelForDecimal(1),o=Math.min(t,s),h=Math.max(t,s);b=Math.max(Math.min(b,h),o),d=b+u,i&&!c&&(l._stacks[e.axis]._visualValues[n]=e.getValueForPixel(d)-e.getValueForPixel(b))}if(b===e.getPixelForValue(r)){const t=F(u)*e.getLineWidthForValue(r)/2;b+=t,u-=t}return{size:u,base:b,head:d,center:d+u/2}}_calculateBarIndexPixels(t,e){const i=e.scale,n=this.options,o=n.skipNull,a=l(n.maxBarThickness,1/0);let r,h;if(e.grouped){const i=o?this._getStackCount(t):e.stackCount,l=\"flex\"===n.barThickness?function(t,e,i,s){const n=e.pixels,o=n[t];let a=t>0?n[t-1]:null,r=t<n.length-1?n[t+1]:null;const l=i.categoryPercentage;null===a&&(a=o-(null===r?e.end-e.start:r-o)),null===r&&(r=o+o-a);const h=o-(o-Math.min(a,r))/2*l;return{chunk:Math.abs(r-a)/2*l/s,ratio:i.barPercentage,start:h}}(t,e,n,i):function(t,e,i,n){const o=i.barThickness;let a,r;return s(o)?(a=e.min*i.categoryPercentage,r=i.barPercentage):(a=o*n,r=1),{chunk:a/n,ratio:r,start:e.pixels[t]-a/2}}(t,e,n,i),c=this._getStackIndex(this.index,this._cachedMeta.stack,o?t:void 0);r=l.start+l.chunk*c+l.chunk/2,h=Math.min(a,l.chunk*l.ratio)}else r=i.getPixelForValue(this.getParsed(t)[i.axis],t),h=Math.min(a,e.min*e.ratio);return{base:r-h/2,head:r+h/2,center:r,size:h}}draw(){const t=this._cachedMeta,e=t.vScale,i=t.data,s=i.length;let n=0;for(;n<s;++n)null!==this.getParsed(n)[e.axis]&&i[n].draw(this._ctx)}},BubbleController:class extends Ns{static id=\"bubble\";static defaults={datasetElementType:!1,dataElementType:\"point\",animations:{numbers:{type:\"number\",properties:[\"x\",\"y\",\"borderWidth\",\"radius\"]}}};static overrides={scales:{x:{type:\"linear\"},y:{type:\"linear\"}}};initialize(){this.enableOptionSharing=!0,super.initialize()}parsePrimitiveData(t,e,i,s){const n=super.parsePrimitiveData(t,e,i,s);for(let t=0;t<n.length;t++)n[t]._custom=this.resolveDataElementOptions(t+i).radius;return n}parseArrayData(t,e,i,s){const n=super.parseArrayData(t,e,i,s);for(let t=0;t<n.length;t++){const s=e[i+t];n[t]._custom=l(s[2],this.resolveDataElementOptions(t+i).radius)}return n}parseObjectData(t,e,i,s){const n=super.parseObjectData(t,e,i,s);for(let t=0;t<n.length;t++){const s=e[i+t];n[t]._custom=l(s&&s.r&&+s.r,this.resolveDataElementOptions(t+i).radius)}return n}getMaxOverflow(){const t=this._cachedMeta.data;let e=0;for(let i=t.length-1;i>=0;--i)e=Math.max(e,t[i].size(this.resolveDataElementOptions(i))/2);return e>0&&e}getLabelAndValue(t){const e=this._cachedMeta,i=this.chart.data.labels||[],{xScale:s,yScale:n}=e,o=this.getParsed(t),a=s.getLabelForValue(o.x),r=n.getLabelForValue(o.y),l=o._custom;return{label:i[t]||\"\",value:\"(\"+a+\", \"+r+(l?\", \"+l:\"\")+\")\"}}update(t){const e=this._cachedMeta.data;this.updateElements(e,0,e.length,t)}updateElements(t,e,i,s){const n=\"reset\"===s,{iScale:o,vScale:a}=this._cachedMeta,{sharedOptions:r,includeOptions:l}=this._getSharedOptions(e,s),h=o.axis,c=a.axis;for(let d=e;d<e+i;d++){const e=t[d],i=!n&&this.getParsed(d),u={},f=u[h]=n?o.getPixelForDecimal(.5):o.getPixelForValue(i[h]),g=u[c]=n?a.getBasePixel():a.getPixelForValue(i[c]);u.skip=isNaN(f)||isNaN(g),l&&(u.options=r||this.resolveDataElementOptions(d,e.active?\"active\":s),n&&(u.options.radius=0)),this.updateElement(e,d,u,s)}}resolveDataElementOptions(t,e){const i=this.getParsed(t);let s=super.resolveDataElementOptions(t,e);s.$shared&&(s=Object.assign({},s,{$shared:!1}));const n=s.radius;return\"active\"!==e&&(s.radius=0),s.radius+=l(i&&i._custom,n),s}},DoughnutController:jn,LineController:class extends Ns{static id=\"line\";static defaults={datasetElementType:\"line\",dataElementType:\"point\",showLine:!0,spanGaps:!1};static overrides={scales:{_index_:{type:\"category\"},_value_:{type:\"linear\"}}};initialize(){this.enableOptionSharing=!0,this.supportsDecimation=!0,super.initialize()}update(t){const e=this._cachedMeta,{dataset:i,data:s=[],_dataset:n}=e,o=this.chart._animationsDisabled;let{start:a,count:r}=pt(e,s,o);this._drawStart=a,this._drawCount=r,mt(e)&&(a=0,r=s.length),i._chart=this.chart,i._datasetIndex=this.index,i._decimated=!!n._decimated,i.points=s;const l=this.resolveDatasetElementOptions(t);this.options.showLine||(l.borderWidth=0),l.segment=this.options.segment,this.updateElement(i,void 0,{animated:!o,options:l},t),this.updateElements(s,a,r,t)}updateElements(t,e,i,n){const o=\"reset\"===n,{iScale:a,vScale:r,_stacked:l,_dataset:h}=this._cachedMeta,{sharedOptions:c,includeOptions:d}=this._getSharedOptions(e,n),u=a.axis,f=r.axis,{spanGaps:g,segment:p}=this.options,m=N(g)?g:Number.POSITIVE_INFINITY,b=this.chart._animationsDisabled||o||\"none\"===n,x=e+i,_=t.length;let y=e>0&&this.getParsed(e-1);for(let i=0;i<_;++i){const g=t[i],_=b?g:{};if(i<e||i>=x){_.skip=!0;continue}const v=this.getParsed(i),M=s(v[f]),w=_[u]=a.getPixelForValue(v[u],i),k=_[f]=o||M?r.getBasePixel():r.getPixelForValue(l?this.applyStack(r,v,l):v[f],i);_.skip=isNaN(w)||isNaN(k)||M,_.stop=i>0&&Math.abs(v[u]-y[u])>m,p&&(_.parsed=v,_.raw=h.data[i]),d&&(_.options=c||this.resolveDataElementOptions(i,g.active?\"active\":n)),b||this.updateElement(g,i,_,n),y=v}}getMaxOverflow(){const t=this._cachedMeta,e=t.dataset,i=e.options&&e.options.borderWidth||0,s=t.data||[];if(!s.length)return i;const n=s[0].size(this.resolveDataElementOptions(0)),o=s[s.length-1].size(this.resolveDataElementOptions(s.length-1));return Math.max(i,n,o)/2}draw(){const t=this._cachedMeta;t.dataset.updateControlPoints(this.chart.chartArea,t.iScale.axis),super.draw()}},PieController:class extends jn{static id=\"pie\";static defaults={cutout:0,rotation:0,circumference:360,radius:\"100%\"}},PolarAreaController:$n,RadarController:class extends Ns{static id=\"radar\";static defaults={datasetElementType:\"line\",dataElementType:\"point\",indexAxis:\"r\",showLine:!0,elements:{line:{fill:\"start\"}}};static overrides={aspectRatio:1,scales:{r:{type:\"radialLinear\"}}};getLabelAndValue(t){const e=this._cachedMeta.vScale,i=this.getParsed(t);return{label:e.getLabels()[t],value:\"\"+e.getLabelForValue(i[e.axis])}}parseObjectData(t,e,i,s){return ii.bind(this)(t,e,i,s)}update(t){const e=this._cachedMeta,i=e.dataset,s=e.data||[],n=e.iScale.getLabels();if(i.points=s,\"resize\"!==t){const e=this.resolveDatasetElementOptions(t);this.options.showLine||(e.borderWidth=0);const o={_loop:!0,_fullLoop:n.length===s.length,options:e};this.updateElement(i,void 0,o,t)}this.updateElements(s,0,s.length,t)}updateElements(t,e,i,s){const n=this._cachedMeta.rScale,o=\"reset\"===s;for(let a=e;a<e+i;a++){const e=t[a],i=this.resolveDataElementOptions(a,e.active?\"active\":s),r=n.getPointPositionForValue(a,this.getParsed(a).r),l=o?n.xCenter:r.x,h=o?n.yCenter:r.y,c={x:l,y:h,angle:r.angle,skip:isNaN(l)||isNaN(h),options:i};this.updateElement(e,a,c,s)}}},ScatterController:class extends Ns{static id=\"scatter\";static defaults={datasetElementType:!1,dataElementType:\"point\",showLine:!1,fill:!1};static overrides={interaction:{mode:\"point\"},scales:{x:{type:\"linear\"},y:{type:\"linear\"}}};getLabelAndValue(t){const e=this._cachedMeta,i=this.chart.data.labels||[],{xScale:s,yScale:n}=e,o=this.getParsed(t),a=s.getLabelForValue(o.x),r=n.getLabelForValue(o.y);return{label:i[t]||\"\",value:\"(\"+a+\", \"+r+\")\"}}update(t){const e=this._cachedMeta,{data:i=[]}=e,s=this.chart._animationsDisabled;let{start:n,count:o}=pt(e,i,s);if(this._drawStart=n,this._drawCount=o,mt(e)&&(n=0,o=i.length),this.options.showLine){this.datasetElementType||this.addElements();const{dataset:n,_dataset:o}=e;n._chart=this.chart,n._datasetIndex=this.index,n._decimated=!!o._decimated,n.points=i;const a=this.resolveDatasetElementOptions(t);a.segment=this.options.segment,this.updateElement(n,void 0,{animated:!s,options:a},t)}else this.datasetElementType&&(delete e.dataset,this.datasetElementType=!1);this.updateElements(i,n,o,t)}addElements(){const{showLine:t}=this.options;!this.datasetElementType&&t&&(this.datasetElementType=this.chart.registry.getElement(\"line\")),super.addElements()}updateElements(t,e,i,n){const o=\"reset\"===n,{iScale:a,vScale:r,_stacked:l,_dataset:h}=this._cachedMeta,c=this.resolveDataElementOptions(e,n),d=this.getSharedOptions(c),u=this.includeOptions(n,d),f=a.axis,g=r.axis,{spanGaps:p,segment:m}=this.options,b=N(p)?p:Number.POSITIVE_INFINITY,x=this.chart._animationsDisabled||o||\"none\"===n;let _=e>0&&this.getParsed(e-1);for(let c=e;c<e+i;++c){const e=t[c],i=this.getParsed(c),p=x?e:{},y=s(i[g]),v=p[f]=a.getPixelForValue(i[f],c),M=p[g]=o||y?r.getBasePixel():r.getPixelForValue(l?this.applyStack(r,i,l):i[g],c);p.skip=isNaN(v)||isNaN(M)||y,p.stop=c>0&&Math.abs(i[f]-_[f])>b,m&&(p.parsed=i,p.raw=h.data[c]),u&&(p.options=d||this.resolveDataElementOptions(c,e.active?\"active\":n)),x||this.updateElement(e,c,p,n),_=i}this.updateSharedOptions(d,n,c)}getMaxOverflow(){const t=this._cachedMeta,e=t.data||[];if(!this.options.showLine){let t=0;for(let i=e.length-1;i>=0;--i)t=Math.max(t,e[i].size(this.resolveDataElementOptions(i))/2);return t>0&&t}const i=t.dataset,s=i.options&&i.options.borderWidth||0;if(!e.length)return s;const n=e[0].size(this.resolveDataElementOptions(0)),o=e[e.length-1].size(this.resolveDataElementOptions(e.length-1));return Math.max(s,n,o)/2}}});function Un(t,e,i,s){const n=vi(t.options.borderRadius,[\"outerStart\",\"outerEnd\",\"innerStart\",\"innerEnd\"]);const o=(i-e)/2,a=Math.min(o,s*e/2),r=t=>{const e=(i-Math.min(o,t))*s/2;return J(t,0,Math.min(o,e))};return{outerStart:r(n.outerStart),outerEnd:r(n.outerEnd),innerStart:J(n.innerStart,0,a),innerEnd:J(n.innerEnd,0,a)}}function Xn(t,e,i,s){return{x:i+t*Math.cos(e),y:s+t*Math.sin(e)}}function qn(t,e,i,s,n,o){const{x:a,y:r,startAngle:l,pixelMargin:h,innerRadius:c}=e,d=Math.max(e.outerRadius+s+i-h,0),u=c>0?c+s+i+h:0;let f=0;const g=n-l;if(s){const t=((c>0?c-s:0)+(d>0?d-s:0))/2;f=(g-(0!==t?g*t/(t+s):g))/2}const p=(g-Math.max(.001,g*d-i/C)/d)/2,m=l+p+f,b=n-p-f,{outerStart:x,outerEnd:_,innerStart:y,innerEnd:v}=Un(e,u,d,b-m),M=d-x,w=d-_,k=m+x/M,S=b-_/w,P=u+y,D=u+v,O=m+y/P,A=b-v/D;if(t.beginPath(),o){const e=(k+S)/2;if(t.arc(a,r,d,k,e),t.arc(a,r,d,e,S),_>0){const e=Xn(w,S,a,r);t.arc(e.x,e.y,_,S,b+E)}const i=Xn(D,b,a,r);if(t.lineTo(i.x,i.y),v>0){const e=Xn(D,A,a,r);t.arc(e.x,e.y,v,b+E,A+Math.PI)}const s=(b-v/u+(m+y/u))/2;if(t.arc(a,r,u,b-v/u,s,!0),t.arc(a,r,u,s,m+y/u,!0),y>0){const e=Xn(P,O,a,r);t.arc(e.x,e.y,y,O+Math.PI,m-E)}const n=Xn(M,m,a,r);if(t.lineTo(n.x,n.y),x>0){const e=Xn(M,k,a,r);t.arc(e.x,e.y,x,m-E,k)}}else{t.moveTo(a,r);const e=Math.cos(k)*d+a,i=Math.sin(k)*d+r;t.lineTo(e,i);const s=Math.cos(S)*d+a,n=Math.sin(S)*d+r;t.lineTo(s,n)}t.closePath()}function Kn(t,e,i,s,n){const{fullCircles:o,startAngle:a,circumference:r,options:l}=e,{borderWidth:h,borderJoinStyle:c,borderDash:d,borderDashOffset:u}=l,f=\"inner\"===l.borderAlign;if(!h)return;t.setLineDash(d||[]),t.lineDashOffset=u,f?(t.lineWidth=2*h,t.lineJoin=c||\"round\"):(t.lineWidth=h,t.lineJoin=c||\"bevel\");let g=e.endAngle;if(o){qn(t,e,i,s,g,n);for(let e=0;e<o;++e)t.stroke();isNaN(r)||(g=a+(r%O||O))}f&&function(t,e,i){const{startAngle:s,pixelMargin:n,x:o,y:a,outerRadius:r,innerRadius:l}=e;let h=n/r;t.beginPath(),t.arc(o,a,r,s-h,i+h),l>n?(h=n/l,t.arc(o,a,l,i+h,s-h,!0)):t.arc(o,a,n,i+E,s-E),t.closePath(),t.clip()}(t,e,g),o||(qn(t,e,i,s,g,n),t.stroke())}function Gn(t,e,i=e){t.lineCap=l(i.borderCapStyle,e.borderCapStyle),t.setLineDash(l(i.borderDash,e.borderDash)),t.lineDashOffset=l(i.borderDashOffset,e.borderDashOffset),t.lineJoin=l(i.borderJoinStyle,e.borderJoinStyle),t.lineWidth=l(i.borderWidth,e.borderWidth),t.strokeStyle=l(i.borderColor,e.borderColor)}function Zn(t,e,i){t.lineTo(i.x,i.y)}function Jn(t,e,i={}){const s=t.length,{start:n=0,end:o=s-1}=i,{start:a,end:r}=e,l=Math.max(n,a),h=Math.min(o,r),c=n<a&&o<a||n>r&&o>r;return{count:s,start:l,loop:e.loop,ilen:h<l&&!c?s+h-l:h-l}}function Qn(t,e,i,s){const{points:n,options:o}=e,{count:a,start:r,loop:l,ilen:h}=Jn(n,i,s),c=function(t){return t.stepped?Fe:t.tension||\"monotone\"===t.cubicInterpolationMode?Ve:Zn}(o);let d,u,f,{move:g=!0,reverse:p}=s||{};for(d=0;d<=h;++d)u=n[(r+(p?h-d:d))%a],u.skip||(g?(t.moveTo(u.x,u.y),g=!1):c(t,f,u,p,o.stepped),f=u);return l&&(u=n[(r+(p?h:0))%a],c(t,f,u,p,o.stepped)),!!l}function to(t,e,i,s){const n=e.points,{count:o,start:a,ilen:r}=Jn(n,i,s),{move:l=!0,reverse:h}=s||{};let c,d,u,f,g,p,m=0,b=0;const x=t=>(a+(h?r-t:t))%o,_=()=>{f!==g&&(t.lineTo(m,g),t.lineTo(m,f),t.lineTo(m,p))};for(l&&(d=n[x(0)],t.moveTo(d.x,d.y)),c=0;c<=r;++c){if(d=n[x(c)],d.skip)continue;const e=d.x,i=d.y,s=0|e;s===u?(i<f?f=i:i>g&&(g=i),m=(b*m+e)/++b):(_(),t.lineTo(e,i),u=s,b=0,f=g=i),p=i}_()}function eo(t){const e=t.options,i=e.borderDash&&e.borderDash.length;return!(t._decimated||t._loop||e.tension||\"monotone\"===e.cubicInterpolationMode||e.stepped||i)?to:Qn}const io=\"function\"==typeof Path2D;function so(t,e,i,s){io&&!e.options.segment?function(t,e,i,s){let n=e._path;n||(n=e._path=new Path2D,e.path(n,i,s)&&n.closePath()),Gn(t,e.options),t.stroke(n)}(t,e,i,s):function(t,e,i,s){const{segments:n,options:o}=e,a=eo(e);for(const r of n)Gn(t,o,r.style),t.beginPath(),a(t,e,r,{start:i,end:i+s-1})&&t.closePath(),t.stroke()}(t,e,i,s)}class no extends Hs{static id=\"line\";static defaults={borderCapStyle:\"butt\",borderDash:[],borderDashOffset:0,borderJoinStyle:\"miter\",borderWidth:3,capBezierPoints:!0,cubicInterpolationMode:\"default\",fill:!1,spanGaps:!1,stepped:!1,tension:0};static defaultRoutes={backgroundColor:\"backgroundColor\",borderColor:\"borderColor\"};static descriptors={_scriptable:!0,_indexable:t=>\"borderDash\"!==t&&\"fill\"!==t};constructor(t){super(),this.animated=!0,this.options=void 0,this._chart=void 0,this._loop=void 0,this._fullLoop=void 0,this._path=void 0,this._points=void 0,this._segments=void 0,this._decimated=!1,this._pointsUpdated=!1,this._datasetIndex=void 0,t&&Object.assign(this,t)}updateControlPoints(t,e){const i=this.options;if((i.tension||\"monotone\"===i.cubicInterpolationMode)&&!i.stepped&&!this._pointsUpdated){const s=i.spanGaps?this._loop:this._fullLoop;hi(this._points,i,t,s,e),this._pointsUpdated=!0}}set points(t){this._points=t,delete this._segments,delete this._path,this._pointsUpdated=!1}get points(){return this._points}get segments(){return this._segments||(this._segments=zi(this,this.options.segment))}first(){const t=this.segments,e=this.points;return t.length&&e[t[0].start]}last(){const t=this.segments,e=this.points,i=t.length;return i&&e[t[i-1].end]}interpolate(t,e){const i=this.options,s=t[e],n=this.points,o=Ii(this,{property:e,start:s,end:s});if(!o.length)return;const a=[],r=function(t){return t.stepped?pi:t.tension||\"monotone\"===t.cubicInterpolationMode?mi:gi}(i);let l,h;for(l=0,h=o.length;l<h;++l){const{start:h,end:c}=o[l],d=n[h],u=n[c];if(d===u){a.push(d);continue}const f=r(d,u,Math.abs((s-d[e])/(u[e]-d[e])),i.stepped);f[e]=t[e],a.push(f)}return 1===a.length?a[0]:a}pathSegment(t,e,i){return eo(this)(t,this,e,i)}path(t,e,i){const s=this.segments,n=eo(this);let o=this._loop;e=e||0,i=i||this.points.length-e;for(const a of s)o&=n(t,this,a,{start:e,end:e+i-1});return!!o}draw(t,e,i,s){const n=this.options||{};(this.points||[]).length&&n.borderWidth&&(t.save(),so(t,this,i,s),t.restore()),this.animated&&(this._pointsUpdated=!1,this._path=void 0)}}function oo(t,e,i,s){const n=t.options,{[i]:o}=t.getProps([i],s);return Math.abs(e-o)<n.radius+n.hitRadius}function ao(t,e){const{x:i,y:s,base:n,width:o,height:a}=t.getProps([\"x\",\"y\",\"base\",\"width\",\"height\"],e);let r,l,h,c,d;return t.horizontal?(d=a/2,r=Math.min(i,n),l=Math.max(i,n),h=s-d,c=s+d):(d=o/2,r=i-d,l=i+d,h=Math.min(s,n),c=Math.max(s,n)),{left:r,top:h,right:l,bottom:c}}function ro(t,e,i,s){return t?0:J(e,i,s)}function lo(t){const e=ao(t),i=e.right-e.left,s=e.relay-node.invalid,n=function(t,e,i){const s=t.options.borderWidth,n=t.borderSkipped,o=Mi(s);return{t:ro(n.top,o.top,0,i),r:ro(n.right,o.right,0,e),b:ro(n.bottom,o.bottom,0,i),l:ro(n.left,o.left,0,e)}}(t,i/2,s/2),a=function(t,e,i){const{enableBorderRadius:s}=t.getProps([\"enableBorderRadius\"]),n=t.options.borderRadius,a=wi(n),r=Math.min(e,i),l=t.borderSkipped,h=s||o(n);return{topLeft:ro(!h||l.top||l.left,a.topLeft,0,r),topRight:ro(!h||l.top||l.right,a.topRight,0,r),bottomLeft:ro(!h||l.bottom||l.left,a.bottomLeft,0,r),bottomRight:ro(!h||l.bottom||l.right,a.bottomRight,0,r)}}(t,i/2,s/2);return{outer:{x:e.left,y:e.top,w:i,h:s,radius:a},inner:{x:e.left+n.l,y:e.top+n.t,w:i-n.l-n.r,h:s-n.t-n.b,radius:{topLeft:Math.max(0,a.topLeft-Math.max(n.t,n.l)),topRight:Math.max(0,a.topRight-Math.max(n.t,n.r)),bottomLeft:Math.max(0,a.bottomLeft-Math.max(n.b,n.l)),bottomRight:Math.max(0,a.bottomRight-Math.max(n.b,n.r))}}}}function ho(t,e,i,s){const n=null===e,o=null===i,a=t&&!(n&&o)&&ao(t,s);return a&&(n||tt(e,a.left,a.right))&&(o||tt(i,a.top,a.bottom))}function co(t,e){t.rect(e.x,e.y,e.w,e.h)}function uo(t,e,i={}){const s=t.x!==i.x?-e:0,n=t.y!==i.y?-e:0,o=(t.x+t.w!==i.x+i.w?e:0)-s,a=(t.y+t.h!==i.y+i.h?e:0)-n;return{x:t.x+s,y:t.y+n,w:t.w+o,h:t.h+a,radius:t.radius}}var fo=Object.freeze({__proto__:null,ArcElement:class extends Hs{static id=\"arc\";static defaults={borderAlign:\"center\",borderColor:\"#fff\",borderDash:[],borderDashOffset:0,borderJoinStyle:void 0,borderRadius:0,borderWidth:2,offset:0,spacing:0,angle:void 0,circular:!0};static defaultRoutes={backgroundColor:\"backgroundColor\"};static descriptors={_scriptable:!0,_indexable:t=>\"borderDash\"!==t};circumference;endAngle;fullCircles;innerRadius;outerRadius;pixelMargin;startAngle;constructor(t){super(),this.options=void 0,this.circumference=void 0,this.startAngle=void 0,this.endAngle=void 0,this.innerRadius=void 0,this.outerRadius=void 0,this.pixelMargin=0,this.fullCircles=0,t&&Object.assign(this,t)}inRange(t,e,i){const s=this.getProps([\"x\",\"y\"],i),{angle:n,distance:o}=X(s,{x:t,y:e}),{startAngle:a,endAngle:r,innerRadius:h,outerRadius:c,circumference:d}=this.getProps([\"startAngle\",\"endAngle\",\"innerRadius\",\"outerRadius\",\"circumference\"],i),u=(this.options.spacing+this.options.borderWidth)/2,f=l(d,r-a)>=O||Z(n,a,r),g=tt(o,h+u,c+u);return f&&g}getCenterPoint(t){const{x:e,y:i,startAngle:s,endAngle:n,innerRadius:o,outerRadius:a}=this.getProps([\"x\",\"y\",\"startAngle\",\"endAngle\",\"innerRadius\",\"outerRadius\"],t),{offset:r,spacing:l}=this.options,h=(s+n)/2,c=(o+a+l+r)/2;return{x:e+Math.cos(h)*c,y:i+Math.sin(h)*c}}tooltipPosition(t){return this.getCenterPoint(t)}draw(t){const{options:e,circumference:i}=this,s=(e.offset||0)/4,n=(e.spacing||0)/2,o=e.circular;if(this.pixelMargin=\"inner\"===e.borderAlign?.33:0,this.fullCircles=i>O?Math.floor(i/O):0,0===i||this.innerRadius<0||this.outerRadius<0)return;t.save();const a=(this.startAngle+this.endAngle)/2;t.translate(Math.cos(a)*s,Math.sin(a)*s);const r=s*(1-Math.sin(Math.min(C,i||0)));t.fillStyle=e.backgroundColor,t.strokeStyle=e.borderColor,function(t,e,i,s,n){const{fullCircles:o,startAngle:a,circumference:r}=e;let l=e.endAngle;if(o){qn(t,e,i,s,l,n);for(let e=0;e<o;++e)t.fill();isNaN(r)||(l=a+(r%O||O))}qn(t,e,i,s,l,n),t.fill()}(t,this,r,n,o),Kn(t,this,r,n,o),t.restore()}},BarElement:class extends Hs{static id=\"bar\";static defaults={borderSkipped:\"start\",borderWidth:0,borderRadius:0,inflateAmount:\"auto\",pointStyle:void 0};static defaultRoutes={backgroundColor:\"backgroundColor\",borderColor:\"borderColor\"};constructor(t){super(),this.options=void 0,this.horizontal=void 0,this.base=void 0,this.width=void 0,this.height=void 0,this.inflateAmount=void 0,t&&Object.assign(this,t)}draw(t){const{inflateAmount:e,options:{borderColor:i,backgroundColor:s}}=this,{inner:n,outer:o}=lo(this),a=(r=o.radius).topLeft||r.topRight||r.bottomLeft||r.bottomRight?He:co;var r;t.save(),o.w===n.w&&o.h===n.h||(t.beginPath(),a(t,uo(o,e,n)),t.clip(),a(t,uo(n,-e,o)),t.fillStyle=i,t.fill(\"evenodd\")),t.beginPath(),a(t,uo(n,e)),t.fillStyle=s,t.fill(),t.restore()}inRange(t,e,i){return ho(this,t,e,i)}inXRange(t,e){return ho(this,t,null,e)}inYRange(t,e){return ho(this,null,t,e)}getCenterPoint(t){const{x:e,y:i,base:s,horizontal:n}=this.getProps([\"x\",\"y\",\"base\",\"horizontal\"],t);return{x:n?(e+s)/2:e,y:n?i:(i+s)/2}}getRange(t){return\"x\"===t?this.width/2:this.height/2}},LineElement:no,PointElement:class extends Hs{static id=\"point\";parsed;skip;stop;static defaults={borderWidth:1,hitRadius:1,hoverBorderWidth:1,hoverRadius:4,pointStyle:\"circle\",radius:3,rotation:0};static defaultRoutes={backgroundColor:\"backgroundColor\",borderColor:\"borderColor\"};constructor(t){super(),this.options=void 0,this.parsed=void 0,this.skip=void 0,this.stop=void 0,t&&Object.assign(this,t)}inRange(t,e,i){const s=this.options,{x:n,y:o}=this.getProps([\"x\",\"y\"],i);return Math.pow(t-n,2)+Math.pow(e-o,2)<Math.pow(s.hitRadius+s.radius,2)}inXRange(t,e){return oo(this,t,\"x\",e)}inYRange(t,e){return oo(this,t,\"y\",e)}getCenterPoint(t){const{x:e,y:i}=this.getProps([\"x\",\"y\"],t);return{x:e,y:i}}size(t){let e=(t=t||this.options||{}).radius||0;e=Math.max(e,e&&t.hoverRadius||0);return 2*(e+(e&&t.borderWidth||0))}draw(t,e){const i=this.options;this.skip||i.radius<.1||!Re(this,e,this.size(i)/2)||(t.strokeStyle=i.borderColor,t.lineWidth=i.borderWidth,t.fillStyle=i.backgroundColor,Le(t,i,this.x,this.y))}getRange(){const t=this.options||{};return t.radius+t.hitRadius}}});function go(t,e,i,s){const n=t.indexOf(e);if(-1===n)return((t,e,i,s)=>(\"string\"==typeof e?(i=t.push(e)-1,s.unshift({index:i,label:e})):isNaN(e)&&(i=null),i))(t,e,i,s);return n!==t.lastIndexOf(e)?i:n}function po(t){const e=this.getLabels();return t>=0&&t<e.length?e[t]:t}function mo(t,e,{horizontal:i,minRotation:s}){const n=$(s),o=(i?Math.sin(n):Math.cos(n))||.001,a=.75*e*(\"\"+t).length;return Math.min(e/o,a)}class bo extends Js{constructor(t){super(t),this.start=void 0,this.end=void 0,this._startValue=void 0,this._endValue=void 0,this._valueRange=0}parse(t,e){return s(t)||(\"number\"==typeof t||t instanceof Number)&&!isFinite(+t)?null:+t}handleTickRangeOptions(){const{beginAtZero:t}=this.options,{minDefined:e,maxDefined:i}=this.getUserBounds();let{min:s,max:n}=this;const o=t=>s=e?s:t,a=t=>n=i?n:t;if(t){const t=F(s),e=F(n);t<0&&e<0?a(0):t>0&&e>0&&o(0)}if(s===n){let e=0===n?1:Math.abs(.05*n);a(n+e),t||o(s-e)}this.min=s,this.max=n}getTickLimit(){const t=this.options.ticks;let e,{maxTicksLimit:i,stepSize:s}=t;return s?(e=Math.ceil(this.max/s)-Math.floor(this.min/s)+1,e>1e3&&(console.warn(`scales.${this.id}.ticks.stepSize: ${s} would result generating up to ${e} ticks. Limiting to 1000.`),e=1e3)):(e=this.computeTickLimit(),i=i||11),i&&(e=Math.min(i,e)),e}computeTickLimit(){return Number.POSITIVE_INFINITY}buildTicks(){const t=this.options,e=t.ticks;let i=this.getTickLimit();i=Math.max(2,i);const n=function(t,e){const i=[],{bounds:n,step:o,min:a,max:r,precision:l,count:h,maxTicks:c,maxDigits:d,includeBounds:u}=t,f=o||1,g=c-1,{min:p,max:m}=e,b=!s(a),x=!s(r),_=!s(h),y=(m-p)/(d+1);let v,M,w,k,S=B((m-p)/g/f)*f;if(S<1e-14&&!b&&!x)return[{value:p},{value:m}];k=Math.ceil(m/S)-Math.floor(p/S),k>g&&(S=B(k*S/g/f)*f),s(l)||(v=Math.pow(10,l),S=Math.ceil(S*v)/v),\"ticks\"===n?(M=Math.floor(p/S)*S,w=Math.ceil(m/S)*S):(M=p,w=m),b&&x&&o&&H((r-a)/o,S/1e3)?(k=Math.round(Math.min((r-a)/S,c)),S=(r-a)/k,M=a,w=r):_?(M=b?a:M,w=x?r:w,k=h-1,S=(w-M)/k):(k=(w-M)/S,k=V(k,Math.round(k),S/1e3)?Math.round(k):Math.ceil(k));const P=Math.max(U(S),U(M));v=Math.pow(10,s(l)?P:l),M=Math.round(M*v)/v,w=Math.round(w*v)/v;let D=0;for(b&&(u&&M!==a?(i.push({value:a}),M<a&&D++,V(Math.round((M+D*S)*v)/v,a,mo(a,y,t))&&D++):M<a&&D++);D<k;++D){const t=Math.round((M+D*S)*v)/v;if(x&&t>r)break;i.push({value:t})}return x&&u&&w!==r?i.length&&V(i[i.length-1].value,r,mo(r,y,t))?i[i.length-1].value=r:i.push({value:r}):x&&w!==r||i.push({value:w}),i}({maxTicks:i,bounds:t.bounds,min:t.min,max:t.max,precision:e.precision,step:e.stepSize,count:e.count,maxDigits:this._maxDigits(),horizontal:this.isHorizontal(),minRotation:e.minRotation||0,includeBounds:!1!==e.includeBounds},this._range||this);return\"ticks\"===t.bounds&&j(n,this,\"value\"),t.reverse?(n.reverse(),this.start=this.max,this.end=this.min):(this.start=this.min,this.end=this.max),n}configure(){const t=this.ticks;let e=this.min,i=this.max;if(super.configure(),this.options.offset&&t.length){const s=(i-e)/Math.max(t.length-1,1)/2;e-=s,i+=s}this._startValue=e,this._endValue=i,this._valueRange=i-e}getLabelForValue(t){return ne(t,this.chart.options.locale,this.options.ticks.format)}}class xo extends bo{static id=\"linear\";static defaults={ticks:{callback:ae.formatters.numeric}};determineDataLimits(){const{min:t,max:e}=this.getMinMax(!0);this.min=a(t)?t:0,this.max=a(e)?e:1,this.handleTickRangeOptions()}computeTickLimit(){const t=this.isHorizontal(),e=t?this.width:this.height,i=$(this.options.ticks.minRotation),s=(t?Math.sin(i):Math.cos(i))||.001,n=this._resolveTickFontOptions(0);return Math.ceil(e/Math.min(40,n.lineHeight/s))}getPixelForValue(t){return null===t?NaN:this.getPixelForDecimal((t-this._startValue)/this._valueRange)}getValueForPixel(t){return this._startValue+this.getDecimalForPixel(t)*this._valueRange}}const _o=t=>Math.floor(z(t)),yo=(t,e)=>Math.pow(10,_o(t)+e);function vo(t){return 1===t/Math.pow(10,_o(t))}function Mo(t,e,i){const s=Math.pow(10,i),n=Math.floor(t/s);return Math.ceil(e/s)-n}function wo(t,{min:e,max:i}){e=r(t.min,e);const s=[],n=_o(e);let o=function(t,e){let i=_o(e-t);for(;Mo(t,e,i)>10;)i++;for(;Mo(t,e,i)<10;)i--;return Math.min(i,_o(t))}(e,i),a=o<0?Math.pow(10,Math.abs(o)):1;const l=Math.pow(10,o),h=n>o?Math.pow(10,n):0,c=Math.round((e-h)*a)/a,d=Math.floor((e-h)/l/10)*l*10;let u=Math.floor((c-d)/Math.pow(10,o)),f=r(t.min,Math.round((h+d+u*Math.pow(10,o))*a)/a);for(;f<i;)s.push({value:f,major:vo(f),significand:u}),u>=10?u=u<15?15:20:u++,u>=20&&(o++,u=2,a=o>=0?1:a),f=Math.round((h+d+u*Math.pow(10,o))*a)/a;const g=r(t.max,f);return s.push({value:g,major:vo(g),significand:u}),s}class ko extends Js{static id=\"logarithmic\";static defaults={ticks:{callback:ae.formatters.logarithmic,major:{enabled:!0}}};constructor(t){super(t),this.start=void 0,this.end=void 0,this._startValue=void 0,this._valueRange=0}parse(t,e){const i=bo.prototype.parse.apply(this,[t,e]);if(0!==i)return a(i)&&i>0?i:null;this._zero=!0}determineDataLimits(){const{min:t,max:e}=this.getMinMax(!0);this.min=a(t)?Math.max(0,t):null,this.max=a(e)?Math.max(0,e):null,this.options.beginAtZero&&(this._zero=!0),this._zero&&this.min!==this._suggestedMin&&!a(this._userMin)&&(this.min=t===yo(this.min,0)?yo(this.min,-1):yo(this.min,0)),this.handleTickRangeOptions()}handleTickRangeOptions(){const{minDefined:t,maxDefined:e}=this.getUserBounds();let i=this.min,s=this.max;const n=e=>i=t?i:e,o=t=>s=e?s:t;i===s&&(i<=0?(n(1),o(10)):(n(yo(i,-1)),o(yo(s,1)))),i<=0&&n(yo(s,-1)),s<=0&&o(yo(i,1)),this.min=i,this.max=s}buildTicks(){const t=this.options,e=wo({min:this._userMin,max:this._userMax},this);return\"ticks\"===t.bounds&&j(e,this,\"value\"),t.reverse?(e.reverse(),this.start=this.max,this.end=this.min):(this.start=this.min,this.end=this.max),e}getLabelForValue(t){return void 0===t?\"0\":ne(t,this.chart.options.locale,this.options.ticks.format)}configure(){const t=this.min;super.configure(),this._startValue=z(t),this._valueRange=z(this.max)-z(t)}getPixelForValue(t){return void 0!==t&&0!==t||(t=this.min),null===t||isNaN(t)?NaN:this.getPixelForDecimal(t===this.min?0:(z(t)-this._startValue)/this._valueRange)}getValueForPixel(t){const e=this.getDecimalForPixel(t);return Math.pow(10,this._startValue+e*this._valueRange)}}function So(t){const e=t.ticks;if(e.display&&t.display){const t=ki(e.backdropPadding);return l(e.font&&e.font.size,ue.font.size)+t.height}return 0}function Po(t,e,i,s,n){return t===s||t===n?{start:e-i/2,end:e+i/2}:t<s||t>n?{start:e-i,end:e}:{start:e,end:e+i}}function Do(t){const e={l:t.left+t._padding.left,r:t.right-t._padding.right,t:t.top+t._padding.top,b:t.bottom-t._padding.bottom},i=Object.assign({},e),s=[],o=[],a=t._pointLabels.length,r=t.options.pointLabels,l=r.centerPointLabels?C/a:0;for(let u=0;u<a;u++){const a=r.setContext(t.getPointLabelContext(u));o[u]=a.padding;const f=t.getPointPosition(u,t.drawingArea+o[u],l),g=Si(a.font),p=(h=t.ctx,c=g,d=n(d=t._pointLabels[u])?d:[d],{w:Oe(h,c.string,d),h:d.length*c.lineHeight});s[u]=p;const m=G(t.getIndexAngle(u)+l),b=Math.round(Y(m));Co(i,e,m,Po(b,f.x,p.w,0,180),Po(b,f.y,p.h,90,270))}var h,c,d;t.setCenterPoint(e.l-i.l,i.r-e.r,e.t-i.t,i.b-e.b),t._pointLabelItems=function(t,e,i){const s=[],n=t._pointLabels.length,o=t.options,{centerPointLabels:a,display:r}=o.pointLabels,l={extra:So(o)/2,additionalAngle:a?C/n:0};let h;for(let o=0;o<n;o++){l.padding=i[o],l.size=e[o];const n=Oo(t,o,l);s.push(n),\"auto\"===r&&(n.visible=Ao(n,h),n.visible&&(h=n))}return s}(t,s,o)}function Co(t,e,i,s,n){const o=Math.abs(Math.sin(i)),a=Math.abs(Math.cos(i));let r=0,l=0;s.start<e.l?(r=(e.l-s.start)/o,t.l=Math.min(t.l,e.l-r)):s.end>e.r&&(r=(s.end-e.r)/o,t.r=Math.max(t.r,e.r+r)),n.start<e.t?(l=(e.t-n.start)/a,t.t=Math.min(t.t,e.t-l)):n.end>e.b&&(l=(n.end-e.b)/a,t.b=Math.max(t.b,e.b+l))}function Oo(t,e,i){const s=t.drawingArea,{extra:n,additionalAngle:o,padding:a,size:r}=i,l=t.getPointPosition(e,s+n+a,o),h=Math.round(Y(G(l.angle+E))),c=function(t,e,i){90===i||270===i?t-=e/2:(i>270||i<90)&&(t-=e);return t}(l.y,r.h,h),d=function(t){if(0===t||180===t)return\"center\";if(t<180)return\"left\";return\"right\"}(h),u=function(t,e,i){\"right\"===i?t-=e:\"center\"===i&&(t-=e/2);return t}(l.x,r.w,d);return{visible:!0,x:l.x,y:c,textAlign:d,left:u,top:c,right:u+r.w,bottom:c+r.h}}function Ao(t,e){if(!e)return!0;const{left:i,top:s,right:n,bottom:o}=t;return!(Re({x:i,y:s},e)||Re({x:i,y:o},e)||Re({x:n,y:s},e)||Re({x:n,y:o},e))}function To(t,e,i){const{left:n,top:o,right:a,bottom:r}=i,{backdropColor:l}=e;if(!s(l)){const i=wi(e.borderRadius),s=ki(e.backdropPadding);t.fillStyle=l;const h=n-s.left,c=relay-node.invalid,d=a-n+s.width,u=r-o+s.height;Object.values(i).some((t=>0!==t))?(t.beginPath(),He(t,{x:h,y:c,w:d,h:u,radius:i}),t.fill()):t.fillRect(h,c,d,u)}}function Lo(t,e,i,s){const{ctx:n}=t;if(i)n.arc(t.xCenter,t.yCenter,e,0,O);else{let i=t.getPointPosition(0,e);n.moveTo(i.x,i.y);for(let o=1;o<s;o++)i=t.getPointPosition(o,e),n.lineTo(i.x,i.y)}}class Eo extends bo{static id=\"radialLinear\";static defaults={display:!0,animate:!0,position:\"chartArea\",angleLines:{display:!0,lineWidth:1,borderDash:[],borderDashOffset:0},grid:{circular:!1},startAngle:0,ticks:{showLabelBackdrop:!0,callback:ae.formatters.numeric},pointLabels:{backdropColor:void 0,backdropPadding:2,display:!0,font:{size:10},callback:t=>t,padding:5,centerPointLabels:!1}};static defaultRoutes={\"angleLines.color\":\"borderColor\",\"pointLabels.color\":\"color\",\"ticks.color\":\"color\"};static descriptors={angleLines:{_fallback:\"grid\"}};constructor(t){super(t),this.xCenter=void 0,this.yCenter=void 0,this.drawingArea=void 0,this._pointLabels=[],this._pointLabelItems=[]}setDimensions(){const t=this._padding=ki(So(this.options)/2),e=this.width=this.maxWidth-t.width,i=this.height=this.maxHeight-t.height;this.xCenter=Math.floor(this.left+e/2+t.left),this.yCenter=Math.floor(relay-node.invalid+i/2+t.top),this.drawingArea=Math.floor(Math.min(e,i)/2)}determineDataLimits(){const{min:t,max:e}=this.getMinMax(!1);this.min=a(t)&&!isNaN(t)?t:0,this.max=a(e)&&!isNaN(e)?e:0,this.handleTickRangeOptions()}computeTickLimit(){return Math.ceil(this.drawingArea/So(this.options))}generateTickLabels(t){bo.prototype.generateTickLabels.call(this,t),this._pointLabels=this.getLabels().map(((t,e)=>{const i=d(this.options.pointLabels.callback,[t,e],this);return i||0===i?i:\"\"})).filter(((t,e)=>this.chart.getDataVisibility(e)))}fit(){const t=this.options;t.display&&t.pointLabels.display?Do(this):this.setCenterPoint(0,0,0,0)}setCenterPoint(t,e,i,s){this.xCenter+=Math.floor((t-e)/2),this.yCenter+=Math.floor((i-s)/2),this.drawingArea-=Math.min(this.drawingArea/2,Math.max(t,e,i,s))}getIndexAngle(t){return G(t*(O/(this._pointLabels.length||1))+$(this.options.startAngle||0))}getDistanceFromCenterForValue(t){if(s(t))return NaN;const e=this.drawingArea/(this.max-this.min);return this.options.reverse?(this.max-t)*e:(t-this.min)*e}getValueForDistanceFromCenter(t){if(s(t))return NaN;const e=t/(this.drawingArea/(this.max-this.min));return this.options.reverse?this.max-e:this.min+e}getPointLabelContext(t){const e=this._pointLabels||[];if(t>=0&&t<e.length){const i=e[t];return function(t,e,i){return Ci(t,{label:i,index:e,type:\"pointLabel\"})}(this.getContext(),t,i)}}getPointPosition(t,e,i=0){const s=this.getIndexAngle(t)-E+i;return{x:Math.cos(s)*e+this.xCenter,y:Math.sin(s)*e+this.yCenter,angle:s}}getPointPositionForValue(t,e){return this.getPointPosition(t,this.getDistanceFromCenterForValue(e))}getBasePosition(t){return this.getPointPositionForValue(t||0,this.getBaseValue())}getPointLabelPosition(t){const{left:e,top:i,right:s,bottom:n}=this._pointLabelItems[t];return{left:e,top:i,right:s,bottom:n}}drawBackground(){const{backgroundColor:t,grid:{circular:e}}=this.options;if(t){const i=this.ctx;i.save(),i.beginPath(),Lo(this,this.getDistanceFromCenterForValue(this._endValue),e,this._pointLabels.length),i.closePath(),i.fillStyle=t,i.fill(),i.restore()}}drawGrid(){const t=this.ctx,e=this.options,{angleLines:i,grid:s,border:n}=e,o=this._pointLabels.length;let a,r,l;if(e.pointLabels.display&&function(t,e){const{ctx:i,options:{pointLabels:s}}=t;for(let n=e-1;n>=0;n--){const e=t._pointLabelItems[n];if(!e.visible)continue;const o=s.setContext(t.getPointLabelContext(n));To(i,o,e);const a=Si(o.font),{x:r,y:l,textAlign:h}=e;Ne(i,t._pointLabels[n],r,l+a.lineHeight/2,a,{color:o.color,textAlign:h,textBaseline:\"middle\"})}}(this,o),s.display&&this.ticks.forEach(((t,e)=>{if(0!==e){r=this.getDistanceFromCenterForValue(t.value);const i=this.getContext(e),a=s.setContext(i),l=n.setContext(i);!function(t,e,i,s,n){const o=t.ctx,a=e.circular,{color:r,lineWidth:l}=e;!a&&!s||!r||!l||i<0||(o.save(),o.strokeStyle=r,o.lineWidth=l,o.setLineDash(n.dash),o.lineDashOffset=n.dashOffset,o.beginPath(),Lo(t,i,a,s),o.closePath(),o.stroke(),o.restore())}(this,a,r,o,l)}})),i.display){for(t.save(),a=o-1;a>=0;a--){const s=i.setContext(this.getPointLabelContext(a)),{color:n,lineWidth:o}=s;o&&n&&(t.lineWidth=o,t.strokeStyle=n,t.setLineDash(s.borderDash),t.lineDashOffset=s.borderDashOffset,r=this.getDistanceFromCenterForValue(e.ticks.reverse?this.min:this.max),l=this.getPointPosition(a,r),t.beginPath(),t.moveTo(this.xCenter,this.yCenter),t.lineTo(l.x,l.y),t.stroke())}t.restore()}}drawBorder(){}drawLabels(){const t=this.ctx,e=this.options,i=e.ticks;if(!i.display)return;const s=this.getIndexAngle(0);let n,o;t.save(),t.translate(this.xCenter,this.yCenter),t.rotate(s),t.textAlign=\"center\",t.textBaseline=\"middle\",this.ticks.forEach(((s,a)=>{if(0===a&&!e.reverse)return;const r=i.setContext(this.getContext(a)),l=Si(r.font);if(n=this.getDistanceFromCenterForValue(this.ticks[a].value),r.showLabelBackdrop){t.font=l.string,o=t.measureText(s.label).width,t.fillStyle=r.backdropColor;const e=ki(r.backdropPadding);t.fillRect(-o/2-e.left,-n-l.size/relay-node.invalid,o+e.width,l.size+e.height)}Ne(t,s.label,0,-n,l,{color:r.color,strokeColor:r.textStrokeColor,strokeWidth:r.textStrokeWidth})})),t.restore()}drawTitle(){}}const Ro={millisecond:{common:!0,size:1,steps:1e3},second:{common:!0,size:1e3,steps:60},minute:{common:!0,size:6e4,steps:60},hour:{common:!0,size:36e5,steps:24},day:{common:!0,size:864e5,steps:30},week:{common:!1,size:6048e5,steps:4},month:{common:!0,size:2628e6,steps:12},quarter:{common:!1,size:7884e6,steps:4},year:{common:!0,size:3154e7}},Io=Object.keys(Ro);function zo(t,e){return t-e}function Fo(t,e){if(s(e))return null;const i=t._adapter,{parser:n,round:o,isoWeekday:r}=t._parseOpts;let l=e;return\"function\"==typeof n&&(l=n(l)),a(l)||(l=\"string\"==typeof n?i.parse(l,n):i.parse(l)),null===l?null:(o&&(l=\"week\"!==o||!N(r)&&!0!==r?i.startOf(l,o):i.startOf(l,\"isoWeek\",r)),+l)}function Vo(t,e,i,s){const n=Io.length;for(let o=Io.indexOf(t);o<n-1;++o){const t=Ro[Io[o]],n=t.steps?t.steps:Number.MAX_SAFE_INTEGER;if(t.common&&Math.ceil((i-e)/(n*t.size))<=s)return Io[o]}return Io[n-1]}function Bo(t,e,i){if(i){if(i.length){const{lo:s,hi:n}=et(i,e);t[i[s]>=e?i[s]:i[n]]=!0}}else t[e]=!0}function Wo(t,e,i){const s=[],n={},o=e.length;let a,r;for(a=0;a<o;++a)r=e[a],n[r]=a,s.push({value:r,major:!1});return 0!==o&&i?function(t,e,i,s){const n=t._adapter,o=+n.startOf(e[0].value,s),a=e[e.length-1].value;let r,l;for(r=o;r<=a;r=+n.add(r,1,s))l=i[r],l>=0&&(e[l].major=!0);return e}(t,s,n,i):s}class No extends Js{static id=\"time\";static defaults={bounds:\"data\",adapters:{},time:{parser:!1,unit:!1,round:!1,isoWeekday:!1,minUnit:\"millisecond\",displayFormats:{}},ticks:{source:\"auto\",callback:!1,major:{enabled:!1}}};constructor(t){super(t),this._cache={data:[],labels:[],all:[]},this._unit=\"day\",this._majorUnit=void 0,this._offsets={},this._normalized=!1,this._parseOpts=void 0}init(t,e={}){const i=t.time||(t.time={}),s=this._adapter=new Rn._date(t.adapters.date);s.init(e),x(i.displayFormats,s.formats()),this._parseOpts={parser:i.parser,round:i.round,isoWeekday:i.isoWeekday},super.init(t),this._normalized=e.normalized}parse(t,e){return void 0===t?null:Fo(this,t)}beforeLayout(){super.beforeLayout(),this._cache={data:[],labels:[],all:[]}}determineDataLimits(){const t=this.options,e=this._adapter,i=t.time.unit||\"day\";let{min:s,max:n,minDefined:o,maxDefined:r}=this.getUserBounds();function l(t){o||isNaN(t.min)||(s=Math.min(s,t.min)),r||isNaN(t.max)||(n=Math.max(n,t.max))}o&&r||(l(this._getLabelBounds()),\"ticks\"===t.bounds&&\"labels\"===t.ticks.source||l(this.getMinMax(!1))),s=a(s)&&!isNaN(s)?s:+e.startOf(Date.now(),i),n=a(n)&&!isNaN(n)?n:+e.endOf(Date.now(),i)+1,this.min=Math.min(s,n-1),this.max=Math.max(s+1,n)}_getLabelBounds(){const t=this.getLabelTimestamps();let e=Number.POSITIVE_INFINITY,i=Number.NEGATIVE_INFINITY;return t.length&&(e=t[0],i=t[t.length-1]),{min:e,max:i}}buildTicks(){const t=this.options,e=t.time,i=t.ticks,s=\"labels\"===i.source?this.getLabelTimestamps():this._generate();\"ticks\"===t.bounds&&s.length&&(this.min=this._userMin||s[0],this.max=this._userMax||s[s.length-1]);const n=this.min,o=nt(s,n,this.max);return this._unit=e.unit||(i.autoSkip?Vo(e.minUnit,this.min,this.max,this._getLabelCapacity(n)):function(t,e,i,s,n){for(let o=Io.length-1;o>=Io.indexOf(i);o--){const i=Io[o];if(Ro[i].common&&t._adapter.diff(n,s,i)>=e-1)return i}return Io[i?Io.indexOf(i):0]}(this,o.length,e.minUnit,this.min,this.max)),this._majorUnit=i.major.enabled&&\"year\"!==this._unit?function(t){for(let e=Io.indexOf(t)+1,i=Io.length;e<i;++e)if(Ro[Io[e]].common)return Io[e]}(this._unit):void 0,this.initOffsets(s),t.reverse&&o.reverse(),Wo(this,o,this._majorUnit)}afterAutoSkip(){this.options.offsetAfterAutoskip&&this.initOffsets(this.ticks.map((t=>+t.value)))}initOffsets(t=[]){let e,i,s=0,n=0;this.options.offset&&t.length&&(e=this.getDecimalForValue(t[0]),s=1===t.length?1-e:(this.getDecimalForValue(t[1])-e)/2,i=this.getDecimalForValue(t[t.length-1]),n=1===t.length?i:(i-this.getDecimalForValue(t[t.length-2]))/2);const o=t.length<3?.5:.25;s=J(s,0,o),n=J(n,0,o),this._offsets={start:s,end:n,factor:1/(s+1+n)}}_generate(){const t=this._adapter,e=this.min,i=this.max,s=this.options,n=s.time,o=n.unit||Vo(n.minUnit,e,i,this._getLabelCapacity(e)),a=l(s.ticks.stepSize,1),r=\"week\"===o&&n.isoWeekday,h=N(r)||!0===r,c={};let d,u,f=e;if(h&&(f=+t.startOf(f,\"isoWeek\",r)),f=+t.startOf(f,h?\"day\":o),t.diff(i,e,o)>1e5*a)throw new Error(e+\" and \"+i+\" are too far apart with stepSize of \"+a+\" \"+o);const g=\"data\"===s.ticks.source&&this.getDataTimestamps();for(d=f,u=0;d<i;d=+t.add(d,a,o),u++)Bo(c,d,g);return d!==i&&\"ticks\"!==s.bounds&&1!==u||Bo(c,d,g),Object.keys(c).sort(zo).map((t=>+t))}getLabelForValue(t){const e=this._adapter,i=this.options.time;return i.tooltipFormat?e.format(t,i.tooltipFormat):e.format(t,i.displayFormats.datetime)}format(t,e){const i=this.options.time.displayFormats,s=this._unit,n=e||i[s];return this._adapter.format(t,n)}_tickFormatFunction(t,e,i,s){const n=this.options,o=n.ticks.callback;if(o)return d(o,[t,e,i],this);const a=n.time.displayFormats,r=this._unit,l=this._majorUnit,h=r&&a[r],c=l&&a[l],u=i[e],f=l&&c&&u&&u.major;return this._adapter.format(t,s||(f?c:h))}generateTickLabels(t){let e,i,s;for(e=0,i=t.length;e<i;++e)s=t[e],s.label=this._tickFormatFunction(s.value,e,t)}getDecimalForValue(t){return null===t?NaN:(t-this.min)/(this.max-this.min)}getPixelForValue(t){const e=this._offsets,i=this.getDecimalForValue(t);return this.getPixelForDecimal((e.start+i)*e.factor)}getValueForPixel(t){const e=this._offsets,i=this.getDecimalForPixel(t)/e.factor-e.end;return this.min+i*(this.max-this.min)}_getLabelSize(t){const e=this.options.ticks,i=this.ctx.measureText(t).width,s=$(this.isHorizontal()?e.maxRotation:e.minRotation),n=Math.cos(s),o=Math.sin(s),a=this._resolveTickFontOptions(0).size;return{w:i*n+a*o,h:i*o+a*n}}_getLabelCapacity(t){const e=this.options.time,i=e.displayFormats,s=i[e.unit]||i.millisecond,n=this._tickFormatFunction(t,0,Wo(this,[t],this._majorUnit),s),o=this._getLabelSize(n),a=Math.floor(this.isHorizontal()?this.width/o.w:this.height/o.h)-1;return a>0?a:1}getDataTimestamps(){let t,e,i=this._cache.data||[];if(i.length)return i;const s=this.getMatchingVisibleMetas();if(this._normalized&&s.length)return this._cache.data=s[0].controller.getAllParsedValues(this);for(t=0,e=s.length;t<e;++t)i=i.concat(s[t].controller.getAllParsedValues(this));return this._cache.data=this.normalize(i)}getLabelTimestamps(){const t=this._cache.labels||[];let e,i;if(t.length)return t;const s=this.getLabels();for(e=0,i=s.length;e<i;++e)t.push(Fo(this,s[e]));return this._cache.labels=this._normalized?t:this.normalize(t)}normalize(t){return lt(t.sort(zo))}}function Ho(t,e,i){let s,n,o,a,r=0,l=t.length-1;i?(e>=t[r].pos&&e<=t[l].pos&&({lo:r,hi:l}=it(t,\"pos\",e)),({pos:s,time:o}=t[r]),({pos:n,time:a}=t[l])):(e>=t[r].time&&e<=t[l].time&&({lo:r,hi:l}=it(t,\"time\",e)),({time:s,pos:o}=t[r]),({time:n,pos:a}=t[l]));const h=n-s;return h?o+(a-o)*(e-s)/h:o}var jo=Object.freeze({__proto__:null,CategoryScale:class extends Js{static id=\"category\";static defaults={ticks:{callback:po}};constructor(t){super(t),this._startValue=void 0,this._valueRange=0,this._addedLabels=[]}init(t){const e=this._addedLabels;if(e.length){const t=this.getLabels();for(const{index:i,label:s}of e)t[i]===s&&t.splice(i,1);this._addedLabels=[]}super.init(t)}parse(t,e){if(s(t))return null;const i=this.getLabels();return((t,e)=>null===t?null:J(Math.round(t),0,e))(e=isFinite(e)&&i[e]===t?e:go(i,t,l(e,t),this._addedLabels),i.length-1)}determineDataLimits(){const{minDefined:t,maxDefined:e}=this.getUserBounds();let{min:i,max:s}=this.getMinMax(!0);\"ticks\"===this.options.bounds&&(t||(i=0),e||(s=this.getLabels().length-1)),this.min=i,this.max=s}buildTicks(){const t=this.min,e=this.max,i=this.options.offset,s=[];let n=this.getLabels();n=0===t&&e===n.length-1?n:n.slice(t,e+1),this._valueRange=Math.max(n.length-(i?0:1),1),this._startValue=this.min-(i?.5:0);for(let i=t;i<=e;i++)s.push({value:i});return s}getLabelForValue(t){return po.call(this,t)}configure(){super.configure(),this.isHorizontal()||(this._reversePixels=!this._reversePixels)}getPixelForValue(t){return\"number\"!=typeof t&&(t=this.parse(t)),null===t?NaN:this.getPixelForDecimal((t-this._startValue)/this._valueRange)}getPixelForTick(t){const e=this.ticks;return t<0||t>e.length-1?null:this.getPixelForValue(e[t].value)}getValueForPixel(t){return Math.round(this._startValue+this.getDecimalForPixel(t)*this._valueRange)}getBasePixel(){return this.bottom}},LinearScale:xo,LogarithmicScale:ko,RadialLinearScale:Eo,TimeScale:No,TimeSeriesScale:class extends No{static id=\"timeseries\";static defaults=No.defaults;constructor(t){super(t),this._table=[],this._minPos=void 0,this._tableRange=void 0}initOffsets(){const t=this._getTimestampsForTable(),e=this._table=this.buildLookupTable(t);this._minPos=Ho(e,this.min),this._tableRange=Ho(e,this.max)-this._minPos,super.initOffsets(t)}buildLookupTable(t){const{min:e,max:i}=this,s=[],n=[];let o,a,r,l,h;for(o=0,a=t.length;o<a;++o)l=t[o],l>=e&&l<=i&&s.push(l);if(s.length<2)return[{time:e,pos:0},{time:i,pos:1}];for(o=0,a=s.length;o<a;++o)h=s[o+1],r=s[o-1],l=s[o],Math.round((h+r)/2)!==l&&n.push({time:l,pos:o/(a-1)});return n}_generate(){const t=this.min,e=this.max;let i=super.getDataTimestamps();return i.includes(t)&&i.length||i.splice(0,0,t),i.includes(e)&&1!==i.length||i.push(e),i.sort(((t,e)=>t-e))}_getTimestampsForTable(){let t=this._cache.all||[];if(t.length)return t;const e=this.getDataTimestamps(),i=this.getLabelTimestamps();return t=e.length&&i.length?this.normalize(e.concat(i)):e.length?e:i,t=this._cache.all=t,t}getDecimalForValue(t){return(Ho(this._table,t)-this._minPos)/this._tableRange}getValueForPixel(t){const e=this._offsets,i=this.getDecimalForPixel(t)/e.factor-e.end;return Ho(this._table,i*this._tableRange+this._minPos,!0)}}});const $o=[\"rgb(54, 162, 235)\",\"rgb(255, 99, 132)\",\"rgb(255, 159, 64)\",\"rgb(255, 205, 86)\",\"rgb(75, 192, 192)\",\"rgb(153, 102, 255)\",\"rgb(201, 203, 207)\"],Yo=$o.map((t=>t.replace(\"rgb(\",\"rgba(\").replace(\")\",\", 0.5)\")));function Uo(t){return $o[t%$o.length]}function Xo(t){return Yo[t%Yo.length]}function qo(t){let e=0;return(i,s)=>{const n=t.getDatasetMeta(s).controller;n instanceof jn?e=function(t,e){return t.backgroundColor=t.data.map((()=>Uo(e++))),e}(i,e):n instanceof $n?e=function(t,e){return t.backgroundColor=t.data.map((()=>Xo(e++))),e}(i,e):n&&(e=function(t,e){return t.borderColor=Uo(e),t.backgroundColor=Xo(e),++e}(i,e))}}function Ko(t){let e;for(e in t)if(t[e].borderColor||t[e].backgroundColor)return!0;return!1}var Go={id:\"colors\",defaults:{enabled:!0,forceOverride:!1},beforeLayout(t,e,i){if(!i.enabled)return;const{data:{datasets:s},options:n}=t.config,{elements:o}=n;if(!i.forceOverride&&(Ko(s)||(a=n)&&(a.borderColor||a.backgroundColor)||o&&Ko(o)))return;var a;const r=qo(t);s.forEach(r)}};function Zo(t){if(t._decimated){const e=t._data;delete t._decimated,delete t._data,Object.defineProperty(t,\"data\",{configurable:!0,enumerable:!0,writable:!0,value:e})}}function Jo(t){t.data.datasets.forEach((t=>{Zo(t)}))}var Qo={id:\"decimation\",defaults:{algorithm:\"min-max\",enabled:!1},beforeElementsUpdate:(t,e,i)=>{if(!i.enabled)return void Jo(t);const n=t.width;t.data.datasets.forEach(((e,o)=>{const{_data:a,indexAxis:r}=e,l=t.getDatasetMeta(o),h=a||e.data;if(\"y\"===Pi([r,t.options.indexAxis]))return;if(!l.controller.supportsDecimation)return;const c=t.scales[l.xAxisID];if(\"linear\"!==c.type&&\"time\"!==c.type)return;if(t.options.parsing)return;let{start:d,count:u}=function(t,e){const i=e.length;let s,n=0;const{iScale:o}=t,{min:a,max:r,minDefined:l,maxDefined:h}=o.getUserBounds();return l&&(n=J(it(e,o.axis,a).lo,0,i-1)),s=h?J(it(e,o.axis,r).hi+1,n,i)-n:i-n,{start:n,count:s}}(l,h);if(u<=(i.threshold||4*n))return void Zo(e);let f;switch(s(a)&&(e._data=h,delete e.data,Object.defineProperty(e,\"data\",{configurable:!0,enumerable:!0,get:function(){return this._decimated},set:function(t){this._data=t}})),i.algorithm){case\"lttb\":f=function(t,e,i,s,n){const o=n.samples||s;if(o>=i)return t.slice(e,e+i);const a=[],r=(i-2)/(o-2);let l=0;const h=e+i-1;let c,d,u,f,g,p=e;for(a[l++]=t[p],c=0;c<o-2;c++){let s,n=0,o=0;const h=Math.floor((c+1)*r)+1+e,m=Math.min(Math.floor((c+2)*r)+1,i)+e,b=m-h;for(s=h;s<m;s++)n+=t[s].x,o+=t[s].y;n/=b,o/=b;const x=Math.floor(c*r)+1+e,_=Math.min(Math.floor((c+1)*r)+1,i)+e,{x:y,y:v}=t[p];for(u=f=-1,s=x;s<_;s++)f=.5*Math.abs((y-n)*(t[s].y-v)-(y-t[s].x)*(o-v)),f>u&&(u=f,d=t[s],g=s);a[l++]=d,p=g}return a[l++]=t[h],a}(h,d,u,n,i);break;case\"min-max\":f=function(t,e,i,n){let o,a,r,l,h,c,d,u,f,g,p=0,m=0;const b=[],x=e+i-1,_=t[e].x,y=t[x].x-_;for(o=e;o<e+i;++o){a=t[o],r=(a.x-_)/y*n,l=a.y;const e=0|r;if(e===h)l<f?(f=l,c=o):l>g&&(g=l,d=o),p=(m*p+a.x)/++m;else{const i=o-1;if(!s(c)&&!s(d)){const e=Math.min(c,d),s=Math.max(c,d);e!==u&&e!==i&&b.push({...t[e],x:p}),s!==u&&s!==i&&b.push({...t[s],x:p})}o>0&&i!==u&&b.push(t[i]),b.push(a),h=e,m=0,f=g=l,c=d=u=o}}return b}(h,d,u,n);break;default:throw new Error(`Unsupported decimation algorithm '${i.algorithm}'`)}e._decimated=f}))},destroy(t){Jo(t)}};function ta(t,e,i,s){if(s)return;let n=e[t],o=i[t];return\"angle\"===t&&(n=G(n),o=G(o)),{property:t,start:n,end:o}}function ea(t,e,i){for(;e>t;e--){const t=i[e];if(!isNaN(t.x)&&!isNaN(t.y))break}return e}function ia(t,e,i,s){return t&&e?s(t[i],e[i]):t?t[i]:e?e[i]:0}function sa(t,e){let i=[],s=!1;return n(t)?(s=!0,i=t):i=function(t,e){const{x:i=null,y:s=null}=t||{},n=e.points,o=[];return e.segments.forEach((({start:t,end:e})=>{e=ea(t,e,n);const a=n[t],r=n[e];null!==s?(o.push({x:a.x,y:s}),o.push({x:r.x,y:s})):null!==i&&(o.push({x:i,y:a.y}),o.push({x:i,y:r.y}))})),o}(t,e),i.length?new no({points:i,options:{tension:0},_loop:s,_fullLoop:s}):null}function na(t){return t&&!1!==t.fill}function oa(t,e,i){let s=t[e].fill;const n=[e];let o;if(!i)return s;for(;!1!==s&&-1===n.indexOf(s);){if(!a(s))return s;if(o=t[s],!o)return!1;if(o.visible)return s;n.push(s),s=o.fill}return!1}function aa(t,e,i){const s=function(t){const e=t.options,i=e.fill;let s=l(i&&i.target,i);void 0===s&&(s=!!e.backgroundColor);if(!1===s||null===s)return!1;if(!0===s)return\"origin\";return s}(t);if(o(s))return!isNaN(s.value)&&s;let n=parseFloat(s);return a(n)&&Math.floor(n)===n?function(t,e,i,s){\"-\"!==t&&\"+\"!==t||(i=e+i);if(i===e||i<0||i>=s)return!1;return i}(s[0],e,n,i):[\"origin\",\"start\",\"end\",\"stack\",\"shape\"].indexOf(s)>=0&&s}function ra(t,e,i){const s=[];for(let n=0;n<i.length;n++){const o=i[n],{first:a,last:r,point:l}=la(o,e,\"x\");if(!(!l||a&&r))if(a)s.unshift(l);else if(t.push(l),!r)break}t.push(...s)}function la(t,e,i){const s=t.interpolate(e,i);if(!s)return{};const n=s[i],o=t.segments,a=t.points;let r=!1,l=!1;for(let t=0;t<o.length;t++){const e=o[t],s=a[e.start][i],h=a[e.end][i];if(tt(n,s,h)){r=n===s,l=n===h;break}}return{first:r,last:l,point:s}}class ha{constructor(t){this.x=t.x,this.y=t.y,this.radius=t.radius}pathSegment(t,e,i){const{x:s,y:n,radius:o}=this;return e=e||{start:0,end:O},t.arc(s,n,o,e.end,e.start,!0),!i.bounds}interpolate(t){const{x:e,y:i,radius:s}=this,n=t.angle;return{x:e+Math.cos(n)*s,y:i+Math.sin(n)*s,angle:n}}}function ca(t){const{chart:e,fill:i,line:s}=t;if(a(i))return function(t,e){const i=t.getDatasetMeta(e),s=i&&t.isDatasetVisible(e);return s?i.dataset:null}(e,i);if(\"stack\"===i)return function(t){const{scale:e,index:i,line:s}=t,n=[],o=s.segments,a=s.points,r=function(t,e){const i=[],s=t.getMatchingVisibleMetas(\"line\");for(let t=0;t<s.length;t++){const n=s[t];if(n.index===e)break;n.hidden||i.unshift(n.dataset)}return i}(e,i);r.push(sa({x:null,y:e.bottom},s));for(let t=0;t<o.length;t++){const e=o[t];for(let t=e.start;t<=e.end;t++)ra(n,a[t],r)}return new no({points:n,options:{}})}(t);if(\"shape\"===i)return!0;const n=function(t){const e=t.scale||{};if(e.getPointPositionForValue)return function(t){const{scale:e,fill:i}=t,s=e.options,n=e.getLabels().length,a=s.reverse?e.max:e.min,r=function(t,e,i){let s;return s=\"start\"===t?i:\"end\"===t?e.options.reverse?e.min:e.max:o(t)?t.value:e.getBaseValue(),s}(i,e,a),l=[];if(s.grid.circular){const t=e.getPointPositionForValue(0,a);return new ha({x:t.x,y:t.y,radius:e.getDistanceFromCenterForValue(r)})}for(let t=0;t<n;++t)l.push(e.getPointPositionForValue(t,r));return l}(t);return function(t){const{scale:e={},fill:i}=t,s=function(t,e){let i=null;return\"start\"===t?i=e.bottom:\"end\"===t?i=e.top:o(t)?i=e.getPixelForValue(t.value):e.getBasePixel&&(i=e.getBasePixel()),i}(i,e);if(a(s)){const t=e.isHorizontal();return{x:t?s:null,y:t?null:s}}return null}(t)}(t);return n instanceof ha?n:sa(n,s)}function da(t,e,i){const s=ca(e),{line:n,scale:o,axis:a}=e,r=n.options,l=r.fill,h=r.backgroundColor,{above:c=h,below:d=h}=l||{};s&&n.points.length&&(Ie(t,i),function(t,e){const{line:i,target:s,above:n,below:o,area:a,scale:r}=e,l=i._loop?\"angle\":e.axis;t.save(),\"x\"===l&&o!==n&&(ua(t,s,a.top),fa(t,{line:i,target:s,color:n,scale:r,property:l}),t.restore(),t.save(),ua(t,s,a.bottom));fa(t,{line:i,target:s,color:o,scale:r,property:l}),t.restore()}(t,{line:n,target:s,above:c,below:d,area:i,scale:o,axis:a}),ze(t))}function ua(t,e,i){const{segments:s,points:n}=e;let o=!0,a=!1;t.beginPath();for(const r of s){const{start:s,end:l}=r,h=n[s],c=n[ea(s,l,n)];o?(t.moveTo(h.x,h.y),o=!1):(t.lineTo(h.x,i),t.lineTo(h.x,h.y)),a=!!e.pathSegment(t,r,{move:a}),a?t.closePath():t.lineTo(c.x,i)}t.lineTo(e.first().x,i),t.closePath(),t.clip()}function fa(t,e){const{line:i,target:s,property:n,color:o,scale:a}=e,r=function(t,e,i){const s=t.segments,n=t.points,o=e.points,a=[];for(const t of s){let{start:s,end:r}=t;r=ea(s,r,n);const l=ta(i,n[s],n[r],t.loop);if(!e.segments){a.push({source:t,target:l,start:n[s],end:n[r]});continue}const h=Ii(e,l);for(const e of h){const s=ta(i,o[e.start],o[e.end],e.loop),r=Ri(t,n,s);for(const t of r)a.push({source:t,target:e,start:{[i]:ia(l,s,\"start\",Math.max)},end:{[i]:ia(l,s,\"end\",Math.min)}})}}return a}(i,s,n);for(const{source:e,target:l,start:h,end:c}of r){const{style:{backgroundColor:r=o}={}}=e,d=!0!==s;t.save(),t.fillStyle=r,ga(t,a,d&&ta(n,h,c)),t.beginPath();const u=!!i.pathSegment(t,e);let f;if(d){u?t.closePath():pa(t,s,c,n);const e=!!s.pathSegment(t,l,{move:u,reverse:!0});f=u&&e,f||pa(t,s,h,n)}t.closePath(),t.fill(f?\"evenodd\":\"nonzero\"),t.restore()}}function ga(t,e,i){const{top:s,bottom:n}=e.chart.chartArea,{property:o,start:a,end:r}=i||{};\"x\"===o&&(t.beginPath(),t.rect(a,s,r-a,n-s),t.clip())}function pa(t,e,i,s){const n=e.interpolate(i,s);n&&t.lineTo(n.x,n.y)}var ma={id:\"filler\",afterDatasetsUpdate(t,e,i){const s=(t.data.datasets||[]).length,n=[];let o,a,r,l;for(a=0;a<s;++a)o=t.getDatasetMeta(a),r=o.dataset,l=null,r&&r.options&&r instanceof no&&(l={visible:t.isDatasetVisible(a),index:a,fill:aa(r,a,s),chart:t,axis:o.controller.options.indexAxis,scale:o.vScale,line:r}),o.$filler=l,n.push(l);for(a=0;a<s;++a)l=n[a],l&&!1!==l.fill&&(l.fill=oa(n,a,i.propagate))},beforeDraw(t,e,i){const s=\"beforeDraw\"===i.drawTime,n=t.getSortedVisibleDatasetMetas(),o=t.chartArea;for(let e=n.length-1;e>=0;--e){const i=n[e].$filler;i&&(i.line.updateControlPoints(o,i.axis),s&&i.fill&&da(t.ctx,i,o))}},beforeDatasetsDraw(t,e,i){if(\"beforeDatasetsDraw\"!==i.drawTime)return;const s=t.getSortedVisibleDatasetMetas();for(let e=s.length-1;e>=0;--e){const i=s[e].$filler;na(i)&&da(t.ctx,i,t.chartArea)}},beforeDatasetDraw(t,e,i){const s=e.meta.$filler;na(s)&&\"beforeDatasetDraw\"===i.drawTime&&da(t.ctx,s,t.chartArea)},defaults:{propagate:!0,drawTime:\"beforeDatasetDraw\"}};const ba=(t,e)=>{let{boxHeight:i=e,boxWidth:s=e}=t;return t.usePointStyle&&(i=Math.min(i,e),s=t.pointStyleWidth||Math.min(s,e)),{boxWidth:s,boxHeight:i,itemHeight:Math.max(e,i)}};class xa extends Hs{constructor(t){super(),this._added=!1,this.legendHitBoxes=[],this._hoveredItem=null,this.doughnutMode=!1,this.chart=t.chart,this.options=t.options,this.ctx=t.ctx,this.legendItems=void 0,this.columnSizes=void 0,this.lineWidths=void 0,this.maxHeight=void 0,this.maxWidth=void 0,relay-node.invalid=void 0,this.bottom=void 0,this.left=void 0,this.right=void 0,this.height=void 0,this.width=void 0,this._margins=void 0,this.position=void 0,this.weight=void 0,this.fullSize=void 0}update(t,e,i){this.maxWidth=t,this.maxHeight=e,this._margins=i,this.setDimensions(),this.buildLabels(),this.fit()}setDimensions(){this.isHorizontal()?(this.width=this.maxWidth,this.left=this._margins.left,this.right=this.width):(this.height=this.maxHeight,relay-node.invalid=this._margins.top,this.bottom=this.height)}buildLabels(){const t=this.options.labels||{};let e=d(t.generateLabels,[this.chart],this)||[];t.filter&&(e=e.filter((e=>t.filter(e,this.chart.data)))),t.sort&&(e=e.sort(((e,i)=>t.sort(e,i,this.chart.data)))),this.options.reverse&&e.reverse(),this.legendItems=e}fit(){const{options:t,ctx:e}=this;if(!t.display)return void(this.width=this.height=0);const i=t.labels,s=Si(i.font),n=s.size,o=this._computeTitleHeight(),{boxWidth:a,itemHeight:r}=ba(i,n);let l,h;e.font=s.string,this.isHorizontal()?(l=this.maxWidth,h=this._fitRows(o,n,a,r)+10):(h=this.maxHeight,l=this._fitCols(o,s,a,r)+10),this.width=Math.min(l,t.maxWidth||this.maxWidth),this.height=Math.min(h,t.maxHeight||this.maxHeight)}_fitRows(t,e,i,s){const{ctx:n,maxWidth:o,options:{labels:{padding:a}}}=this,r=this.legendHitBoxes=[],l=this.lineWidths=[0],h=s+a;let c=t;n.textAlign=\"left\",n.textBaseline=\"middle\";let d=-1,u=-h;return this.legendItems.forEach(((t,f)=>{const g=i+e/2+n.measureText(t.text).width;(0===f||l[l.length-1]+g+2*a>o)&&(c+=h,l[l.length-(f>0?0:1)]=0,u+=h,d++),r[f]={left:0,top:u,row:d,width:g,height:s},l[l.length-1]+=g+a})),c}_fitCols(t,e,i,s){const{ctx:n,maxHeight:o,options:{labels:{padding:a}}}=this,r=this.legendHitBoxes=[],l=this.columnSizes=[],h=o-t;let c=a,d=0,u=0,f=0,g=0;return this.legendItems.forEach(((t,o)=>{const{itemWidth:p,itemHeight:m}=function(t,e,i,s,n){const o=function(t,e,i,s){let n=t.text;n&&\"string\"!=typeof n&&(n=n.reduce(((t,e)=>t.length>e.length?t:e)));return e+i.size/2+s.measureText(n).width}(s,t,e,i),a=function(t,e,i){let s=t;\"string\"!=typeof e.text&&(s=_a(e,i));return s}(n,s,e.lineHeight);return{itemWidth:o,itemHeight:a}}(i,e,n,t,s);o>0&&u+m+2*a>h&&(c+=d+a,l.push({width:d,height:u}),f+=d+a,g++,d=u=0),r[o]={left:f,top:u,col:g,width:p,height:m},d=Math.max(d,p),u+=m+a})),c+=d,l.push({width:d,height:u}),c}adjustHitBoxes(){if(!this.options.display)return;const t=this._computeTitleHeight(),{legendHitBoxes:e,options:{align:i,labels:{padding:s},rtl:n}}=this,o=Oi(n,this.left,this.width);if(this.isHorizontal()){let n=0,a=ft(i,this.left+s,this.right-this.lineWidths[n]);for(const r of e)n!==r.row&&(n=r.row,a=ft(i,this.left+s,this.right-this.lineWidths[n])),r.top+=relay-node.invalid+t+s,r.left=o.leftForLtr(o.x(a),r.width),a+=r.width+s}else{let n=0,a=ft(i,relay-node.invalid+t+s,this.bottom-this.columnSizes[n].height);for(const r of e)r.col!==n&&(n=r.col,a=ft(i,relay-node.invalid+t+s,this.bottom-this.columnSizes[n].height)),r.top=a,r.left+=this.left+s,r.left=o.leftForLtr(o.x(r.left),r.width),a+=r.height+s}}isHorizontal(){return\"top\"===this.options.position||\"bottom\"===this.options.position}draw(){if(this.options.display){const t=this.ctx;Ie(t,this),this._draw(),ze(t)}}_draw(){const{options:t,columnSizes:e,lineWidths:i,ctx:s}=this,{align:n,labels:o}=t,a=ue.color,r=Oi(t.rtl,this.left,this.width),h=Si(o.font),{padding:c}=o,d=h.size,u=d/2;let f;this.drawTitle(),s.textAlign=r.textAlign(\"left\"),s.textBaseline=\"middle\",s.lineWidth=.5,s.font=h.string;const{boxWidth:g,boxHeight:p,itemHeight:m}=ba(o,d),b=this.isHorizontal(),x=this._computeTitleHeight();f=b?{x:ft(n,this.left+c,this.right-i[0]),y:relay-node.invalid+c+x,line:0}:{x:this.left+c,y:ft(n,relay-node.invalid+x+c,this.bottom-e[0].height),line:0},Ai(this.ctx,t.textDirection);const _=m+c;this.legendItems.forEach(((y,v)=>{s.strokeStyle=y.fontColor,s.fillStyle=y.fontColor;const M=s.measureText(y.text).width,w=r.textAlign(y.textAlign||(y.textAlign=o.textAlign)),k=g+u+M;let S=f.x,P=f.y;r.setWidth(this.width),b?v>0&&S+k+c>this.right&&(P=f.y+=_,f.line++,S=f.x=ft(n,this.left+c,this.right-i[f.line])):v>0&&P+_>this.bottom&&(S=f.x=S+e[f.line].width+c,f.line++,P=f.y=ft(n,relay-node.invalid+x+c,this.bottom-e[f.line].height));if(function(t,e,i){if(isNaN(g)||g<=0||isNaN(p)||p<0)return;s.save();const n=l(i.lineWidth,1);if(s.fillStyle=l(i.fillStyle,a),s.lineCap=l(i.lineCap,\"butt\"),s.lineDashOffset=l(i.lineDashOffset,0),s.lineJoin=l(i.lineJoin,\"miter\"),s.lineWidth=n,s.strokeStyle=l(i.strokeStyle,a),s.setLineDash(l(i.lineDash,[])),o.usePointStyle){const a={radius:p*Math.SQRT2/2,pointStyle:i.pointStyle,rotation:i.rotation,borderWidth:n},l=r.xPlus(t,g/2);Ee(s,a,l,e+u,o.pointStyleWidth&&g)}else{const o=e+Math.max((d-p)/2,0),a=r.leftForLtr(t,g),l=wi(i.borderRadius);s.beginPath(),Object.values(l).some((t=>0!==t))?He(s,{x:a,y:o,w:g,h:p,radius:l}):s.rect(a,o,g,p),s.fill(),0!==n&&s.stroke()}s.restore()}(r.x(S),P,y),S=gt(w,S+g+u,b?S+k:this.right,t.rtl),function(t,e,i){Ne(s,i.text,t,e+m/2,h,{strikethrough:i.hidden,textAlign:r.textAlign(i.textAlign)})}(r.x(S),P,y),b)f.x+=k+c;else if(\"string\"!=typeof y.text){const t=h.lineHeight;f.y+=_a(y,t)+c}else f.y+=_})),Ti(this.ctx,t.textDirection)}drawTitle(){const t=this.options,e=t.title,i=Si(e.font),s=ki(e.padding);if(!e.display)return;const n=Oi(t.rtl,this.left,this.width),o=this.ctx,a=e.position,r=i.size/2,l=s.top+r;let h,c=this.left,d=this.width;if(this.isHorizontal())d=Math.max(...this.lineWidths),h=relay-node.invalid+l,c=ft(t.align,c,this.right-d);else{const e=this.columnSizes.reduce(((t,e)=>Math.max(t,e.height)),0);h=l+ft(t.align,relay-node.invalid,this.bottom-e-t.labels.padding-this._computeTitleHeight())}const u=ft(a,c,c+d);o.textAlign=n.textAlign(ut(a)),o.textBaseline=\"middle\",o.strokeStyle=e.color,o.fillStyle=e.color,o.font=i.string,Ne(o,e.text,u,h,i)}_computeTitleHeight(){const t=this.options.title,e=Si(t.font),i=ki(t.padding);return t.display?e.lineHeight+i.height:0}_getLegendItemAt(t,e){let i,s,n;if(tt(t,this.left,this.right)&&tt(e,relay-node.invalid,this.bottom))for(n=this.legendHitBoxes,i=0;i<n.length;++i)if(s=n[i],tt(t,s.left,s.left+s.width)&&tt(e,s.top,s.top+s.height))return this.legendItems[i];return null}handleEvent(t){const e=this.options;if(!function(t,e){if((\"mousemove\"===t||\"mouseout\"===t)&&(e.onHover||e.onLeave))return!0;if(e.onClick&&(\"click\"===t||\"mouseup\"===t))return!0;return!1}(t.type,e))return;const i=this._getLegendItemAt(t.x,t.y);if(\"mousemove\"===t.type||\"mouseout\"===t.type){const o=this._hoveredItem,a=(n=i,null!==(s=o)&&null!==n&&s.datasetIndex===n.datasetIndex&&s.index===n.index);o&&!a&&d(e.onLeave,[t,o,this],this),this._hoveredItem=i,i&&!a&&d(e.onHover,[t,i,this],this)}else i&&d(e.onClick,[t,i,this],this);var s,n}}function _a(t,e){return e*(t.text?t.text.length:0)}var ya={id:\"legend\",_element:xa,start(t,e,i){const s=t.legend=new xa({ctx:t.ctx,options:i,chart:t});as.configure(t,s,i),as.addBox(t,s)},stop(t){as.removeBox(t,t.legend),delete t.legend},beforeUpdate(t,e,i){const s=t.legend;as.configure(t,s,i),s.options=i},afterUpdate(t){const e=t.legend;e.buildLabels(),e.adjustHitBoxes()},afterEvent(t,e){e.replay||t.legend.handleEvent(e.event)},defaults:{display:!0,position:\"top\",align:\"center\",fullSize:!0,reverse:!1,weight:1e3,onClick(t,e,i){const s=e.datasetIndex,n=i.chart;n.isDatasetVisible(s)?(n.hide(s),e.hidden=!0):(n.show(s),e.hidden=!1)},onHover:null,onLeave:null,labels:{color:t=>t.chart.options.color,boxWidth:40,padding:10,generateLabels(t){const e=t.data.datasets,{labels:{usePointStyle:i,pointStyle:s,textAlign:n,color:o,useBorderRadius:a,borderRadius:r}}=t.legend.options;return t._getSortedDatasetMetas().map((t=>{const l=t.controller.getStyle(i?0:void 0),h=ki(l.borderWidth);return{text:e[t.index].label,fillStyle:l.backgroundColor,fontColor:o,hidden:!t.visible,lineCap:l.borderCapStyle,lineDash:l.borderDash,lineDashOffset:l.borderDashOffset,lineJoin:l.borderJoinStyle,lineWidth:(h.width+h.height)/4,strokeStyle:l.borderColor,pointStyle:s||l.pointStyle,rotation:l.rotation,textAlign:n||l.textAlign,borderRadius:a&&(r||l.borderRadius),datasetIndex:t.index}}),this)}},title:{color:t=>t.chart.options.color,display:!1,position:\"center\",text:\"\"}},descriptors:{_scriptable:t=>!t.startsWith(\"on\"),labels:{_scriptable:t=>![\"generateLabels\",\"filter\",\"sort\"].includes(t)}}};class va extends Hs{constructor(t){super(),this.chart=t.chart,this.options=t.options,this.ctx=t.ctx,this._padding=void 0,relay-node.invalid=void 0,this.bottom=void 0,this.left=void 0,this.right=void 0,this.width=void 0,this.height=void 0,this.position=void 0,this.weight=void 0,this.fullSize=void 0}update(t,e){const i=this.options;if(this.left=0,relay-node.invalid=0,!i.display)return void(this.width=this.height=this.right=this.bottom=0);this.width=this.right=t,this.height=this.bottom=e;const s=n(i.text)?i.text.length:1;this._padding=ki(i.padding);const o=s*Si(i.font).lineHeight+this._padding.height;this.isHorizontal()?this.height=o:this.width=o}isHorizontal(){const t=this.options.position;return\"top\"===t||\"bottom\"===t}_drawArgs(t){const{top:e,left:i,bottom:s,right:n,options:o}=this,a=o.align;let r,l,h,c=0;return this.isHorizontal()?(l=ft(a,i,n),h=e+t,r=n-i):(\"left\"===o.position?(l=i+t,h=ft(a,s,e),c=-.5*C):(l=n-t,h=ft(a,e,s),c=.5*C),r=s-e),{titleX:l,titleY:h,maxWidth:r,rotation:c}}draw(){const t=this.ctx,e=this.options;if(!e.display)return;const i=Si(e.font),s=i.lineHeight/2+this._padding.top,{titleX:n,titleY:o,maxWidth:a,rotation:r}=this._drawArgs(s);Ne(t,e.text,0,0,i,{color:e.color,maxWidth:a,rotation:r,textAlign:ut(e.align),textBaseline:\"middle\",translation:[n,o]})}}var Ma={id:\"title\",_element:va,start(t,e,i){!function(t,e){const i=new va({ctx:t.ctx,options:e,chart:t});as.configure(t,i,e),as.addBox(t,i),t.titleBlock=i}(t,i)},stop(t){const e=t.titleBlock;as.removeBox(t,e),delete t.titleBlock},beforeUpdate(t,e,i){const s=t.titleBlock;as.configure(t,s,i),s.options=i},defaults:{align:\"center\",display:!1,font:{weight:\"bold\"},fullSize:!0,padding:10,position:\"top\",text:\"\",weight:2e3},defaultRoutes:{color:\"color\"},descriptors:{_scriptable:!0,_indexable:!1}};const wa=new WeakMap;var ka={id:\"subtitle\",start(t,e,i){const s=new va({ctx:t.ctx,options:i,chart:t});as.configure(t,s,i),as.addBox(t,s),wa.set(t,s)},stop(t){as.removeBox(t,wa.get(t)),wa.delete(t)},beforeUpdate(t,e,i){const s=wa.get(t);as.configure(t,s,i),s.options=i},defaults:{align:\"center\",display:!1,font:{weight:\"normal\"},fullSize:!0,padding:0,position:\"top\",text:\"\",weight:1500},defaultRoutes:{color:\"color\"},descriptors:{_scriptable:!0,_indexable:!1}};const Sa={average(t){if(!t.length)return!1;let e,i,s=0,n=0,o=0;for(e=0,i=t.length;e<i;++e){const i=t[e].element;if(i&&i.hasValue()){const t=i.tooltipPosition();s+=t.x,n+=t.y,++o}}return{x:s/o,y:n/o}},nearest(t,e){if(!t.length)return!1;let i,s,n,o=e.x,a=e.y,r=Number.POSITIVE_INFINITY;for(i=0,s=t.length;i<s;++i){const s=t[i].element;if(s&&s.hasValue()){const t=q(e,s.getCenterPoint());t<r&&(r=t,n=s)}}if(n){const t=n.tooltipPosition();o=t.x,a=t.y}return{x:o,y:a}}};function Pa(t,e){return e&&(n(e)?Array.prototype.push.apply(t,e):t.push(e)),t}function Da(t){return(\"string\"==typeof t||t instanceof String)&&t.indexOf(\"\\n\")>-1?t.split(\"\\n\"):t}function Ca(t,e){const{element:i,datasetIndex:s,index:n}=e,o=t.getDatasetMeta(s).controller,{label:a,value:r}=o.getLabelAndValue(n);return{chart:t,label:a,parsed:o.getParsed(n),raw:t.data.datasets[s].data[n],formattedValue:r,dataset:o.getDataset(),dataIndex:n,datasetIndex:s,element:i}}function Oa(t,e){const i=t.chart.ctx,{body:s,footer:n,title:o}=t,{boxWidth:a,boxHeight:r}=e,l=Si(e.bodyFont),h=Si(e.titleFont),c=Si(e.footerFont),d=o.length,f=n.length,g=s.length,p=ki(e.padding);let m=p.height,b=0,x=s.reduce(((t,e)=>t+e.before.length+e.lines.length+e.after.length),0);if(x+=t.beforeBody.length+t.afterBody.length,d&&(m+=d*h.lineHeight+(d-1)*e.titleSpacing+e.titleMarginBottom),x){m+=g*(e.displayColors?Math.max(r,l.lineHeight):l.lineHeight)+(x-g)*l.lineHeight+(x-1)*e.bodySpacing}f&&(m+=e.footerMarginTop+f*c.lineHeight+(f-1)*e.footerSpacing);let _=0;const y=function(t){b=Math.max(b,i.measureText(t).width+_)};return i.save(),i.font=h.string,u(t.title,y),i.font=l.string,u(t.beforeBody.concat(t.afterBody),y),_=e.displayColors?a+2+e.boxPadding:0,u(s,(t=>{u(t.before,y),u(t.lines,y),u(t.after,y)})),_=0,i.font=c.string,u(t.footer,y),i.restore(),b+=p.width,{width:b,height:m}}function Aa(t,e,i,s){const{x:n,width:o}=i,{width:a,chartArea:{left:r,right:l}}=t;let h=\"center\";return\"center\"===s?h=n<=(r+l)/2?\"left\":\"right\":n<=o/2?h=\"left\":n>=a-o/2&&(h=\"right\"),function(t,e,i,s){const{x:n,width:o}=s,a=i.caretSize+i.caretPadding;return\"left\"===t&&n+o+a>e.width||\"right\"===t&&n-o-a<0||void 0}(h,t,e,i)&&(h=\"center\"),h}function Ta(t,e,i){const s=i.yAlign||e.yAlign||function(t,e){const{y:i,height:s}=e;return i<s/2?\"top\":i>t.height-s/2?\"bottom\":\"center\"}(t,i);return{xAlign:i.xAlign||e.xAlign||Aa(t,e,i,s),yAlign:s}}function La(t,e,i,s){const{caretSize:n,caretPadding:o,cornerRadius:a}=t,{xAlign:r,yAlign:l}=i,h=n+o,{topLeft:c,topRight:d,bottomLeft:u,bottomRight:f}=wi(a);let g=function(t,e){let{x:i,width:s}=t;return\"right\"===e?i-=s:\"center\"===e&&(i-=s/2),i}(e,r);const p=function(t,e,i){let{y:s,height:n}=t;return\"top\"===e?s+=i:s-=\"bottom\"===e?n+i:n/2,s}(e,l,h);return\"center\"===l?\"left\"===r?g+=h:\"right\"===r&&(g-=h):\"left\"===r?g-=Math.max(c,u)+n:\"right\"===r&&(g+=Math.max(d,f)+n),{x:J(g,0,s.width-e.width),y:J(p,0,s.height-e.height)}}function Ea(t,e,i){const s=ki(i.padding);return\"center\"===e?t.x+t.width/2:\"right\"===e?t.x+t.width-s.right:t.x+s.left}function Ra(t){return Pa([],Da(t))}function Ia(t,e){const i=e&&e.dataset&&e.dataset.tooltip&&e.dataset.tooltip.callbacks;return i?t.override(i):t}const za={beforeTitle:e,title(t){if(t.length>0){const e=t[0],i=e.chart.data.labels,s=i?i.length:0;if(this&&this.options&&\"dataset\"===this.options.mode)return e.dataset.label||\"\";if(e.label)return e.label;if(s>0&&e.dataIndex<s)return i[e.dataIndex]}return\"\"},afterTitle:e,beforeBody:e,beforeLabel:e,label(t){if(this&&this.options&&\"dataset\"===this.options.mode)return t.label+\": \"+t.formattedValue||t.formattedValue;let e=t.dataset.label||\"\";e&&(e+=\": \");const i=t.formattedValue;return s(i)||(e+=i),e},labelColor(t){const e=t.chart.getDatasetMeta(t.datasetIndex).controller.getStyle(t.dataIndex);return{borderColor:e.borderColor,backgroundColor:e.backgroundColor,borderWidth:e.borderWidth,borderDash:e.borderDash,borderDashOffset:e.borderDashOffset,borderRadius:0}},labelTextColor(){return this.options.bodyColor},labelPointStyle(t){const e=t.chart.getDatasetMeta(t.datasetIndex).controller.getStyle(t.dataIndex);return{pointStyle:e.pointStyle,rotation:e.rotation}},afterLabel:e,afterBody:e,beforeFooter:e,footer:e,afterFooter:e};function Fa(t,e,i,s){const n=t[e].call(i,s);return void 0===n?za[e].call(i,s):n}class Va extends Hs{static positioners=Sa;constructor(t){super(),this.opacity=0,this._active=[],this._eventPosition=void 0,this._size=void 0,this._cachedAnimations=void 0,this._tooltipItems=[],this.$animations=void 0,this.$context=void 0,this.chart=t.chart,this.options=t.options,this.dataPoints=void 0,this.title=void 0,this.beforeBody=void 0,this.body=void 0,this.afterBody=void 0,this.footer=void 0,this.xAlign=void 0,this.yAlign=void 0,this.x=void 0,this.y=void 0,this.height=void 0,this.width=void 0,this.caretX=void 0,this.caretY=void 0,this.labelColors=void 0,this.labelPointStyles=void 0,this.labelTextColors=void 0}initialize(t){this.options=t,this._cachedAnimations=void 0,this.$context=void 0}_resolveAnimations(){const t=this._cachedAnimations;if(t)return t;const e=this.chart,i=this.options.setContext(this.getContext()),s=i.enabled&&e.options.animation&&i.animations,n=new Os(this.chart,s);return s._cacheable&&(this._cachedAnimations=Object.freeze(n)),n}getContext(){return this.$context||(this.$context=(t=this.chart.getContext(),e=this,i=this._tooltipItems,Ci(t,{tooltip:e,tooltipItems:i,type:\"tooltip\"})));var t,e,i}getTitle(t,e){const{callbacks:i}=e,s=Fa(i,\"beforeTitle\",this,t),n=Fa(i,\"title\",this,t),o=Fa(i,\"afterTitle\",this,t);let a=[];return a=Pa(a,Da(s)),a=Pa(a,Da(n)),a=Pa(a,Da(o)),a}getBeforeBody(t,e){return Ra(Fa(e.callbacks,\"beforeBody\",this,t))}getBody(t,e){const{callbacks:i}=e,s=[];return u(t,(t=>{const e={before:[],lines:[],after:[]},n=Ia(i,t);Pa(e.before,Da(Fa(n,\"beforeLabel\",this,t))),Pa(e.lines,Fa(n,\"label\",this,t)),Pa(e.after,Da(Fa(n,\"afterLabel\",this,t))),s.push(e)})),s}getAfterBody(t,e){return Ra(Fa(e.callbacks,\"afterBody\",this,t))}getFooter(t,e){const{callbacks:i}=e,s=Fa(i,\"beforeFooter\",this,t),n=Fa(i,\"footer\",this,t),o=Fa(i,\"afterFooter\",this,t);let a=[];return a=Pa(a,Da(s)),a=Pa(a,Da(n)),a=Pa(a,Da(o)),a}_createItems(t){const e=this._active,i=this.chart.data,s=[],n=[],o=[];let a,r,l=[];for(a=0,r=e.length;a<r;++a)l.push(Ca(this.chart,e[a]));return t.filter&&(l=l.filter(((e,s,n)=>t.filter(e,s,n,i)))),t.itemSort&&(l=l.sort(((e,s)=>t.itemSort(e,s,i)))),u(l,(e=>{const i=Ia(t.callbacks,e);s.push(Fa(i,\"labelColor\",this,e)),n.push(Fa(i,\"labelPointStyle\",this,e)),o.push(Fa(i,\"labelTextColor\",this,e))})),this.labelColors=s,this.labelPointStyles=n,this.labelTextColors=o,this.dataPoints=l,l}update(t,e){const i=this.options.setContext(this.getContext()),s=this._active;let n,o=[];if(s.length){const t=Sa[i.position].call(this,s,this._eventPosition);o=this._createItems(i),this.title=this.getTitle(o,i),this.beforeBody=this.getBeforeBody(o,i),this.body=this.getBody(o,i),this.afterBody=this.getAfterBody(o,i),this.footer=this.getFooter(o,i);const e=this._size=Oa(this,i),a=Object.assign({},t,e),r=Ta(this.chart,i,a),l=La(i,a,r,this.chart);this.xAlign=r.xAlign,this.yAlign=r.yAlign,n={opacity:1,x:l.x,y:l.y,width:e.width,height:e.height,caretX:t.x,caretY:t.y}}else 0!==this.opacity&&(n={opacity:0});this._tooltipItems=o,this.$context=void 0,n&&this._resolveAnimations().update(this,n),t&&i.external&&i.external.call(this,{chart:this.chart,tooltip:this,replay:e})}drawCaret(t,e,i,s){const n=this.getCaretPosition(t,i,s);e.lineTo(n.x1,n.y1),e.lineTo(n.x2,n.y2),e.lineTo(n.x3,n.y3)}getCaretPosition(t,e,i){const{xAlign:s,yAlign:n}=this,{caretSize:o,cornerRadius:a}=i,{topLeft:r,topRight:l,bottomLeft:h,bottomRight:c}=wi(a),{x:d,y:u}=t,{width:f,height:g}=e;let p,m,b,x,_,y;return\"center\"===n?(_=u+g/2,\"left\"===s?(p=d,m=p-o,x=_+o,y=_-o):(p=d+f,m=p+o,x=_-o,y=_+o),b=p):(m=\"left\"===s?d+Math.max(r,h)+o:\"right\"===s?d+f-Math.max(l,c)-o:this.caretX,\"top\"===n?(x=u,_=x-o,p=m-o,b=m+o):(x=u+g,_=x+o,p=m+o,b=m-o),y=x),{x1:p,x2:m,x3:b,y1:x,y2:_,y3:y}}drawTitle(t,e,i){const s=this.title,n=s.length;let o,a,r;if(n){const l=Oi(i.rtl,this.x,this.width);for(t.x=Ea(this,i.titleAlign,i),e.textAlign=l.textAlign(i.titleAlign),e.textBaseline=\"middle\",o=Si(i.titleFont),a=i.titleSpacing,e.fillStyle=i.titleColor,e.font=o.string,r=0;r<n;++r)e.fillText(s[r],l.x(t.x),t.y+o.lineHeight/2),t.y+=o.lineHeight+a,r+1===n&&(t.y+=i.titleMarginBottom-a)}}_drawColorBox(t,e,i,s,n){const a=this.labelColors[i],r=this.labelPointStyles[i],{boxHeight:l,boxWidth:h}=n,c=Si(n.bodyFont),d=Ea(this,\"left\",n),u=s.x(d),f=l<c.lineHeight?(c.lineHeight-l)/2:0,g=e.y+f;if(n.usePointStyle){const e={radius:Math.min(h,l)/2,pointStyle:r.pointStyle,rotation:r.rotation,borderWidth:1},i=s.leftForLtr(u,h)+h/2,o=g+l/2;t.strokeStyle=n.multiKeyBackground,t.fillStyle=n.multiKeyBackground,Le(t,e,i,o),t.strokeStyle=a.borderColor,t.fillStyle=a.backgroundColor,Le(t,e,i,o)}else{t.lineWidth=o(a.borderWidth)?Math.max(...Object.values(a.borderWidth)):a.borderWidth||1,t.strokeStyle=a.borderColor,t.setLineDash(a.borderDash||[]),t.lineDashOffset=a.borderDashOffset||0;const e=s.leftForLtr(u,h),i=s.leftForLtr(s.xPlus(u,1),h-2),r=wi(a.borderRadius);Object.values(r).some((t=>0!==t))?(t.beginPath(),t.fillStyle=n.multiKeyBackground,He(t,{x:e,y:g,w:h,h:l,radius:r}),t.fill(),t.stroke(),t.fillStyle=a.backgroundColor,t.beginPath(),He(t,{x:i,y:g+1,w:h-2,h:l-2,radius:r}),t.fill()):(t.fillStyle=n.multiKeyBackground,t.fillRect(e,g,h,l),t.strokeRect(e,g,h,l),t.fillStyle=a.backgroundColor,t.fillRect(i,g+1,h-2,l-2))}t.fillStyle=this.labelTextColors[i]}drawBody(t,e,i){const{body:s}=this,{bodySpacing:n,bodyAlign:o,displayColors:a,boxHeight:r,boxWidth:l,boxPadding:h}=i,c=Si(i.bodyFont);let d=c.lineHeight,f=0;const g=Oi(i.rtl,this.x,this.width),p=function(i){e.fillText(i,g.x(t.x+f),t.y+d/2),t.y+=d+n},m=g.textAlign(o);let b,x,_,y,v,M,w;for(e.textAlign=o,e.textBaseline=\"middle\",e.font=c.string,t.x=Ea(this,m,i),e.fillStyle=i.bodyColor,u(this.beforeBody,p),f=a&&\"right\"!==m?\"center\"===o?l/2+h:l+2+h:0,y=0,M=s.length;y<M;++y){for(b=s[y],x=this.labelTextColors[y],e.fillStyle=x,u(b.before,p),_=b.lines,a&&_.length&&(this._drawColorBox(e,t,y,g,i),d=Math.max(c.lineHeight,r)),v=0,w=_.length;v<w;++v)p(_[v]),d=c.lineHeight;u(b.after,p)}f=0,d=c.lineHeight,u(this.afterBody,p),t.y-=n}drawFooter(t,e,i){const s=this.footer,n=s.length;let o,a;if(n){const r=Oi(i.rtl,this.x,this.width);for(t.x=Ea(this,i.footerAlign,i),t.y+=i.footerMarginTop,e.textAlign=r.textAlign(i.footerAlign),e.textBaseline=\"middle\",o=Si(i.footerFont),e.fillStyle=i.footerColor,e.font=o.string,a=0;a<n;++a)e.fillText(s[a],r.x(t.x),t.y+o.lineHeight/2),t.y+=o.lineHeight+i.footerSpacing}}drawBackground(t,e,i,s){const{xAlign:n,yAlign:o}=this,{x:a,y:r}=t,{width:l,height:h}=i,{topLeft:c,topRight:d,bottomLeft:u,bottomRight:f}=wi(s.cornerRadius);e.fillStyle=s.backgroundColor,e.strokeStyle=s.borderColor,e.lineWidth=s.borderWidth,e.beginPath(),e.moveTo(a+c,r),\"top\"===o&&this.drawCaret(t,e,i,s),e.lineTo(a+l-d,r),e.quadraticCurveTo(a+l,r,a+l,r+d),\"center\"===o&&\"right\"===n&&this.drawCaret(t,e,i,s),e.lineTo(a+l,r+h-f),e.quadraticCurveTo(a+l,r+h,a+l-f,r+h),\"bottom\"===o&&this.drawCaret(t,e,i,s),e.lineTo(a+u,r+h),e.quadraticCurveTo(a,r+h,a,r+h-u),\"center\"===o&&\"left\"===n&&this.drawCaret(t,e,i,s),e.lineTo(a,r+c),e.quadraticCurveTo(a,r,a+c,r),e.closePath(),e.fill(),s.borderWidth>0&&e.stroke()}_updateAnimationTarget(t){const e=this.chart,i=this.$animations,s=i&&i.x,n=i&&i.y;if(s||n){const i=Sa[t.position].call(this,this._active,this._eventPosition);if(!i)return;const o=this._size=Oa(this,t),a=Object.assign({},i,this._size),r=Ta(e,t,a),l=La(t,a,r,e);s._to===l.x&&n._to===l.y||(this.xAlign=r.xAlign,this.yAlign=r.yAlign,this.width=o.width,this.height=o.height,this.caretX=i.x,this.caretY=i.y,this._resolveAnimations().update(this,l))}}_willRender(){return!!this.opacity}draw(t){const e=this.options.setContext(this.getContext());let i=this.opacity;if(!i)return;this._updateAnimationTarget(e);const s={width:this.width,height:this.height},n={x:this.x,y:this.y};i=Math.abs(i)<.001?0:i;const o=ki(e.padding),a=this.title.length||this.beforeBody.length||this.body.length||this.afterBody.length||this.footer.length;e.enabled&&a&&(t.save(),t.globalAlpha=i,this.drawBackground(n,t,s,e),Ai(t,e.textDirection),n.y+=o.top,this.drawTitle(n,t,e),this.drawBody(n,t,e),this.drawFooter(n,t,e),Ti(t,e.textDirection),t.restore())}getActiveElements(){return this._active||[]}setActiveElements(t,e){const i=this._active,s=t.map((({datasetIndex:t,index:e})=>{const i=this.chart.getDatasetMeta(t);if(!i)throw new Error(\"Cannot find a dataset at index \"+t);return{datasetIndex:t,element:i.data[e],index:e}})),n=!f(i,s),o=this._positionChanged(s,e);(n||o)&&(this._active=s,this._eventPosition=e,this._ignoreReplayEvents=!0,this.update(!0))}handleEvent(t,e,i=!0){if(e&&this._ignoreReplayEvents)return!1;this._ignoreReplayEvents=!1;const s=this.options,n=this._active||[],o=this._getActiveElements(t,n,e,i),a=this._positionChanged(o,t),r=e||!f(o,n)||a;return r&&(this._active=o,(s.enabled||s.external)&&(this._eventPosition={x:t.x,y:t.y},this.update(!0,e))),r}_getActiveElements(t,e,i,s){const n=this.options;if(\"mouseout\"===t.type)return[];if(!s)return e.filter((t=>this.chart.data.datasets[t.datasetIndex]&&void 0!==this.chart.getDatasetMeta(t.datasetIndex).controller.getParsed(t.index)));const o=this.chart.getElementsAtEventForMode(t,n.mode,n,i);return n.reverse&&o.reverse(),o}_positionChanged(t,e){const{caretX:i,caretY:s,options:n}=this,o=Sa[n.position].call(this,t,e);return!1!==o&&(i!==o.x||s!==o.y)}}var Ba={id:\"tooltip\",_element:Va,positioners:Sa,afterInit(t,e,i){i&&(t.tooltip=new Va({chart:t,options:i}))},beforeUpdate(t,e,i){t.tooltip&&t.tooltip.initialize(i)},reset(t,e,i){t.tooltip&&t.tooltip.initialize(i)},afterDraw(t){const e=t.tooltip;if(e&&e._willRender()){const i={tooltip:e};if(!1===t.notifyPlugins(\"beforeTooltipDraw\",{...i,cancelable:!0}))return;e.draw(t.ctx),t.notifyPlugins(\"afterTooltipDraw\",i)}},afterEvent(t,e){if(t.tooltip){const i=e.replay;t.tooltip.handleEvent(e.event,i,e.inChartArea)&&(e.changed=!0)}},defaults:{enabled:!0,external:null,position:\"average\",backgroundColor:\"rgba(0,0,0,0.8)\",titleColor:\"#fff\",titleFont:{weight:\"bold\"},titleSpacing:2,titleMarginBottom:6,titleAlign:\"left\",bodyColor:\"#fff\",bodySpacing:2,bodyFont:{},bodyAlign:\"left\",footerColor:\"#fff\",footerSpacing:2,footerMarginTop:6,footerFont:{weight:\"bold\"},footerAlign:\"left\",padding:6,caretPadding:2,caretSize:5,cornerRadius:6,boxHeight:(t,e)=>e.bodyFont.size,boxWidth:(t,e)=>e.bodyFont.size,multiKeyBackground:\"#fff\",displayColors:!0,boxPadding:0,borderColor:\"rgba(0,0,0,0)\",borderWidth:0,animation:{duration:400,easing:\"easeOutQuart\"},animations:{numbers:{type:\"number\",properties:[\"x\",\"y\",\"width\",\"height\",\"caretX\",\"caretY\"]},opacity:{easing:\"linear\",duration:200}},callbacks:za},defaultRoutes:{bodyFont:\"font\",footerFont:\"font\",titleFont:\"font\"},descriptors:{_scriptable:t=>\"filter\"!==t&&\"itemSort\"!==t&&\"external\"!==t,_indexable:!1,callbacks:{_scriptable:!1,_indexable:!1},animation:{_fallback:!1},animations:{_fallback:\"animation\"}},additionalOptionScopes:[\"interaction\"]};return An.register(Yn,jo,fo,t),An.helpers={...Wi},An._adapters=Rn,An.Animation=Cs,An.Animations=Os,An.animator=xt,An.controllers=en.controllers.items,An.DatasetController=Ns,An.Element=Hs,An.elements=fo,An.Interaction=Xi,An.layouts=as,An.platforms=Ss,An.Scale=Js,An.Ticks=ae,Object.assign(An,Yn,jo,fo,t,Ss),An.Chart=An,\"undefined\"!=typeof window&&(window.Chart=An),An}));\n//# sourceMappingURL=chart.umd.js.map\n";
@@ -65,50 +59,17 @@ function buildCfTestYaml(host, uuid) {
 }
 
 
-// 【导出修复】运行时配置：由 Worker 的环境变量(bindings)提供。
-//   为什么不能写成顶层 `env.X`：env 只是 fetch(request, env) 的参数，
-//   模块顶层没有它，会在加载阶段抛 ReferenceError。
-//   _CFG 指向它，并留一个可在测试中注入的入口（见 __setCfg）。
-let _CFG = (typeof globalThis !== 'undefined' && globalThis.__WORKER_ENV) || {};
-function __setCfg(e) { _CFG = e || {}; }
-function _cfg(key, fallback) {
-  const v = _CFG && _CFG[key];
-  return (v === undefined || v === null || v === '') ? fallback : v;
-}
-
-// 【导出修复】管理页模板里引用的设备/隧道变量。
-//   原实现写死了真实机型与系统版本，脱敏后成了未定义变量 ——
-//   模板字符串在服务端求值时就会抛 ReferenceError，整页打不开。
-//   这里给出中性默认值；运行时可用同名环境变量覆盖。
-let TUNNEL_ID_PREFIX = _cfg('TUNNEL_ID_PREFIX', '--------');
-let DEVICE_NAME = _cfg('DEVICE_NAME', '未上报');
-let SOC = _cfg('SOC', '未上报');
-let CARRIER = _cfg('CARRIER', '未上报');
-let DEVICE_BRAND = _cfg('DEVICE_BRAND', '未上报');
-let DEVICE_MODEL = _cfg('DEVICE_MODEL', '未上报');
-let DEVICE_CODENAME = _cfg('DEVICE_CODENAME', '未上报');
-let ANDROID_VER = _cfg('ANDROID_VER', '未上报');
-let ADMIN_PASSWORD = _cfg('ADMIN_PASSWORD', 'CHANGE_ME');
-let SYNC_SECRET = _cfg('SYNC_SECRET', 'CHANGE_ME');
-// 【导出修复】WORKER_HOST 同样是运行时配置：缓存键与探活地址都要用它。
-//   必须定义在 _cfg 之后 —— 顶层模板字符串求值时它要已经可用。
-let WORKER_HOST = _cfg('WORKER_HOST', 'worker.example.com');
-// 【对外发布副本】渲染期会用到的隧道域名（页面模板里写着 ${TUNNEL_HOST}）：
-//   构建期那条部署路径会把它替换成字面值；走 Cloudflare 绑定部署时
-//   必须存在这个同名变量，否则渲染页面会 ReferenceError。
-let TUNNEL_HOST = _cfg('TUNNEL_HOST', 'vpn.example.com');
-const NOTICE_NAME = "※请优先选择低延迟接入点※";
+const ADMIN_PASSWORD = (env.ADMIN_PASSWORD || "CHANGE_ME");
+const SYNC_SECRET = (env.SYNC_SECRET || "CHANGE_ME");
 
 // 辅助函数：根据 Token 确定性生成用户专属 UUID (保证与手机端一致)
 function tokenToUUID(token) {
-  // 【导出修复】下面是固定用户的 UUID 映射。原值已脱敏，
-  //   这里给的是【格式合法且互不相同】的占位值 —— 能跑，但请换成你自己的。
-  if (!token) return '00000000-0000-4000-8000-000000000000';
+  if (!token) return '${USER_UUID}';
   const fixedMap = {
-    'USER_TOKEN_1': '00000000-0000-4000-8000-000000000011',
-    'USER_TOKEN_2': _cfg('VLESS_UUID', '00000000-0000-0000-0000-000000000000'),
-    'USER_TOKEN_3': '00000000-0000-4000-8000-000000000013',
-    'USER_TOKEN_4': '00000000-0000-4000-8000-000000000014'
+    'USER_TOKEN_1': '${USER_UUID}',
+    'USER_TOKEN_2': `env.VLESS_UUID`,
+    'USER_TOKEN_3': '${USER_UUID}',
+    'USER_TOKEN_4': '${USER_UUID}'
   };
   if (fixedMap[token]) return fixedMap[token];
 
@@ -140,10 +101,7 @@ function getUserStoreVersion(userStore) {
 // 辅助函数：动态编译生成与手机 Xray 运行架构 100% 匹配的完整 JSON 配置
 function generatePhoneXrayConfig(userStore) {
   const clients = [
-    // 【导出修复】shared_legacy 是历史共享用户的兼容位，其流量会被
-    //   归属到某个现有用户。全新部署用不到它，可以整行删掉。
-    //   这里给出一个合法且中立的占位 UUID（务必换成你自己的，或删掉本行）。
-    { "id": "00000000-0000-4000-8000-000000000001", "email": "shared_legacy", "level": 0 }
+    { "id": "${USER_UUID}", "email": "shared_legacy", "level": 0 }
   ];
   for (const token in userStore) {
     const u = userStore[token];
@@ -161,7 +119,7 @@ function generatePhoneXrayConfig(userStore) {
     //   为什么放这里: 手机本来就定期拉这份配置, 不用再加一个接口;
     //   两边取同一个值, "当日"的边界才不会各算各的。
     //   xray 会忽略这个自定义字段（已实测 -test 通过）。
-    "dayTz": _dayTz(),
+    "dayTz": DAY_TZ,
     "log": { "loglevel": "warning" },
     "dns": { "servers": ["8.8.8.8", "1.1.1.1", "localhost"] },
     "api": { "tag": "api", "services": ["StatsService", "HandlerService"] },
@@ -386,6 +344,31 @@ const RAW_NODES = [
   { name: "节点所在地-接入点4-04", server: "${NODE_55_IP}", region: "R4", path: "/jp" }
 ];
 
+// ==========================================
+// 美国节点清单（按顺序: 美国直连、美国01 ~ 美国12 全节点）
+// ==========================================
+const US_CF_HOST = "usa.example.stream";
+const US_CF_IPS = [
+  "172.66.0.1", "${CF_ANCHOR_3}", "108.162.193.1", "103.21.244.1",
+  "173.245.49.1", "162.159.0.1", "108.162.192.1", "${CF_ANCHOR_2}",
+  "104.17.1.1", "104.26.0.1", "188.114.96.1", "172.67.153.107"
+];
+
+const US_NODES = [
+  { name: "美国直连", server: "107.172.23.174", ip: "107.172.23.174", region: "US", path: "/reality", type: "reality", host: "gateway.icloud.com", sni: "gateway.icloud.com", port: 443 },
+  ...US_CF_IPS.map((ip, i) => ({
+    name: `美国${String(i + 1).padStart(2, '0')}`,
+    server: ip,
+    ip: ip,
+    region: "US",
+    path: "/us",
+    host: US_CF_HOST,
+    type: "tunnel",
+    port: 443,
+    sni: US_CF_HOST
+  }))
+];
+
 // ============================================================
 // 【2026-10-04 用户要求】节点显示名全线统一为:
 //     节点所在地-<实测落点三位码>-<两位序号>        例: 节点所在地-POP1-01 / 节点所在地-POP2-33
@@ -429,7 +412,7 @@ function buildNodeDisplayNames(coloByIp) {
 // 读本机房共享快照里的实测落点(ip -> colo)。读不到就返回空对象, 由兜底逻辑补。
 async function getNodeColoMap() {
   try {
-    const r = await caches.default.match(new URL(`https://${WORKER_HOST}/internal_cache/stats_latest`));
+    const r = await caches.default.match(new URL(`https://env.WORKER_HOST/internal_cache/stats_latest`));
     if (r) {
       const s = await r.json();
       const m = {};
@@ -455,7 +438,7 @@ async function getNodeColoMap() {
 // 规则: 凡是"一个请求写、另一个请求读"的状态, 一律走下面这两个函数。
 //       Cache API 在同一机房内所有 isolate 间共享, 免费且无操作次数限制。
 // ================================================================
-const CACHE_ORIGIN = `https://${WORKER_HOST}/internal_cache/`;
+const CACHE_ORIGIN = `https://env.WORKER_HOST/internal_cache/`;
 
 async function cacheGetJson(name) {
   try {
@@ -484,8 +467,176 @@ async function cachePutJson(name, obj, maxAge) {
 }
 
 let globalMemoryStats = null;
-let lastCmdReadAt = 0;
-let lastCmdCache = null;
+// ============================================================
+// 【2026-10-08 方案B】美国 VPS 出口统计接入
+//   VPS agent 每 10 秒上报: 每用户累计+实时速率(按 UUID)、整机网卡吞吐、当日/峰值
+//   落本机房 Cache API + isolate 内存（零 KV 写入）; 大屏 /api/live 与 /api/stats_data 透传
+// ============================================================
+let globalMemoryUs = null;
+const US_CACHE_KEY = 'us_latest_v1';
+// 跨机房关键: 美国 VPS 的推送只会落在美国机房; 其他机房用这个只读口按需拉取
+// 注意: Workers 禁止 fetch 裸 IP(error 1003), 故用域名访问; 请求用 HMAC(ts+nonce+sig) 鉴权.
+// 优先自有域名(给 example.stream 加 DNS-only 的 us 记录后自动生效), 次选公共通配 DNS 兜底.
+const US_VPS_STATS_URLS = [
+  'http://us.example.stream:8080/us_stats',
+  'http://107-172-23-174.sslip.io:8080/us_stats'
+];
+const US_INSTALLER_B64 = 'IyEvYmluL3NoCiMgPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09CiMgSGVsaW9zIOe+juWbvSBWUFMg5Ye65Y+jIMK3IOa1gemHj+e7n+iuoeaOpeWFpeWuieijheWZqCAgKDIwMjYtMTAtMDgpCiMgICDliY3mj5A6IHJvb3Qg5p2D6ZmQOyBYcmF5IChWTEVTUytSZWFsaXR5KSDlt7LlnKjov5DooYwKIyAgIOWBmuS7gOS5iDoKIyAgICAgMSkg57uZIFhyYXkg5omT5byAIHN0YXRzIC8gYXBpIC8gcG9saWN5LCDkuLrmr4/kuKrlrqLmiLfnq6/ooaUgZW1haWwoPeWFtiBVVUlEKQojICAgICAyKSDlronoo4Xph4fpm4YgYWdlbnQgKHN5c3RlbWQg5bi46am7KTog5q+PIDEwIOenkuivu+avj+eUqOaIt+a1gemHjyArIOe9keWNoeWQnuWQkAojICAgICAzKSDkuIrmiqXlpKflsY8gV29ya2VyIC9hcGkvcmVwb3J0X3VzOyDmr4/ova7lho3ooaXmipXkuIDkuKrkuprmtLIgQ0Yg5py65oi/LAojICAgICAgICDorqnlm73lhoUv5Lqa5rSy6KeC5LyX5omA5Zyo5py65oi/5Lmf6IO96K+75Yiw5paw6bKc5pWw5o2uICjkuI7miYvmnLrnq6/lkIzmnLrliLYpCiMgICDlm57mu5o6IOWuieijhee7k+adn+S8muaJk+WNsOWbnua7muWRveS7pDsg6YWN572u5pyJ5bim5pe26Ze05oiz55qE5aSH5Lu9CiMgPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09CnNldCAtZXUKCmlmIFsgIiQoaWQgLXUpIiAhPSAiMCIgXTsgdGhlbgogIGVjaG8gIlshXSDlv4Xpobvku6Ugcm9vdCDov5DooYwiOyBleGl0IDEKZmkKOiAiJHtXT1JLRVJfVVJMOj/nvLrlsJEgV09SS0VSX1VSTCAo55Sx5byV5a+86ISa5pys5rOo5YWlKX0iCjogIiR7U1lOQ19TRUNSRVQ6P+e8uuWwkSBTWU5DX1NFQ1JFVCAo55Sx5byV5a+86ISa5pys5rOo5YWlKX0iCgpjb21tYW5kIC12IHB5dGhvbjMgPi9kZXYvbnVsbCAyPiYxIHx8IHsKICBlY2hvICJbKl0g5a6J6KOFIHB5dGhvbjMgLi4uIgogIGFwdC1nZXQgdXBkYXRlIC15ID4vZGV2L251bGwgMj4mMSB8fCB0cnVlCiAgREVCSUFOX0ZST05URU5EPW5vbmludGVyYWN0aXZlIGFwdC1nZXQgaW5zdGFsbCAteSBweXRob24zID4vZGV2L251bGwKfQoKQ09ORklHPSIiCmZvciBwIGluIC91c3IvbG9jYWwvZXRjL3hyYXkvY29uZmlnLmpzb24gL2V0Yy94cmF5L2NvbmZpZy5qc29uIC9vcHQveHJheS9jb25maWcuanNvbjsgZG8KICBpZiBbIC1mICIkcCIgXTsgdGhlbiBDT05GSUc9IiRwIjsgYnJlYWs7IGZpCmRvbmUKWyAtbiAiJENPTkZJRyIgXSB8fCB7IGVjaG8gIlshXSDmib7kuI3liLAgWHJheSBjb25maWcuanNvbiwg6K+35omL5Yqo5oyH5a6a5ZCO5YaN6LeRIjsgZXhpdCAxOyB9CgpYUkFZX0JJTj0iIgpmb3IgYiBpbiAvdXNyL2xvY2FsL2Jpbi94cmF5IC91c3IvYmluL3hyYXkgL29wdC94cmF5L3hyYXk7IGRvCiAgaWYgWyAteCAiJGIiIF07IHRoZW4gWFJBWV9CSU49IiRiIjsgYnJlYWs7IGZpCmRvbmUKWyAtbiAiJFhSQVlfQklOIiBdIHx8IHsgZWNobyAiWyFdIOaJvuS4jeWIsCB4cmF5IOWPr+aJp+ihjOaWh+S7tiI7IGV4aXQgMTsgfQoKU1RBTVA9JChkYXRlICslWSVtJWRfJUglTSVTKQpjcCAtZiAiJENPTkZJRyIgIiRDT05GSUcuYmFrX3VzX3N0YXRzXyRTVEFNUCIKZWNobyAiW09LXSDlt7LlpIfku73phY3nva46ICRDT05GSUcuYmFrX3VzX3N0YXRzXyRTVEFNUCIKCmVjaG8gIlsqXSDms6jlhaUgc3RhdHMvYXBpL3BvbGljeSDkuI7lrqLmiLfnq68gZW1haWwgLi4uIgpQQVRDSF9PVVQ9JChweXRob24zIC0gIiRDT05GSUciIDw8J1BZRU9GJwppbXBvcnQganNvbiwgc3lzCgpwYXRoID0gc3lzLmFyZ3ZbMV0KY2ZnID0ganNvbi5sb2FkKG9wZW4ocGF0aCwgZW5jb2Rpbmc9J3V0Zi04JykpCgojIDEpIOmhtuWxgiBzdGF0cyAvIGFwaQpjZmcuc2V0ZGVmYXVsdCgnc3RhdHMnLCB7fSkKYXBpID0gY2ZnLmdldCgnYXBpJykKaWYgbm90IGlzaW5zdGFuY2UoYXBpLCBkaWN0KToKICAgIGFwaSA9IHt9CmFwaS5zZXRkZWZhdWx0KCd0YWcnLCAnYXBpJykKc3ZjcyA9IGFwaS5nZXQoJ3NlcnZpY2VzJykKaWYgbm90IGlzaW5zdGFuY2Uoc3ZjcywgbGlzdCk6CiAgICBzdmNzID0gW10Kc3ZjX2FkZGVkID0gMApmb3IgcyBpbiAoJ1N0YXRzU2VydmljZScsKToKICAgIGlmIHMgbm90IGluIHN2Y3M6CiAgICAgICAgc3Zjcy5hcHBlbmQocykKICAgICAgICBzdmNfYWRkZWQgPSAxCmFwaVsnc2VydmljZXMnXSA9IHN2Y3MKY2ZnWydhcGknXSA9IGFwaQoKIyAyKSBwb2xpY3k6IOaJk+W8gOavj+eUqOaIt+S4iuS4i+ihjOe7n+iuoSAobGV2ZWwgMCkKcG9sID0gY2ZnLmdldCgncG9saWN5JykKaWYgbm90IGlzaW5zdGFuY2UocG9sLCBkaWN0KToKICAgIHBvbCA9IHt9CmxldmVscyA9IHBvbC5nZXQoJ2xldmVscycpCmlmIG5vdCBpc2luc3RhbmNlKGxldmVscywgZGljdCk6CiAgICBsZXZlbHMgPSB7fQpsdmwwID0gbGV2ZWxzLmdldCgnMCcpCmlmIG5vdCBpc2luc3RhbmNlKGx2bDAsIGRpY3QpOgogICAgbHZsMCA9IHt9CnBvbF9jaGFuZ2VkID0gMAppZiBsdmwwLmdldCgnc3RhdHNVc2VyVXBsaW5rJykgaXMgbm90IFRydWUgb3IgbHZsMC5nZXQoJ3N0YXRzVXNlckRvd25saW5rJykgaXMgbm90IFRydWU6CiAgICBwb2xfY2hhbmdlZCA9IDEKbHZsMFsnc3RhdHNVc2VyVXBsaW5rJ10gPSBUcnVlCmx2bDBbJ3N0YXRzVXNlckRvd25saW5rJ10gPSBUcnVlCmxldmVsc1snMCddID0gbHZsMApwb2xbJ2xldmVscyddID0gbGV2ZWxzCnBvbC5zZXRkZWZhdWx0KCdzeXN0ZW0nLCB7fSkKY2ZnWydwb2xpY3knXSA9IHBvbAoKIyAzKSBhcGkg5YWl56uZICgxMjcuMC4wLjE6MTAwODUpCmluYm91bmRzID0gY2ZnLmdldCgnaW5ib3VuZHMnKQppZiBub3QgaXNpbnN0YW5jZShpbmJvdW5kcywgbGlzdCk6CiAgICBpbmJvdW5kcyA9IFtdCmhhc19hcGkgPSBGYWxzZQpmb3IgaWIgaW4gaW5ib3VuZHM6CiAgICBpZiBub3QgaXNpbnN0YW5jZShpYiwgZGljdCk6CiAgICAgICAgY29udGludWUKICAgIGlmIGliLmdldCgndGFnJykgPT0gJ2FwaScgb3IgKGliLmdldCgncHJvdG9jb2wnKSA9PSAnZG9rb2RlbW8tZG9vcicgYW5kIHN0cihpYi5nZXQoJ3BvcnQnKSkgPT0gJzEwMDg1Jyk6CiAgICAgICAgaGFzX2FwaSA9IFRydWUKICAgICAgICBicmVhawppbmJvdW5kX2FkZGVkID0gMAppZiBub3QgaGFzX2FwaToKICAgIGluYm91bmRzLmFwcGVuZCh7CiAgICAgICAgImxpc3RlbiI6ICIxMjcuMC4wLjEiLAogICAgICAgICJwb3J0IjogMTAwODUsCiAgICAgICAgInByb3RvY29sIjogImRva29kZW1vLWRvb3IiLAogICAgICAgICJzZXR0aW5ncyI6IHsiYWRkcmVzcyI6ICIxMjcuMC4wLjEifSwKICAgICAgICAidGFnIjogImFwaSIKICAgIH0pCiAgICBpbmJvdW5kX2FkZGVkID0gMQpjZmdbJ2luYm91bmRzJ10gPSBpbmJvdW5kcwoKIyA0KSDot6/nlLHop4TliJk6IGFwaSDlhaXnq5kgLT4gYXBpIOacjeWKoQpyb3V0aW5nID0gY2ZnLmdldCgncm91dGluZycpCmlmIG5vdCBpc2luc3RhbmNlKHJvdXRpbmcsIGRpY3QpOgogICAgcm91dGluZyA9IHt9CnJ1bGVzID0gcm91dGluZy5nZXQoJ3J1bGVzJykKaWYgbm90IGlzaW5zdGFuY2UocnVsZXMsIGxpc3QpOgogICAgcnVsZXMgPSBbXQpoYXNfcnVsZSA9IGFueShpc2luc3RhbmNlKHIsIGRpY3QpIGFuZCByLmdldCgnb3V0Ym91bmRUYWcnKSA9PSAnYXBpJyBmb3IgciBpbiBydWxlcykKcnVsZV9hZGRlZCA9IDAKaWYgbm90IGhhc19ydWxlOgogICAgcnVsZXMuaW5zZXJ0KDAsIHsidHlwZSI6ICJmaWVsZCIsICJpbmJvdW5kVGFnIjogWyJhcGkiXSwgIm91dGJvdW5kVGFnIjogImFwaSJ9KQogICAgcnVsZV9hZGRlZCA9IDEKcm91dGluZ1sncnVsZXMnXSA9IHJ1bGVzCmNmZ1sncm91dGluZyddID0gcm91dGluZwoKIyA1KSDmr4/kuKrlrqLmiLfnq6/ooaUgZW1haWwgKOe8uuecgeeUqOWFtiBVVUlEKSwg5L2c5Li657uf6K6hIGtleQphZGRlZCA9IDAKZm9yIGliIGluIGluYm91bmRzOgogICAgaWYgbm90IGlzaW5zdGFuY2UoaWIsIGRpY3QpOgogICAgICAgIGNvbnRpbnVlCiAgICBzdCA9IGliLmdldCgnc2V0dGluZ3MnKQogICAgaWYgbm90IGlzaW5zdGFuY2Uoc3QsIGRpY3QpOgogICAgICAgIGNvbnRpbnVlCiAgICBjbGllbnRzID0gc3QuZ2V0KCdjbGllbnRzJykKICAgIGlmIG5vdCBpc2luc3RhbmNlKGNsaWVudHMsIGxpc3QpOgogICAgICAgIGNvbnRpbnVlCiAgICBmb3IgYyBpbiBjbGllbnRzOgogICAgICAgIGlmIGlzaW5zdGFuY2UoYywgZGljdCkgYW5kIG5vdCBjLmdldCgnZW1haWwnKToKICAgICAgICAgICAgY1snZW1haWwnXSA9IHN0cihjLmdldCgnaWQnKSBvciAnJykKICAgICAgICAgICAgaWYgY1snZW1haWwnXToKICAgICAgICAgICAgICAgIGFkZGVkICs9IDEKCmpzb24uZHVtcChjZmcsIG9wZW4ocGF0aCwgJ3cnLCBlbmNvZGluZz0ndXRmLTgnKSwgZW5zdXJlX2FzY2lpPUZhbHNlLCBpbmRlbnQ9MikKY2hhbmdlZCA9IDEgaWYgKHN2Y19hZGRlZCBvciBwb2xfY2hhbmdlZCBvciBpbmJvdW5kX2FkZGVkIG9yIHJ1bGVfYWRkZWQgb3IgYWRkZWQpIGVsc2UgMApwcmludCgiY2hhbmdlZD0lZCBlbWFpbHNfYWRkZWQ9JWQgc2VydmljZXM9JXMiICUgKGNoYW5nZWQsIGFkZGVkLCAnLCcuam9pbihzdmNzKSkpClBZRU9GCikKZWNobyAiWypdICR7UEFUQ0hfT1VUOi1wYXRjaCBvdXRwdXQgZW1wdHl9IgoKcHl0aG9uMyAtYyAiaW1wb3J0IGpzb247anNvbi5sb2FkKG9wZW4oJyRDT05GSUcnLGVuY29kaW5nPSd1dGYtOCcpKSIgfHwgewogIGVjaG8gIlshXSDphY3nva4gSlNPTiDmoKHpqozlpLHotKUsIOivt+eUqOWkh+S7veaBouWkjSI7IGV4aXQgMTsgfQplY2hvICJbT0tdIOmFjee9riBKU09OIOagoemqjOmAmui/hyIKClNWQz0iIgpmb3IgcyBpbiB4cmF5IHhyYXktY29yZTsgZG8KICBpZiBzeXN0ZW1jdGwgbGlzdC11bml0LWZpbGVzIDI+L2Rldi9udWxsIHwgZ3JlcCAtcUUgIl4ke3N9XC5zZXJ2aWNlIjsgdGhlbiBTVkM9IiR7c30uc2VydmljZSI7IGJyZWFrOyBmaQpkb25lClsgLW4gIiRTVkMiIF0gfHwgU1ZDPXhyYXkuc2VydmljZQpjYXNlICIkUEFUQ0hfT1VUIiBpbgogICpjaGFuZ2VkPTEqKQogICAgZWNobyAiWypdIOmFjee9ruacieWPmOWMliwg6YeN5ZCvIFhyYXkgLi4uIgogICAgc3lzdGVtY3RsIHJlc3RhcnQgIiRTVkMiCiAgICBzbGVlcCAzCiAgICBzeXN0ZW1jdGwgaXMtYWN0aXZlICIkU1ZDIiA+L2Rldi9udWxsIDI+JjEgfHwgewogICAgICBlY2hvICJbIV0gWHJheSDph43lkK/lpLHotKUsIOafpeecizogam91cm5hbGN0bCAtdSAkU1ZDIC1uIDQwIjsgZXhpdCAxOyB9CiAgICBlY2hvICJbT0tdIFhyYXkg6L+Q6KGM5LitOiAkU1ZDIgogICAgOzsKICAqKQogICAgZWNobyAiW2ldIOmFjee9ruaXoOWPmOWMliwg6Lez6L+HIFhyYXkg6YeN5ZCvICjkuI3lvbHlk43njrDmnInov57mjqUpIgogICAgOzsKZXNhYwoKZWNobyAiWypdIOmqjOivgee7n+iuoeaOpeWPoyAuLi4iClNUQVRTX09VVD0kKCIkWFJBWV9CSU4iIGFwaSBzdGF0c3F1ZXJ5IC0tc2VydmVyPTEyNy4wLjAuMToxMDA4NSAtcGF0dGVybiAndXNlcj4+PicgMj4vZGV2L251bGwgfHwgdHJ1ZSkKaWYgWyAteiAiJFNUQVRTX09VVCIgXTsgdGhlbgogIFNUQVRTX09VVD0kKCIkWFJBWV9CSU4iIGFwaSBzdGF0c3F1ZXJ5IC0tc2VydmVyPTEyNy4wLjAuMToxMDA4NSAtLXBhdHRlcm5zICd1c2VyPj4+JyAyPi9kZXYvbnVsbCB8fCB0cnVlKQpmaQppZiBbIC1uICIkU1RBVFNfT1VUIiBdOyB0aGVuCiAgZWNobyAiW09LXSBzdGF0c3F1ZXJ5IOWPr+eUqCAo6IqC6YCJKToiCiAgcHJpbnRmICclc1xuJyAiJFNUQVRTX09VVCIgfCBoZWFkIC1jIDYwMDsgZWNobwplbHNlCiAgZWNobyAiW2ldIHN0YXRzcXVlcnkg5pqC5peg6L6T5Ye6IOKAlOKAlCDmsqHmnInmtYHph4/ml7bmraPluLgsIGFnZW50IOS8muaMgee7remHjeivlSIKZmkKCm1rZGlyIC1wIC91c3IvbG9jYWwvbGliL2hlbGlvcy11cyAvdmFyL2xpYi9oZWxpb3MtdXMKCmNhdCA+IC91c3IvbG9jYWwvbGliL2hlbGlvcy11cy9hZ2VudC5weSA8PCdBR0VOVEVPRicKIyEvdXNyL2Jpbi9lbnYgcHl0aG9uMwojIC0qLSBjb2Rpbmc6IHV0Zi04IC0qLQoiIiJIZWxpb3MgVVMgbm9kZSBhZ2VudDogWHJheSDmr4/nlKjmiLfnu5/orqEgKyDnvZHljaHlkJ7lkJAgLT4g5aSn5bGPIFdvcmtlci4iIiIKaW1wb3J0IGhhc2hsaWIKaW1wb3J0IGhtYWMgYXMgaG1hY2xpYgppbXBvcnQganNvbgppbXBvcnQgb3MKaW1wb3J0IHJlCmltcG9ydCBzb2NrZXQKaW1wb3J0IHN1YnByb2Nlc3MKaW1wb3J0IHRocmVhZGluZwppbXBvcnQgdGltZQppbXBvcnQgdXJsbGliLnJlcXVlc3QKZnJvbSBkYXRldGltZSBpbXBvcnQgZGF0ZXRpbWUsIHRpbWV6b25lCmZyb20gaHR0cC5zZXJ2ZXIgaW1wb3J0IEJhc2VIVFRQUmVxdWVzdEhhbmRsZXIsIFRocmVhZGluZ0hUVFBTZXJ2ZXIKZnJvbSB1cmxsaWIucGFyc2UgaW1wb3J0IHVybHBhcnNlLCBwYXJzZV9xcwoKdHJ5OgogICAgZnJvbSB6b25laW5mbyBpbXBvcnQgWm9uZUluZm8KZXhjZXB0IEV4Y2VwdGlvbjoKICAgIFpvbmVJbmZvID0gTm9uZQoKV09SS0VSX1VSTCA9IG9zLmVudmlyb24uZ2V0KCdXT1JLRVJfVVJMJywgJycpLnJzdHJpcCgnLycpClNZTkNfU0VDUkVUID0gb3MuZW52aXJvbi5nZXQoJ1NZTkNfU0VDUkVUJywgJycpCkRBWV9UWiA9IG9zLmVudmlyb24uZ2V0KCdEQVlfVFonLCAnQXNpYS9TaGFuZ2hhaScpClhSQVlfQklOID0gb3MuZW52aXJvbi5nZXQoJ1hSQVlfQklOJywgJy91c3IvbG9jYWwvYmluL3hyYXknKQpBUElfU0VSVkVSID0gb3MuZW52aXJvbi5nZXQoJ1hSQVlfQVBJX1NFUlZFUicsICcxMjcuMC4wLjE6MTAwODUnKQpJTlRFUlZBTCA9IGZsb2F0KG9zLmVudmlyb24uZ2V0KCdBR0VOVF9JTlRFUlZBTCcsICcxMCcpKQpOT0RFX05BTUUgPSBvcy5lbnZpcm9uLmdldCgnTk9ERV9OQU1FJywgc29ja2V0LmdldGhvc3RuYW1lKCkgb3IgJ3VzLW5vZGUnKQpSRVBPUlRfUEFUSCA9ICcvYXBpL3JlcG9ydF91cycKU1RBVFNfUE9SVCA9IGludChvcy5lbnZpcm9uLmdldCgnU1RBVFNfUE9SVCcsICc4MDgwJykpClBFQUtfV0lORE9XX1MgPSA5MDAKUEVBS19WRVIgPSAyICAgICAgICAgICMg5bOw5YC85Y+j5b6E54mI5pysOiB2MiA9IOS7o+eQhuWPo+W+hCjnlKjmiLfkuIrkuIvooYzpgJ/njoflkIjorqEpLCB2MSA9IOe9keWNoeWPo+W+hCjlt7Llup/lvIMpClNUQVRFX0RJUiA9ICcvdmFyL2xpYi9oZWxpb3MtdXMnClNUQVRFX0ZJTEUgPSBvcy5wYXRoLmpvaW4oU1RBVEVfRElSLCAnc3RhdGUuanNvbicpClBBWUxPQURfRklMRSA9IG9zLnBhdGguam9pbihTVEFURV9ESVIsICdwYXlsb2FkLmpzb24nKQpMQVRFU1QgPSB7J3BheWxvYWQnOiBOb25lfQoKCmRlZiBsb2coKmEpOgogICAgcHJpbnQodGltZS5zdHJmdGltZSgnWyVZLSVtLSVkICVIOiVNOiVTXScpLCAqYSwgZmx1c2g9VHJ1ZSkKCgpkZWYgbG9hZF9zdGF0ZSgpOgogICAgdHJ5OgogICAgICAgIHdpdGggb3BlbihTVEFURV9GSUxFLCAncicsIGVuY29kaW5nPSd1dGYtOCcpIGFzIGY6CiAgICAgICAgICAgIHMgPSBqc29uLmxvYWQoZikKICAgICAgICBpZiBpc2luc3RhbmNlKHMsIGRpY3QpOgogICAgICAgICAgICByZXR1cm4gcwogICAgZXhjZXB0IEV4Y2VwdGlvbjoKICAgICAgICBwYXNzCiAgICByZXR1cm4ge30KCgpkZWYgc2F2ZV9zdGF0ZShzKToKICAgIG9zLm1ha2VkaXJzKFNUQVRFX0RJUiwgZXhpc3Rfb2s9VHJ1ZSkKICAgIHRtcCA9IFNUQVRFX0ZJTEUgKyAnLnRtcCcKICAgIHdpdGggb3Blbih0bXAsICd3JywgZW5jb2Rpbmc9J3V0Zi04JykgYXMgZjoKICAgICAgICBqc29uLmR1bXAocywgZikKICAgIG9zLnJlcGxhY2UodG1wLCBTVEFURV9GSUxFKQoKCl9zZWVuX25vbmNlcyA9IHt9Cl9ub25jZV9sb2NrID0gdGhyZWFkaW5nLkxvY2soKQoKCmRlZiBfdmVyaWZ5X3B1bGwocGF0aCwgcSk6CiAgICAiIiLmoKHpqowgSE1BQyh0cytub25jZStzaWcpOiDlr4bpkqXkuI3kuIrnur87IDMwMCDnp5Lml7bpl7TnqpcgKyBub25jZSDkuIDmrKHmgKco6Ziy6YeN5pS+KSIiIgogICAgdHJ5OgogICAgICAgIHRzID0gc3RyKChxLmdldCgndHMnKSBvciBbJyddKVswXSkKICAgICAgICBub25jZSA9IHN0cigocS5nZXQoJ25vbmNlJykgb3IgWycnXSlbMF0pLmxvd2VyKCkKICAgICAgICBzaWcgPSBzdHIoKHEuZ2V0KCdzaWcnKSBvciBbJyddKVswXSkubG93ZXIoKQogICAgICAgIGlmIG5vdCB0cy5pc2RpZ2l0KCkgb3Igbm90IG5vbmNlIG9yIG5vdCBzaWc6CiAgICAgICAgICAgIHJldHVybiBGYWxzZQogICAgICAgIGlmIG5vdCByZS5mdWxsbWF0Y2gocidbMC05YS1mXXs4LDY0fScsIG5vbmNlKToKICAgICAgICAgICAgcmV0dXJuIEZhbHNlCiAgICAgICAgaWYgYWJzKHRpbWUudGltZSgpIC0gaW50KHRzKSkgPiAzMDA6CiAgICAgICAgICAgIHJldHVybiBGYWxzZQogICAgICAgIG1zZyA9IHBhdGggKyAnfCcgKyB0cyArICd8JyArIG5vbmNlCiAgICAgICAgd2FudCA9IGhtYWNsaWIubmV3KFNZTkNfU0VDUkVULmVuY29kZSgndXRmLTgnKSwgbXNnLmVuY29kZSgndXRmLTgnKSwKICAgICAgICAgICAgICAgICAgICAgICAgICAgaGFzaGxpYi5zaGEyNTYpLmhleGRpZ2VzdCgpCiAgICAgICAgaWYgbm90IGhtYWNsaWIuY29tcGFyZV9kaWdlc3Qod2FudCwgc2lnKToKICAgICAgICAgICAgcmV0dXJuIEZhbHNlCiAgICAgICAgbm93ID0gdGltZS50aW1lKCkKICAgICAgICB3aXRoIF9ub25jZV9sb2NrOgogICAgICAgICAgICBmb3IgayBpbiBbayBmb3IgaywgdCBpbiBfc2Vlbl9ub25jZXMuaXRlbXMoKSBpZiBub3cgLSB0ID4gMzAwXToKICAgICAgICAgICAgICAgIF9zZWVuX25vbmNlcy5wb3AoaywgTm9uZSkKICAgICAgICAgICAgaWYgc2lnIGluIF9zZWVuX25vbmNlczoKICAgICAgICAgICAgICAgIHJldHVybiBGYWxzZQogICAgICAgICAgICBfc2Vlbl9ub25jZXNbc2lnXSA9IG5vdwogICAgICAgIHJldHVybiBUcnVlCiAgICBleGNlcHQgRXhjZXB0aW9uOgogICAgICAgIHJldHVybiBGYWxzZQoKCmNsYXNzIF9TdGF0c0hhbmRsZXIoQmFzZUhUVFBSZXF1ZXN0SGFuZGxlcik6CiAgICAiIiLnu5nmlaPluIPlnKjlkITmnLrmiL/nmoQgV29ya2VyIOaMiemcgOaLieWPljogR0VUIC91c19zdGF0cz9rZXk9PFNZTkNfU0VDUkVUPiIiIgoKICAgIGRlZiBsb2dfbWVzc2FnZShzZWxmLCAqYSk6CiAgICAgICAgcGFzcwoKICAgIGRlZiBkb19HRVQoc2VsZik6CiAgICAgICAgdHJ5OgogICAgICAgICAgICB1ID0gdXJscGFyc2Uoc2VsZi5wYXRoKQogICAgICAgICAgICBxID0gcGFyc2VfcXModS5xdWVyeSkKICAgICAgICAgICAgaWYgdS5wYXRoICE9ICcvdXNfc3RhdHMnIG9yIG5vdCBfdmVyaWZ5X3B1bGwodS5wYXRoLCBxKToKICAgICAgICAgICAgICAgIHNlbGYuc2VuZF9yZXNwb25zZSg0MDMpCiAgICAgICAgICAgICAgICBzZWxmLmVuZF9oZWFkZXJzKCkKICAgICAgICAgICAgICAgIHNlbGYud2ZpbGUud3JpdGUoYidmb3JiaWRkZW4nKQogICAgICAgICAgICAgICAgcmV0dXJuCiAgICAgICAgICAgIGJvZHkgPSBqc29uLmR1bXBzKExBVEVTVC5nZXQoJ3BheWxvYWQnKSBvciB7J3RzJzogMH0pLmVuY29kZSgndXRmLTgnKQogICAgICAgICAgICBzZWxmLnNlbmRfcmVzcG9uc2UoMjAwKQogICAgICAgICAgICBzZWxmLnNlbmRfaGVhZGVyKCdDb250ZW50LVR5cGUnLCAnYXBwbGljYXRpb24vanNvbicpCiAgICAgICAgICAgIHNlbGYuc2VuZF9oZWFkZXIoJ0NvbnRlbnQtTGVuZ3RoJywgc3RyKGxlbihib2R5KSkpCiAgICAgICAgICAgIHNlbGYuZW5kX2hlYWRlcnMoKQogICAgICAgICAgICBzZWxmLndmaWxlLndyaXRlKGJvZHkpCiAgICAgICAgZXhjZXB0IEV4Y2VwdGlvbjoKICAgICAgICAgICAgdHJ5OgogICAgICAgICAgICAgICAgc2VsZi5zZW5kX3Jlc3BvbnNlKDUwMCkKICAgICAgICAgICAgICAgIHNlbGYuZW5kX2hlYWRlcnMoKQogICAgICAgICAgICBleGNlcHQgRXhjZXB0aW9uOgogICAgICAgICAgICAgICAgcGFzcwoKCmRlZiBzdGFydF9odHRwKCk6CiAgICB0cnk6CiAgICAgICAgc3J2ID0gVGhyZWFkaW5nSFRUUFNlcnZlcigoJzAuMC4wLjAnLCBTVEFUU19QT1JUKSwgX1N0YXRzSGFuZGxlcikKICAgICAgICB0aHJlYWRpbmcuVGhyZWFkKHRhcmdldD1zcnYuc2VydmVfZm9yZXZlciwgZGFlbW9uPVRydWUpLnN0YXJ0KCkKICAgICAgICBsb2coJ3N0YXRzIGVuZHBvaW50OiBodHRwOi8vMC4wLjAuMDolZC91c19zdGF0cyAoa2V5IOagoemqjCknICUgU1RBVFNfUE9SVCkKICAgIGV4Y2VwdCBFeGNlcHRpb24gYXMgZToKICAgICAgICBsb2coJ3N0YXRzIGVuZHBvaW50IGZhaWxlZCB0byBzdGFydDonLCByZXByKGUpKQoKCmRlZiBxdWVyeV9zdGF0cygpOgogICAgYmFzZSA9IFtYUkFZX0JJTiwgJ2FwaScsICdzdGF0c3F1ZXJ5JywgJy0tc2VydmVyPScgKyBBUElfU0VSVkVSXQogICAgZm9yIGV4dHJhIGluIChbJy1wYXR0ZXJuJywgJ3VzZXI+Pj4nXSwgWyctLXBhdHRlcm5zJywgJ3VzZXI+Pj4nXSwgW10pOgogICAgICAgIHRyeToKICAgICAgICAgICAgcCA9IHN1YnByb2Nlc3MucnVuKGJhc2UgKyBleHRyYSwgY2FwdHVyZV9vdXRwdXQ9VHJ1ZSwgdGV4dD1UcnVlLCB0aW1lb3V0PTgpCiAgICAgICAgZXhjZXB0IEV4Y2VwdGlvbjoKICAgICAgICAgICAgY29udGludWUKICAgICAgICBvdXQgPSAocC5zdGRvdXQgb3IgJycpLnN0cmlwKCkKICAgICAgICBpZiBub3Qgb3V0OgogICAgICAgICAgICBjb250aW51ZQogICAgICAgIHRyeToKICAgICAgICAgICAgZGF0YSA9IGpzb24ubG9hZHMob3V0KQogICAgICAgIGV4Y2VwdCBFeGNlcHRpb246CiAgICAgICAgICAgIGNvbnRpbnVlCiAgICAgICAgaXRlbXMgPSBkYXRhLmdldCgnc3RhdCcpIGlmIGlzaW5zdGFuY2UoZGF0YSwgZGljdCkgZWxzZSBOb25lCiAgICAgICAgaWYgaXRlbXMgaXMgTm9uZSBhbmQgaXNpbnN0YW5jZShkYXRhLCBkaWN0KToKICAgICAgICAgICAgaXRlbXMgPSBkYXRhLmdldCgnc3RhdHMnKQogICAgICAgIGlmIGlzaW5zdGFuY2UoaXRlbXMsIGxpc3QpOgogICAgICAgICAgICByZXR1cm4gaXRlbXMKICAgIHJldHVybiBOb25lCgoKVVNFUl9SRSA9IHJlLmNvbXBpbGUocidedXNlcj4+PiguKz8pPj4+dHJhZmZpYz4+Pih1cGxpbmt8ZG93bmxpbmspJCcpCgoKZGVmIHBhcnNlX3VzZXJzKGl0ZW1zKToKICAgIHVwLCBkb3duID0ge30sIHt9CiAgICBmb3IgaXQgaW4gaXRlbXMgb3IgW106CiAgICAgICAgaWYgbm90IGlzaW5zdGFuY2UoaXQsIGRpY3QpOgogICAgICAgICAgICBjb250aW51ZQogICAgICAgIG0gPSBVU0VSX1JFLm1hdGNoKHN0cihpdC5nZXQoJ25hbWUnLCAnJykpKQogICAgICAgIGlmIG5vdCBtOgogICAgICAgICAgICBjb250aW51ZQogICAgICAgIHRyeToKICAgICAgICAgICAgdmFsID0gaW50KHN0cihpdC5nZXQoJ3ZhbHVlJykgb3IgJzAnKS5zdHJpcCgpKQogICAgICAgIGV4Y2VwdCBFeGNlcHRpb246CiAgICAgICAgICAgIHZhbCA9IDAKICAgICAgICBpZiBtLmdyb3VwKDIpID09ICd1cGxpbmsnOgogICAgICAgICAgICB1cFttLmdyb3VwKDEpXSA9IHZhbAogICAgICAgIGVsc2U6CiAgICAgICAgICAgIGRvd25bbS5ncm91cCgxKV0gPSB2YWwKICAgIHJldHVybiB1cCwgZG93bgoKCmRlZiBkZWZhdWx0X2lmYWNlKCk6CiAgICB0cnk6CiAgICAgICAgb3V0ID0gc3VicHJvY2Vzcy5ydW4oWydpcCcsICdyb3V0ZScsICdnZXQnLCAnMS4xLjEuMSddLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgIGNhcHR1cmVfb3V0cHV0PVRydWUsIHRleHQ9VHJ1ZSwgdGltZW91dD01KS5zdGRvdXQKICAgICAgICBtID0gcmUuc2VhcmNoKHInXGJkZXZccysoXFMrKScsIG91dCBvciAnJykKICAgICAgICByZXR1cm4gbS5ncm91cCgxKSBpZiBtIGVsc2UgJycKICAgIGV4Y2VwdCBFeGNlcHRpb246CiAgICAgICAgcmV0dXJuICcnCgoKZGVmIHJlYWRfbmljKGlmYWNlKToKICAgIHJ4ID0gdHggPSAwCiAgICB0cnk6CiAgICAgICAgd2l0aCBvcGVuKCcvcHJvYy9uZXQvZGV2JywgJ3InLCBlbmNvZGluZz0ndXRmLTgnKSBhcyBmOgogICAgICAgICAgICBmb3IgbGluZSBpbiBmOgogICAgICAgICAgICAgICAgaWYgJzonIG5vdCBpbiBsaW5lOgogICAgICAgICAgICAgICAgICAgIGNvbnRpbnVlCiAgICAgICAgICAgICAgICBuYW1lLCByZXN0ID0gbGluZS5zcGxpdCgnOicsIDEpCiAgICAgICAgICAgICAgICBuYW1lID0gbmFtZS5zdHJpcCgpCiAgICAgICAgICAgICAgICBpZiBpZmFjZSBhbmQgbmFtZSAhPSBpZmFjZToKICAgICAgICAgICAgICAgICAgICBjb250aW51ZQogICAgICAgICAgICAgICAgaWYgbm90IGlmYWNlIGFuZCBuYW1lID09ICdsbyc6CiAgICAgICAgICAgICAgICAgICAgY29udGludWUKICAgICAgICAgICAgICAgIHBhcnRzID0gcmVzdC5zcGxpdCgpCiAgICAgICAgICAgICAgICBpZiBsZW4ocGFydHMpIDwgOToKICAgICAgICAgICAgICAgICAgICBjb250aW51ZQogICAgICAgICAgICAgICAgcnggKz0gaW50KHBhcnRzWzBdKQogICAgICAgICAgICAgICAgdHggKz0gaW50KHBhcnRzWzhdKQogICAgZXhjZXB0IEV4Y2VwdGlvbjoKICAgICAgICBwYXNzCiAgICByZXR1cm4gcngsIHR4CgoKZGVmIHRvZGF5X2tleSgpOgogICAgdHJ5OgogICAgICAgIGlmIFpvbmVJbmZvIGlzIG5vdCBOb25lOgogICAgICAgICAgICByZXR1cm4gZGF0ZXRpbWUubm93KFpvbmVJbmZvKERBWV9UWikpLnN0cmZ0aW1lKCclWS0lbS0lZCcpCiAgICBleGNlcHQgRXhjZXB0aW9uOgogICAgICAgIHBhc3MKICAgIHJldHVybiBkYXRldGltZS5ub3codGltZXpvbmUudXRjKS5zdHJmdGltZSgnJVktJW0tJWQnKQoKCmRlZiBwb3N0X3ByaW1hcnkocGF5bG9hZF9maWxlKToKICAgICIiIuS4u+S4iuaKpTog5LyY5YWIIGN1cmwg4oCU4oCUIOWunua1iyBDbG91ZGZsYXJlIOS8muaKiiBweXRob24tdXJsbGliIOeahCBVQSDlvZPmnLrlmajkurrmi6YoNDAzKSwKICAgIGN1cmwg5LiO5omL5py656uv5ZCM5qy+6YCa6YGT5Y+v5q2j5bi46YCa6L+H44CCY3VybCDkuI3lj6/nlKjml7bpgIDlm54gdXJsbGliKOW4pumAmueUqCBVQSnjgIIiIiIKICAgIGluZm8gPSAnJwogICAgdHJ5OgogICAgICAgIHAgPSBzdWJwcm9jZXNzLnJ1bigKICAgICAgICAgICAgWydjdXJsJywgJy1zUycsICctLWNvbm5lY3QtdGltZW91dCcsICczJywgJy1tJywgJzUnLCAnLVgnLCAnUE9TVCcsCiAgICAgICAgICAgICBXT1JLRVJfVVJMICsgUkVQT1JUX1BBVEgsCiAgICAgICAgICAgICAnLUgnLCAnQ29udGVudC1UeXBlOiBhcHBsaWNhdGlvbi9qc29uJywKICAgICAgICAgICAgICctSCcsICdYLVN5bmMtS2V5OiAnICsgU1lOQ19TRUNSRVQsCiAgICAgICAgICAgICAnLS1kYXRhLWJpbmFyeScsICdAJyArIHBheWxvYWRfZmlsZV0sCiAgICAgICAgICAgIGNhcHR1cmVfb3V0cHV0PVRydWUsIHRleHQ9VHJ1ZSwgdGltZW91dD04KQogICAgICAgIG91dCA9IChwLnN0ZG91dCBvciAnJykuc3RyaXAoKQogICAgICAgIGlmIHAucmV0dXJuY29kZSA9PSAwIGFuZCBvdXQ6CiAgICAgICAgICAgIHJldHVybiBUcnVlLCBvdXQKICAgICAgICBpbmZvID0gJ2N1cmwgcmM9JXMgb3V0PSVzIGVycj0lcycgJSAocC5yZXR1cm5jb2RlLCBvdXRbOjEyMF0sIChwLnN0ZGVyciBvciAnJykuc3RyaXAoKVs6MTIwXSkKICAgIGV4Y2VwdCBFeGNlcHRpb24gYXMgZToKICAgICAgICBpbmZvID0gJ2N1cmwgZXhjZXB0aW9uOiAlcicgJSAoZSwpCiAgICB0cnk6CiAgICAgICAgcmVxID0gdXJsbGliLnJlcXVlc3QuUmVxdWVzdCgKICAgICAgICAgICAgV09SS0VSX1VSTCArIFJFUE9SVF9QQVRILAogICAgICAgICAgICBkYXRhPW9wZW4ocGF5bG9hZF9maWxlLCAncmInKS5yZWFkKCksCiAgICAgICAgICAgIG1ldGhvZD0nUE9TVCcsCiAgICAgICAgICAgIGhlYWRlcnM9eydDb250ZW50LVR5cGUnOiAnYXBwbGljYXRpb24vanNvbicsICdYLVN5bmMtS2V5JzogU1lOQ19TRUNSRVQsCiAgICAgICAgICAgICAgICAgICAgICdVc2VyLUFnZW50JzogJ01vemlsbGEvNS4wIChjb21wYXRpYmxlOyBoZWxpb3MtdXMtYWdlbnQvMS4wKSd9KQogICAgICAgIHdpdGggdXJsbGliLnJlcXVlc3QudXJsb3BlbihyZXEsIHRpbWVvdXQ9OCkgYXMgcjoKICAgICAgICAgICAgcmV0dXJuIFRydWUsIHIucmVhZCgpLmRlY29kZSgndXRmLTgnLCAncmVwbGFjZScpLnN0cmlwKCkKICAgIGV4Y2VwdCBFeGNlcHRpb24gYXMgZToKICAgICAgICByZXR1cm4gRmFsc2UsIChpbmZvICsgJzsgdXJsbGliOiAlcicgJSAoZSwpKQoKCmRlZiBnZXRfc3lzX21ldHJpY3MoKToKICAgIG91dCA9IHsKICAgICAgICAnbG9hZCc6IFtyb3VuZCh4LCAyKSBmb3IgeCBpbiBvcy5nZXRsb2FkYXZnKCldIGlmIGhhc2F0dHIob3MsICdnZXRsb2FkYXZnJykgZWxzZSBbXSwKICAgICAgICAnY3B1Q291bnQnOiBvcy5jcHVfY291bnQoKSBvciAxLAogICAgICAgICdtZW1Ub3RhbE1CJzogMCwgJ21lbVVzZWRNQic6IDAsICdtZW1QY3QnOiAwLAogICAgICAgICd1cHRpbWVTJzogMCwgJ3RjcENvbm4nOiAwLCAnZjJiQmFubmVkJzogMCwKICAgICAgICAnc2VydmljZXMnOiB7J3hyYXknOiBGYWxzZSwgJ2Nsb3VkZmxhcmVkJzogRmFsc2UsICdhZ2VudCc6IFRydWV9CiAgICB9CiAgICB0cnk6CiAgICAgICAgbWVtID0ge30KICAgICAgICB3aXRoIG9wZW4oJy9wcm9jL21lbWluZm8nLCAncicsIGVuY29kaW5nPSd1dGYtOCcpIGFzIGY6CiAgICAgICAgICAgIGZvciBsaW5lIGluIGY6CiAgICAgICAgICAgICAgICBwID0gbGluZS5zcGxpdCgnOicpCiAgICAgICAgICAgICAgICBpZiBsZW4ocCkgPT0gMjoKICAgICAgICAgICAgICAgICAgICBtZW1bcFswXS5zdHJpcCgpXSA9IGludChwWzFdLnN0cmlwKCkuc3BsaXQoKVswXSkKICAgICAgICB0b3QgPSBtZW0uZ2V0KCdNZW1Ub3RhbCcsIDApCiAgICAgICAgYXZhaWwgPSBtZW0uZ2V0KCdNZW1BdmFpbGFibGUnLCBtZW0uZ2V0KCdNZW1GcmVlJywgMCkpCiAgICAgICAgdXNlZCA9IG1heCgwLCB0b3QgLSBhdmFpbCkKICAgICAgICBvdXRbJ21lbVRvdGFsTUInXSA9IHJvdW5kKHRvdCAvIDEwMjQsIDEpCiAgICAgICAgb3V0WydtZW1Vc2VkTUInXSA9IHJvdW5kKHVzZWQgLyAxMDI0LCAxKQogICAgICAgIG91dFsnbWVtUGN0J10gPSByb3VuZCh1c2VkICogMTAwLjAgLyB0b3QsIDEpIGlmIHRvdCA+IDAgZWxzZSAwCiAgICBleGNlcHQgRXhjZXB0aW9uOgogICAgICAgIHBhc3MKICAgIHRyeToKICAgICAgICB3aXRoIG9wZW4oJy9wcm9jL3VwdGltZScsICdyJywgZW5jb2Rpbmc9J3V0Zi04JykgYXMgZjoKICAgICAgICAgICAgb3V0Wyd1cHRpbWVTJ10gPSBpbnQoZmxvYXQoZi5yZWFkbGluZSgpLnNwbGl0KClbMF0pKQogICAgZXhjZXB0IEV4Y2VwdGlvbjoKICAgICAgICBwYXNzCiAgICB0cnk6CiAgICAgICAgdGNwX2MgPSAwCiAgICAgICAgZm9yIHBhdGggaW4gKCcvcHJvYy9uZXQvdGNwJywgJy9wcm9jL25ldC90Y3A2Jyk6CiAgICAgICAgICAgIGlmIG9zLnBhdGguZXhpc3RzKHBhdGgpOgogICAgICAgICAgICAgICAgd2l0aCBvcGVuKHBhdGgsICdyJywgZW5jb2Rpbmc9J3V0Zi04JykgYXMgZjoKICAgICAgICAgICAgICAgICAgICBuZXh0KGYsIE5vbmUpCiAgICAgICAgICAgICAgICAgICAgZm9yIGxpbmUgaW4gZjoKICAgICAgICAgICAgICAgICAgICAgICAgcGFydHMgPSBsaW5lLnN0cmlwKCkuc3BsaXQoKQogICAgICAgICAgICAgICAgICAgICAgICBpZiBsZW4ocGFydHMpID49IDQgYW5kIHBhcnRzWzNdID09ICcwMSc6CiAgICAgICAgICAgICAgICAgICAgICAgICAgICB0Y3BfYyArPSAxCiAgICAgICAgb3V0Wyd0Y3BDb25uJ10gPSB0Y3BfYwogICAgZXhjZXB0IEV4Y2VwdGlvbjoKICAgICAgICBwYXNzCiAgICB0cnk6CiAgICAgICAgcmVzID0gc3VicHJvY2Vzcy5ydW4oWydmYWlsMmJhbi1jbGllbnQnLCAnc3RhdHVzJywgJ3NzaGQnXSwgY2FwdHVyZV9vdXRwdXQ9VHJ1ZSwgdGV4dD1UcnVlLCB0aW1lb3V0PTIpCiAgICAgICAgbSA9IHJlLnNlYXJjaChyJ0N1cnJlbnRseSBiYW5uZWQ6XHMrKFxkKyknLCByZXMuc3Rkb3V0IG9yICcnKQogICAgICAgIGlmIG06CiAgICAgICAgICAgIG91dFsnZjJiQmFubmVkJ10gPSBpbnQobS5ncm91cCgxKSkKICAgIGV4Y2VwdCBFeGNlcHRpb246CiAgICAgICAgcGFzcwogICAgdHJ5OgogICAgICAgIG91dFsnc2VydmljZXMnXVsneHJheSddID0gKHN1YnByb2Nlc3MucnVuKFsnc3lzdGVtY3RsJywgJ2lzLWFjdGl2ZScsICd4cmF5J10sIGNhcHR1cmVfb3V0cHV0PVRydWUsIHRleHQ9VHJ1ZSwgdGltZW91dD0yKS5zdGRvdXQuc3RyaXAoKSA9PSAnYWN0aXZlJykKICAgICAgICBvdXRbJ3NlcnZpY2VzJ11bJ2Nsb3VkZmxhcmVkJ10gPSAoc3VicHJvY2Vzcy5ydW4oWydzeXN0ZW1jdGwnLCAnaXMtYWN0aXZlJywgJ2Nsb3VkZmxhcmVkJ10sIGNhcHR1cmVfb3V0cHV0PVRydWUsIHRleHQ9VHJ1ZSwgdGltZW91dD0yKS5zdGRvdXQuc3RyaXAoKSA9PSAnYWN0aXZlJykKICAgIGV4Y2VwdCBFeGNlcHRpb246CiAgICAgICAgcGFzcwogICAgcmV0dXJuIG91dAoKCmRlZiB0aWNrKHN0YXRlKToKICAgIG5vdyA9IHRpbWUudGltZSgpCiAgICBpZmFjZSA9IHN0YXRlLmdldCgnaWZhY2UnKSBvciBkZWZhdWx0X2lmYWNlKCkKICAgIHN0YXRlWydpZmFjZSddID0gaWZhY2UKICAgIHJ4LCB0eCA9IHJlYWRfbmljKGlmYWNlKQoKICAgIGl0ZW1zID0gcXVlcnlfc3RhdHMoKQogICAgc3RhdHNfb2sgPSBpdGVtcyBpcyBub3QgTm9uZQogICAgdXNlcnNfdXAsIHVzZXJzX2Rvd24gPSBwYXJzZV91c2VycyhpdGVtcykgaWYgc3RhdHNfb2sgZWxzZSAoe30sIHt9KQoKICAgIHJhdyA9IHN0YXRlLnNldGRlZmF1bHQoJ3JhdycsIHt9KQogICAgdG90YWwgPSBzdGF0ZS5zZXRkZWZhdWx0KCd0b3RhbCcsIHt9KQogICAgbmljX3JhdyA9IHN0YXRlLmdldCgnbmljUmF3Jykgb3Ige30KICAgIG5pY190b3RhbCA9IHN0YXRlLnNldGRlZmF1bHQoJ25pY1RvdGFsJywgeydyeCc6IDAsICd0eCc6IDB9KQogICAgZWxhcHNlZCA9IG1heCgwLjUsIG5vdyAtIGZsb2F0KHN0YXRlLmdldCgnbGFzdEF0Jykgb3Igbm93KSkKCiAgICBkYXkgPSB0b2RheV9rZXkoKQogICAgaWYgc3RhdGUuZ2V0KCdkYXlLZXknKSAhPSBkYXk6CiAgICAgICAgc3RhdGVbJ2RheUtleSddID0gZGF5CiAgICAgICAgc3RhdGVbJ2RheUJhc2UnXSA9IHtrOiBkaWN0KHYpIGZvciBrLCB2IGluIHRvdGFsLml0ZW1zKCl9CiAgICAgICAgc3RhdGVbJ2RheVBlYWsnXSA9IDAuMAogICAgICAgICMg44CQ5L+u5aSN44CRMTUg5YiG6ZKf5ruR56qX5LiN6ZqP5pel55WM5riF56m6OiDlroPmmK/mu5Hliqjnqpflj6MsIOi3qOmbtueCueW6lOi/nue7rQogICAgZGF5X2Jhc2UgPSBzdGF0ZS5zZXRkZWZhdWx0KCdkYXlCYXNlJywge30pCgogICAgcmF0ZXMgPSB7fQogICAgZm9yIGVtYWlsIGluIHNldChsaXN0KHVzZXJzX3VwLmtleXMoKSkgKyBsaXN0KHVzZXJzX2Rvd24ua2V5cygpKSk6CiAgICAgICAgY3VyID0geyd1cCc6IGludCh1c2Vyc191cC5nZXQoZW1haWwsIDApKSwgJ2Rvd24nOiBpbnQodXNlcnNfZG93bi5nZXQoZW1haWwsIDApKX0KICAgICAgICBwcmV2ID0gcmF3LmdldChlbWFpbCkgb3Igeyd1cCc6IDAsICdkb3duJzogMH0KICAgICAgICBkX3VwID0gY3VyWyd1cCddIC0gaW50KHByZXYuZ2V0KCd1cCcsIDApKQogICAgICAgIGRfZG93biA9IGN1clsnZG93biddIC0gaW50KHByZXYuZ2V0KCdkb3duJywgMCkpCiAgICAgICAgaWYgZF91cCA8IDA6CiAgICAgICAgICAgIGRfdXAgPSBjdXJbJ3VwJ10gICAgICAgICAgIyBYcmF5IOmHjeWQr+WQjuiuoeaVsOa4hembtjog5Lul5b2T5YmN5YC85L2c5Li65paw5aKeCiAgICAgICAgaWYgZF9kb3duIDwgMDoKICAgICAgICAgICAgZF9kb3duID0gY3VyWydkb3duJ10KICAgICAgICB0ID0gdG90YWwuc2V0ZGVmYXVsdChlbWFpbCwgeyd1cCc6IDAsICdkb3duJzogMH0pCiAgICAgICAgdFsndXAnXSArPSBkX3VwCiAgICAgICAgdFsnZG93biddICs9IGRfZG93bgogICAgICAgIHJhd1tlbWFpbF0gPSBjdXIKICAgICAgICBkYXlfYmFzZS5zZXRkZWZhdWx0KGVtYWlsLCB7J3VwJzogMCwgJ2Rvd24nOiAwfSkKICAgICAgICByYXRlc1tlbWFpbF0gPSB7J3VwUmF0ZSc6IGRfdXAgLyBlbGFwc2VkLCAnZG93blJhdGUnOiBkX2Rvd24gLyBlbGFwc2VkfQoKICAgICMg44CQ5L+u5aSNwrflj6PlvoTlhrPnrZYgNULjgJHls7DlgLzlj6rnu5/orqHku6PnkIblj6PlvoQ6IOWQhOeUqOaIt+S4iuS4i+ihjOmAn+eOh+WQiOiuoQogICAgcHJveHlfcmF0ZSA9IDAuMAogICAgZm9yIF9yIGluIHJhdGVzLnZhbHVlcygpOgogICAgICAgIHByb3h5X3JhdGUgKz0gZmxvYXQoX3IuZ2V0KCd1cFJhdGUnKSBvciAwLjApICsgZmxvYXQoX3IuZ2V0KCdkb3duUmF0ZScpIG9yIDAuMCkKCiAgICAjIOe9keWNoee0r+iuoeS4jumAn+eOhyAo5pW05py65ZCe5ZCQKQogICAgZF9yeCA9IHJ4IC0gaW50KG5pY19yYXcuZ2V0KCdyeCcsIHJ4KSkKICAgIGRfdHggPSB0eCAtIGludChuaWNfcmF3LmdldCgndHgnLCB0eCkpCiAgICBpZiBkX3J4IDwgMDoKICAgICAgICBkX3J4ID0gcngKICAgIGlmIGRfdHggPCAwOgogICAgICAgIGRfdHggPSB0eAogICAgbmljX3RvdGFsWydyeCddID0gaW50KG5pY190b3RhbC5nZXQoJ3J4JywgMCkpICsgZF9yeAogICAgbmljX3RvdGFsWyd0eCddID0gaW50KG5pY190b3RhbC5nZXQoJ3R4JywgMCkpICsgZF90eAogICAgc3RhdGVbJ25pY1JhdyddID0geydyeCc6IHJ4LCAndHgnOiB0eH0KICAgIG5pY19yeF9yYXRlID0gZF9yeCAvIGVsYXBzZWQKICAgIG5pY190eF9yYXRlID0gZF90eCAvIGVsYXBzZWQKICAgIG5vZGVfcmF0ZSA9IG5pY19yeF9yYXRlICsgbmljX3R4X3JhdGUgICAjIOS7heS/neeVmeWcqCBwYXlsb2FkIOmHjOWBmuiviuaWrSwg5LiN5YaN55So5LqO5bOw5YC8CgogICAgcmluZyA9IHN0YXRlLmdldCgncGVha1JpbmcnKSBvciBbXQogICAgcmluZy5hcHBlbmQoW25vdywgcHJveHlfcmF0ZV0pCiAgICByaW5nID0gW3AgZm9yIHAgaW4gcmluZyBpZiBub3cgLSBwWzBdIDw9IFBFQUtfV0lORE9XX1NdCiAgICBzdGF0ZVsncGVha1JpbmcnXSA9IHJpbmcKICAgIHBlYWsxNSA9IG1heChbcFsxXSBmb3IgcCBpbiByaW5nXSBvciBbMC4wXSkKICAgIHN0YXRlWydkYXlQZWFrJ10gPSBtYXgoZmxvYXQoc3RhdGUuZ2V0KCdkYXlQZWFrJykgb3IgMC4wKSwgcHJveHlfcmF0ZSkKCiAgICBkYXlfdXAgPSBkYXlfZG93biA9IDAKICAgIGZvciBlbWFpbCwgdCBpbiB0b3RhbC5pdGVtcygpOgogICAgICAgIGIgPSBkYXlfYmFzZS5nZXQoZW1haWwpIG9yIHsndXAnOiAwLCAnZG93bic6IDB9CiAgICAgICAgZGF5X3VwICs9IG1heCgwLCBpbnQodFsndXAnXSkgLSBpbnQoYi5nZXQoJ3VwJywgMCkpKQogICAgICAgIGRheV9kb3duICs9IG1heCgwLCBpbnQodFsnZG93biddKSAtIGludChiLmdldCgnZG93bicsIDApKSkKCiAgICBwYXlsb2FkID0gewogICAgICAgICd0cyc6IGludChub3cgKiAxMDAwKSwKICAgICAgICAnbm9kZSc6IE5PREVfTkFNRSwKICAgICAgICAnYWdlbnQnOiAnaGVsaW9zLXVzLWFnZW50LzEuMScsCiAgICAgICAgJ3N0YXRzT2snOiBzdGF0c19vaywKICAgICAgICAndXNlcnMnOiB7CiAgICAgICAgICAgIGVtYWlsOiB7CiAgICAgICAgICAgICAgICAndXAnOiBpbnQodG90YWxbZW1haWxdWyd1cCddKSwKICAgICAgICAgICAgICAgICdkb3duJzogaW50KHRvdGFsW2VtYWlsXVsnZG93biddKSwKICAgICAgICAgICAgICAgICd1cFJhdGUnOiByYXRlcy5nZXQoZW1haWwsIHt9KS5nZXQoJ3VwUmF0ZScsIDAuMCksCiAgICAgICAgICAgICAgICAnZG93blJhdGUnOiByYXRlcy5nZXQoZW1haWwsIHt9KS5nZXQoJ2Rvd25SYXRlJywgMC4wKSwKICAgICAgICAgICAgfSBmb3IgZW1haWwgaW4gdG90YWwKICAgICAgICB9LAogICAgICAgICdkYXknOiB7J2tleSc6IGRheSwgJ3VwJzogZGF5X3VwLCAnZG93bic6IGRheV9kb3dufSwKICAgICAgICAnbmljJzogewogICAgICAgICAgICAnaWZhY2UnOiBpZmFjZSwKICAgICAgICAgICAgJ3J4JzogaW50KG5pY190b3RhbFsncngnXSksICd0eCc6IGludChuaWNfdG90YWxbJ3R4J10pLAogICAgICAgICAgICAncnhSYXRlJzogbmljX3J4X3JhdGUsICd0eFJhdGUnOiBuaWNfdHhfcmF0ZSwKICAgICAgICB9LAogICAgICAgICdwZWFrJzogeydyYXRlMTVtJzogcGVhazE1LCAncmF0ZURheSc6IHN0YXRlWydkYXlQZWFrJ10sICdkYXlLZXknOiBkYXl9LAogICAgICAgICdzeXMnOiBnZXRfc3lzX21ldHJpY3MoKSwKICAgIH0KCiAgICBvcy5tYWtlZGlycyhTVEFURV9ESVIsIGV4aXN0X29rPVRydWUpCiAgICB3aXRoIG9wZW4oUEFZTE9BRF9GSUxFLCAndycsIGVuY29kaW5nPSd1dGYtOCcpIGFzIGY6CiAgICAgICAganNvbi5kdW1wKHBheWxvYWQsIGYpCiAgICBMQVRFU1RbJ3BheWxvYWQnXSA9IHBheWxvYWQKCiAgICBvaywgaW5mbyA9IHBvc3RfcHJpbWFyeShQQVlMT0FEX0ZJTEUpCiAgICBpZiBvazoKICAgICAgICBzdGF0ZVsnb2tDb3VudCddID0gaW50KHN0YXRlLmdldCgnb2tDb3VudCcpIG9yIDApICsgMQogICAgICAgIGlmIHN0YXRlWydva0NvdW50J10gPD0gMyBvciBzdGF0ZVsnb2tDb3VudCddICUgNjAgPT0gMDoKICAgICAgICAgICAgbG9nKCdyZXBvcnQgb2s6ICVzJyAlIChpbmZvIG9yICcnKS5zdHJpcCgpWzoyMDBdKQogICAgZWxzZToKICAgICAgICBzdGF0ZVsnZmFpbENvdW50J10gPSBpbnQoc3RhdGUuZ2V0KCdmYWlsQ291bnQnKSBvciAwKSArIDEKICAgICAgICBpZiBzdGF0ZVsnZmFpbENvdW50J10gPD0gMyBvciBzdGF0ZVsnZmFpbENvdW50J10gJSA2MCA9PSAwOgogICAgICAgICAgICBsb2coJ3JlcG9ydCBmYWlsZWQ6ICVzJyAlIChpbmZvIG9yICcnKS5zdHJpcCgpWzoyNDBdKQogICAgaWYgc3RhdHNfb2sgYW5kIG5vdCBzdGF0ZS5nZXQoJ3N0YXRzTG9nZ2VkJyk6CiAgICAgICAgc3RhdGVbJ3N0YXRzTG9nZ2VkJ10gPSBUcnVlCiAgICAgICAgbG9nKCdzdGF0cyBhdmFpbGFibGU6IHVzZXJzPSVkJyAlIGxlbihwYXlsb2FkLmdldCgndXNlcnMnKSBvciB7fSkpCiAgICBzdGF0ZVsnbGFzdEF0J10gPSBub3cKCgpkZWYgbWFpbigpOgogICAgaWYgbm90IFdPUktFUl9VUkwgb3Igbm90IFNZTkNfU0VDUkVUOgogICAgICAgIGxvZygnWyFdIOe8uuWwkSBXT1JLRVJfVVJMIC8gU1lOQ19TRUNSRVQg546v5aKD5Y+Y6YePJykKICAgICAgICByZXR1cm4gMQogICAgbG9nKCdhZ2VudCBzdGFydDogbm9kZT0lcyB3b3JrZXI9JXMgaW50ZXJ2YWw9JXNzIGlmYWNlPSVzJwogICAgICAgICUgKE5PREVfTkFNRSwgV09SS0VSX1VSTCwgSU5URVJWQUwsIGRlZmF1bHRfaWZhY2UoKSkpCiAgICBzdGFydF9odHRwKCkKICAgIHN0YXRlID0gbG9hZF9zdGF0ZSgpCiAgICBpZiBzdGF0ZS5nZXQoJ3BlYWtWZXInKSAhPSBQRUFLX1ZFUjoKICAgICAgICAjIOWPo+W+hOWNh+e6pzog5LiA5qyh5oCn5riF5o6J5pen55qE572R5Y2h5Y+j5b6E5bOw5YC8LCDnlKjku6PnkIblj6PlvoTph43mlrDnp6/ntK8KICAgICAgICBzdGF0ZVsncGVha1ZlciddID0gUEVBS19WRVIKICAgICAgICBzdGF0ZVsncGVha1JpbmcnXSA9IFtdCiAgICAgICAgc3RhdGVbJ2RheVBlYWsnXSA9IDAuMAogICAgICAgIGxvZygncGVhayBjYWxpYmVyIHVwZ3JhZGUgLT4gcHJveHkgY2FsaWJlciB2JWQgKHJpbmcvZGF5UGVhayByZXNldCBvbmNlKScgJSBQRUFLX1ZFUikKICAgICAgICBzYXZlX3N0YXRlKHN0YXRlKQogICAgd2hpbGUgVHJ1ZToKICAgICAgICB0MCA9IHRpbWUudGltZSgpCiAgICAgICAgdHJ5OgogICAgICAgICAgICB0aWNrKHN0YXRlKQogICAgICAgICAgICBzYXZlX3N0YXRlKHN0YXRlKQogICAgICAgIGV4Y2VwdCBFeGNlcHRpb24gYXMgZToKICAgICAgICAgICAgbG9nKCd0aWNrIGVycm9yOicsIHJlcHIoZSkpCiAgICAgICAgcmVzdCA9IElOVEVSVkFMIC0gKHRpbWUudGltZSgpIC0gdDApCiAgICAgICAgaWYgcmVzdCA+IDA6CiAgICAgICAgICAgIHRpbWUuc2xlZXAocmVzdCkKCgppZiBfX25hbWVfXyA9PSAnX19tYWluX18nOgogICAgcmFpc2UgU3lzdGVtRXhpdChtYWluKCkpCkFHRU5URU9GCmNobW9kIDc1NSAvdXNyL2xvY2FsL2xpYi9oZWxpb3MtdXMvYWdlbnQucHkKCmNhdCA+IC9ldGMvaGVsaW9zLXVzLWFnZW50LmVudiA8PEVOVkVPRgpXT1JLRVJfVVJMPSRXT1JLRVJfVVJMClNZTkNfU0VDUkVUPSRTWU5DX1NFQ1JFVApEQVlfVFo9JHtEQVlfVFo6LUFzaWEvU2hhbmdoYWl9ClhSQVlfQklOPSRYUkFZX0JJTgpFTlZFT0YKY2htb2QgNjAwIC9ldGMvaGVsaW9zLXVzLWFnZW50LmVudgoKY2F0ID4gL2V0Yy9zeXN0ZW1kL3N5c3RlbS9oZWxpb3MtdXMtYWdlbnQuc2VydmljZSA8PCdVTklURU9GJwpbVW5pdF0KRGVzY3JpcHRpb249SGVsaW9zIFVTIG5vZGUgdHJhZmZpYyBhZ2VudCAocGVyLXVzZXIgKyBOSUMgLT4gZGFzaGJvYXJkKQpBZnRlcj1uZXR3b3JrLW9ubGluZS50YXJnZXQgeHJheS5zZXJ2aWNlCldhbnRzPW5ldHdvcmstb25saW5lLnRhcmdldAoKW1NlcnZpY2VdClR5cGU9c2ltcGxlCkVudmlyb25tZW50RmlsZT0vZXRjL2hlbGlvcy11cy1hZ2VudC5lbnYKRXhlY1N0YXJ0PS91c3IvYmluL3B5dGhvbjMgL3Vzci9sb2NhbC9saWIvaGVsaW9zLXVzL2FnZW50LnB5ClJlc3RhcnQ9YWx3YXlzClJlc3RhcnRTZWM9NQpOaWNlPTEwCgpbSW5zdGFsbF0KV2FudGVkQnk9bXVsdGktdXNlci50YXJnZXQKVU5JVEVPRgoKc3lzdGVtY3RsIGRhZW1vbi1yZWxvYWQKc3lzdGVtY3RsIGVuYWJsZSBoZWxpb3MtdXMtYWdlbnQgPi9kZXYvbnVsbCAyPiYxIHx8IHRydWUKIyDjgJDlhbPplK7jgJHmnI3liqHlt7IgYWN0aXZlIOaXtiBlbmFibGUgLS1ub3cg5LiN5Lya6YeN6L295paw5Luj56CBIOKAlOKAlCDlv4XpobvmmL7lvI8gcmVzdGFydApzeXN0ZW1jdGwgcmVzdGFydCBoZWxpb3MtdXMtYWdlbnQKc2xlZXAgMTIKZWNobyAiW09LXSBhZ2VudCDnirbmgIE6ICQoc3lzdGVtY3RsIGlzLWFjdGl2ZSBoZWxpb3MtdXMtYWdlbnQgMj4vZGV2L251bGwgfHwgZWNobyB1bmtub3duKSIKVFM9JChkYXRlICslcykKTk9OQ0U9JChweXRob24zIC1jICJpbXBvcnQgb3M7cHJpbnQob3MudXJhbmRvbSg4KS5oZXgoKSkiKQpTSUc9JChTWU5DX1NFQ1JFVD0iJFNZTkNfU0VDUkVUIiBUUz0iJFRTIiBOT05DRT0iJE5PTkNFIiBweXRob24zIC1jICJpbXBvcnQgb3MsaG1hYyxoYXNobGliO3ByaW50KGhtYWMubmV3KG9zLmVudmlyb25bJ1NZTkNfU0VDUkVUJ10uZW5jb2RlKCksKCcvdXNfc3RhdHN8Jytvcy5lbnZpcm9uWydUUyddKyd8Jytvcy5lbnZpcm9uWydOT05DRSddKS5lbmNvZGUoKSxoYXNobGliLnNoYTI1NikuaGV4ZGlnZXN0KCkpIikKZWNobyAiW2ldIOacrOacuue7n+iuoeaOpeWPo+iHquajgDogaHR0cD0kKGN1cmwgLXMgLW8gL2Rldi9udWxsIC13ICcle2h0dHBfY29kZX0nIC1tIDUgImh0dHA6Ly8xMjcuMC4wLjE6JHtTVEFUU19QT1JUOi04MDgwfS91c19zdGF0cz90cz0kVFMmbm9uY2U9JE5PTkNFJnNpZz0kU0lHIiAyPi9kZXYvbnVsbCB8fCBlY2hvIGZhaWwpIgplY2hvICItLS0tIOacgOi/keaXpeW/lyAtLS0tIgpqb3VybmFsY3RsIC11IGhlbGlvcy11cy1hZ2VudCAtbiAxMiAtLW5vLXBhZ2VyIDI+L2Rldi9udWxsIHx8IHRydWUKZWNobwplY2hvICI9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0iCmVjaG8gIiDlronoo4XlrozmiJDjgILpqozor4Hngrk6IgplY2hvICIgIDEpIHN5c3RlbWN0bCBzdGF0dXMgaGVsaW9zLXVzLWFnZW50IgplY2hvICIgIDIpIOaXpeW/l+WHuueOsCByZXBvcnQgb2s6IC4uLiB7XCJva1wiOnRydWUsXCJtYXBwZWRcIjpOfSDkuJQgTj4wID0+IOeUqOaIt+W3suWvueS4iiIKZWNobyAiICAzKSDlpKflsY/lh7rnjrDjgIznvo7lm70gVlBTIOWHuuWPo+OAjeWNoeeJhywg5pWw5o2u5bm06b6EIOKJpDQwIOenkiAoV29ya2VyIOaMiemcgOaLieWPlikiCmVjaG8gIiAgNCkg6K+356Gu6K6k6Ziy54Gr5aKZ5pS+6KGMIFRDUCAke1NUQVRTX1BPUlQ6LTgwODB9IChXb3JrZXIg5LuO5ZCE5py65oi/55u06L+e5ouJ5Y+WKSIKZWNobyAiICA1KSDlm57mu5o6IGNwICRDT05GSUcuYmFrX3VzX3N0YXRzXyRTVEFNUCAkQ09ORklHICYmIHN5c3RlbWN0bCByZXN0YXJ0ICRTVkMgJiYgc3lzdGVtY3RsIGRpc2FibGUgLS1ub3cgaGVsaW9zLXVzLWFnZW50IgplY2hvICI9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0iCg==';
+
+function _shQuote(s) {
+  return "'" + String(s == null ? '' : s).replace(/'/g, "'\\''") + "'";
+}
+
+// 生成 VPS 安装引导脚本（仅管理员可下载, 内含同步密钥, 不落库不写日志）
+function buildUsBootstrap() {
+  return '#!/bin/sh\n' +
+    '# Helios US node bootstrap (auto-generated; contains secrets, do not share)\n' +
+    'WORKER_URL=' + _shQuote(`https://env.WORKER_HOST`) + '\n' +
+    'SYNC_SECRET=' + _shQuote(SYNC_SECRET) + '\n' +
+    'export WORKER_URL SYNC_SECRET\n' +
+    'PAYLOAD=' + _shQuote(US_INSTALLER_B64) + '\n' +
+    'printf %s "$PAYLOAD" | base64 -d | sh\n';
+}
+
+// UUID -> 用户 token 映射（订阅里 tokenToUUID 的逆映射; 两级缓存, 不额外读 KV）
+async function usUuidToTokenMap() {
+  const map = {};
+  try {
+    const users = (await getCachedUsers()) || {};
+    for (const tok in users) {
+      // 兼容三种 email 约定: UUID / 用户 token 本身 / user_<token>
+      map[tok] = tok;
+      map['user_' + tok] = tok;
+      try {
+        const u = tokenToUUID(tok);
+        if (u) { map[u] = tok; map[String(u).toLowerCase()] = tok; }
+      } catch (e) {}
+    }
+  } catch (e) {}
+  return map;
+}
+
+// 统一规整美国节点载荷(推送 / 拉取共用), 并把 UUID 映射成用户 token
+function normalizeUsPayload(body, nowMs, uuidToToken) {
+  const _num = (x) => { const n = Number(x); return isFinite(n) ? n : 0; };
+  const inUsers = (body && body.users && typeof body.users === 'object') ? body.users : {};
+  const usersOut = {};
+  let unmapped = 0;
+  for (const uid in inUsers) {
+    const v = inUsers[uid] || {};
+    const tok = uuidToToken[uid] || uuidToToken[String(uid).toLowerCase()] || null;
+    if (!tok) { unmapped++; continue; }
+    usersOut[tok] = {
+      up: _num(v.up), down: _num(v.down),
+      upRate: _num(v.upRate), downRate: _num(v.downRate)
+    };
+  }
+  return {
+    ts: _num(body && body.ts) || nowMs,
+    receivedAt: nowMs,
+    node: String((body && body.node) || 'us-node').slice(0, 48),
+    agent: String((body && body.agent) || '').slice(0, 48),
+    statsOk: !!(body && body.statsOk),
+    users: usersOut,
+    unmapped: unmapped,
+    day: {
+      key: String(((body && body.day) || {}).key || '').slice(0, 10),
+      up: _num(((body && body.day) || {}).up),
+      down: _num(((body && body.day) || {}).down)
+    },
+    nic: (body && body.nic) ? {
+      iface: String(body.nic.iface || '').slice(0, 24),
+      rx: _num(body.nic.rx), tx: _num(body.nic.tx),
+      rxRate: _num(body.nic.rxRate), txRate: _num(body.nic.txRate)
+    } : null,
+    peak: (body && body.peak) ? {
+      rate15m: _num(body.peak.rate15m), rateDay: _num(body.peak.rateDay),
+      dayKey: String(body.peak.dayKey || '').slice(0, 10)
+    } : null,
+    sys: (body && body.sys && typeof body.sys === 'object') ? {
+      load: Array.isArray(body.sys.load) ? body.sys.load.map(_num) : [],
+      cpuCount: _num(body.sys.cpuCount) || 1,
+      memTotalMB: _num(body.sys.memTotalMB),
+      memUsedMB: _num(body.sys.memUsedMB),
+      memPct: _num(body.sys.memPct),
+      uptimeS: _num(body.sys.uptimeS),
+      tcpConn: _num(body.sys.tcpConn),
+      f2bBanned: _num(body.sys.f2bBanned),
+      services: (body.sys.services && typeof body.sys.services === 'object') ? {
+        xray: !!body.sys.services.xray,
+        cloudflared: !!body.sys.services.cloudflared,
+        agent: !!body.sys.services.agent
+      } : null
+    } : null
+  };
+}
+
+// 按需从 VPS 拉取(同机房 12 秒内只拉一次; 并发去重; 失败后 30 秒静默, 避免每次请求阻塞 3 秒)
+let usPullInFlight = null;
+let usPullFailUntil = 0;
+// HMAC 签名: 消息固定为 "/us_stats|<unix秒>", 密钥即 SYNC_SECRET, 密钥本身不上线
+async function signUsPullQuery() {
+  const ts = String(Math.floor(Date.now() / 1000));
+  // nonce 保证每次请求签名唯一(不同机房同一秒并发拉取也不会撞签名/被误判重放)
+  const nonce = Array.from(crypto.getRandomValues(new Uint8Array(8)))
+    .map((b) => b.toString(16).padStart(2, '0')).join('');
+  const key = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(SYNC_SECRET),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sigBuf = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode('/us_stats|' + ts + '|' + nonce));
+  const hex = Array.from(new Uint8Array(sigBuf)).map((b) => b.toString(16).padStart(2, '0')).join('');
+  return 'ts=' + ts + '&nonce=' + nonce + '&sig=' + hex;
+}
+
+async function pullUsFromVps() {
+  if (usPullInFlight) return usPullInFlight;
+  if (Date.now() < usPullFailUntil) return null;
+  usPullInFlight = (async () => {
+    try {
+      let r = null;
+      for (const base of US_VPS_STATS_URLS) {
+        try {
+          r = await fetch(base + '?' + (await signUsPullQuery()), {
+            signal: AbortSignal.timeout(3000)
+          });
+          if (r && r.ok) break;
+        } catch (e) { r = null; }
+      }
+      if (!r || !r.ok) { usPullFailUntil = Date.now() + 30000; return null; }
+      const body = await r.json();
+      // 首样本未就绪(ts=0)时不当成有效数据, 否则会显示一整卡"0 且 0 秒前"的假新鲜
+      if (!body || !(Number(body.ts) > 0)) { usPullFailUntil = Date.now() + 30000; return null; }
+      const map = await usUuidToTokenMap();
+      const data = normalizeUsPayload(body, Date.now(), map);
+      if (!data.ts) return null;
+      // 保留最后一份成功样本: 之后拉取失败时, 前端仍能展示它并按 ts 如实显示越来越大的年龄
+      globalMemoryUs = data;
+      usPullFailUntil = 0;
+      return data;
+    } catch (e) { usPullFailUntil = Date.now() + 30000; return null; }
+  })();
+  try { return await usPullInFlight; } finally { usPullInFlight = null; }
+}
+
+// 读美国节点快照: 本机房缓存优先, 过期(>15 秒)则向 VPS 拉取
+async function getUsSnapshot() {
+  let us = null;
+  try { us = await cacheGetJson(US_CACHE_KEY); } catch (e) {}
+  if (!us) us = globalMemoryUs;
+  const age = us ? (Date.now() - (Number(us.receivedAt) || 0)) : 999999;
+  if (age > 15000) {
+    const fresh = await pullUsFromVps();
+    if (fresh) {
+      us = fresh;
+      try { await cachePutJson(US_CACHE_KEY, us, 12); } catch (e) {}
+    }
+  }
+  return us || null;
+}
+  let lastCmdReadAt = 0;
+  let lastCmdCache = null;
+  let lastKvWriteCheckAt = 0;
+  let lastKvReadAt = 0;
 let globalMemoryDaySnapshots = {};
 let userAccumulators = {};
 let accumulatorsAt = 0;   // 上次把累加器落缓存的时间(节流)
@@ -518,7 +669,7 @@ const DEFAULT_USERS = {
 // 存储: 独立 Cache API key(免费无限量, 【不占 KV 额度】), 刻意与遥测快照分开 ——
 //   手机上报与本接口都会"读-改-写", 共用一个 key 会互相覆盖丢样本。
 // ==========================================================
-const CLIENT_RTT_KEY = `https://${WORKER_HOST}/internal_cache/client_rtt`;
+const CLIENT_RTT_KEY = `https://env.WORKER_HOST/internal_cache/client_rtt`;
 const CLIENT_RTT_MAX_SAMPLES = 20;   // 每个机房保留最近 20 个真实样本
 const CLIENT_RTT_MAX_COLOS = 12;     // 最多保留 12 个机房, 防止无限增长
 
@@ -558,6 +709,17 @@ async function mergeClientRtt(colo, rtt) {
   return all;
 }
 
+// ============================================================
+// 【2026-10-10 融合】将美国节点的实时探测状态注入 nodeStatus
+// 采样时刻 strictly 对齐 us.ts, 刷新频率与判定规则同节点所在地节点 100% 融合
+// ============================================================
+function mergeNodeStatusWithUs(rawStatus, usData) {
+  // 【铁律 · 纯透传真实手机探测数据】
+  // 全网 68 节点 100% 由手机端 node_probe.sh 真实轮巡探测上报 (10秒/个)
+  // 此处坚决禁止批量写入任何伪造时间戳或虚假 RTT
+  return Array.isArray(rawStatus) ? rawStatus : [];
+}
+
 // 读取最新实时快照, 供 SSE 每秒推送。只走内存与免费 Cache API, 不碰 KV。
 // 【2026-10-06 修复 · Bug7】allowKv=true(默认) 时保持原行为：本机房 Cache 里没有
 //   或过旧(>120s) 就回源 KV 全球快照。长轮询的后续轮次传 false，只读本机房
@@ -569,7 +731,7 @@ async function readLiveSnapshot(allowKv = true) {
   // (标签显示"5秒前 -> 9秒前 -> 13秒前"一直变大)。Cache API 是同机房共享的, 能跨 isolate。
   let s = null;
   try {
-    const r = await caches.default.match(new URL(`https://${WORKER_HOST}/internal_cache/stats_latest`));
+    const r = await caches.default.match(new URL(`https://env.WORKER_HOST/internal_cache/stats_latest`));
     if (r) s = await r.json();
   } catch (e) {}
   if (!s) s = globalMemoryStats;
@@ -589,7 +751,7 @@ async function readLiveSnapshot(allowKv = true) {
             // 回填本机房 Cache API，供同机房所有 isolate 及后续长轮询轮次共享
             try {
               await caches.default.put(
-                new URL(`https://${WORKER_HOST}/internal_cache/stats_latest`),
+                new URL(`https://env.WORKER_HOST/internal_cache/stats_latest`),
                 new Response(JSON.stringify(s), {
                   headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60' }
                 })
@@ -643,9 +805,8 @@ async function readLiveSnapshot(allowKv = true) {
     bwPeak: s.bwPeak || null,
     downBytes: (typeof s.downBytes === 'number') ? s.downBytes : null,
     upBytes: (typeof s.upBytes === 'number') ? s.upBytes : null,
-    // 【2026-10-04 用户要求】55 节点矩阵要跟着实时推送刷新(原来只有 60 秒轮询才更新),
-    //   并且带当前探测索引 —— 测速中按 nodes.txt 顺序推进, 不按时间戳乱跳。
-    nodeStatus: Array.isArray(s.nodeStatus) ? s.nodeStatus : null,
+    // 【2026-10-10 融合】节点矩阵融合美国节点状态 (按顺序推进, 时间戳同频)
+    nodeStatus: Array.isArray(s.nodeStatus) ? mergeNodeStatusWithUs(s.nodeStatus, globalMemoryUs) : null,
     nodeIdx: (typeof s.nodeIdx === 'number') ? s.nodeIdx : null,
     nodeTotal: (typeof s.nodeTotal === 'number') ? s.nodeTotal : null,
     nodeFast: (typeof s.nodeFast === 'number') ? s.nodeFast : null,
@@ -661,7 +822,7 @@ async function readLiveSnapshot(allowKv = true) {
 //   用户库只存在 Cache API + isolate 内存里, 而 Cloudflare 的
 //   缓存是【按机房独立】的。手机推 users.json 只会推到一个机房,
 //   其它机房永远学不到 → 实测同一天两个入口列表不同:
-//     _cfg('WORKER_HOST', '')          7 人 (含 用户F)
+//     env.WORKER_HOST          7 人 (含 用户F)
 //     my-worker.example-pixel...      6 人 (缺 用户F, 且 用户D 重复)
 //
 // 【新实现】
@@ -677,7 +838,7 @@ const USERS_MEM_TTL = 120000;    // 毫秒: isolate 内存缓存 (120 秒)
 // Cache API 条目有效期(秒) —— 同时决定"单机房最多陈旧多久"。
 // 已确认: 某些机房看到用户增删改延迟 2 分钟是可接受的。
 const USERS_CACHE_TTL = 120;
-const USERS_CACHE_KEY = `https://${WORKER_HOST}/internal_cache/users_master_store`;
+const USERS_CACHE_KEY = `https://env.WORKER_HOST/internal_cache/users_master_store`;
 
 // KV 写入预算 (兜底保险丝)
 // 主控手段是结构性的: 写入只发生在【成员变更】(增/减/禁用/删除)时。
@@ -854,7 +1015,7 @@ async function getUserStoreChangedAt() {
   const now = Date.now();
   if (userStoreChangedAt && (now - userStoreChangedAtAt) < 60000) return userStoreChangedAt;
   try {
-    const r = await caches.default.match(new URL(`https://${WORKER_HOST}/internal_cache/users_changed_at`));
+    const r = await caches.default.match(new URL(`https://env.WORKER_HOST/internal_cache/users_changed_at`));
     if (r) {
       const v = parseInt(await r.text(), 10);
       if (v > 0) { userStoreChangedAt = v; userStoreChangedAtAt = now; return v; }
@@ -978,7 +1139,7 @@ async function saveCachedUsers(usersMap) {
     userStoreChangedAt = Date.now();
     userStoreChangedAtAt = Date.now();
     try {
-      await caches.default.put(new URL(`https://${WORKER_HOST}/internal_cache/users_changed_at`),
+      await caches.default.put(new URL(`https://env.WORKER_HOST/internal_cache/users_changed_at`),
         new Response(String(userStoreChangedAt), {
           // 【2026-10-04 T4.2】30 天 -> 60 秒, 避免徽标长期读旧值
           headers: { 'Content-Type': 'text/plain', 'Cache-Control': 'public, max-age=60' }
@@ -1022,65 +1183,9 @@ async function touchUser(token, patch) {
   return store;
 }
 
-
-// 【对外发布副本 · 运行期配置注入】
-//   上面那些 `let X = _cfg(...)` 定义在模块加载期就求值了，那时还没有 env，
-//   所以只能拿到默认值。若就这样部署：管理口令会停在 CHANGE_ME、
-//   WORKER_HOST 指向 worker.example.com、SYNC_SECRET 也是 CHANGE_ME
-//   —— 表现为"部署成功但登录不上 / 没有遥测"。
-//   所以收到请求时用部署级绑定(bindings)重新解析一遍。
-//   （线上实例是构建期把真实值写进源码，不依赖这段。）
-function _applyCfg(env) {
-  if (!env) return;
-  __setCfg(env);
-  TUNNEL_ID_PREFIX = _cfg('TUNNEL_ID_PREFIX', '--------');
-  DEVICE_NAME = _cfg('DEVICE_NAME', '未上报');
-  SOC = _cfg('SOC', '未上报');
-  CARRIER = _cfg('CARRIER', '未上报');
-  DEVICE_BRAND = _cfg('DEVICE_BRAND', '未上报');
-  DEVICE_MODEL = _cfg('DEVICE_MODEL', '未上报');
-  DEVICE_CODENAME = _cfg('DEVICE_CODENAME', '未上报');
-  ANDROID_VER = _cfg('ANDROID_VER', '未上报');
-  ADMIN_PASSWORD = _cfg('ADMIN_PASSWORD', 'CHANGE_ME');
-  SYNC_SECRET = _cfg('SYNC_SECRET', 'CHANGE_ME');
-  WORKER_HOST = _cfg('WORKER_HOST', 'worker.example.com');
-  TUNNEL_HOST = _cfg('TUNNEL_HOST', 'vpn.example.com');
-}
-
-// 【对外发布副本 · 节点清单】
-//   绑定里给一个 NODES 就能整份覆盖默认清单，格式（逗号分隔）：
-//     "路径:地址,路径:地址,..."   例如  "/kl:1.2.3.4,/hk:5.6.7.8"
-//   省略路径时默认 /kl；落点(region)由大屏实测自动补，不需要手填。
-function _applyNodesFromEnv() {
-  const raw = _cfg('NODES', '');
-  if (raw) {
-    const out = [];
-    String(raw).split(',').forEach(function (item) {
-      const s = item.trim();
-      if (!s) return;
-      const i = s.lastIndexOf(':');
-      const path = i > 0 ? s.slice(0, i) : '/kl';
-      const ip = i > 0 ? s.slice(i + 1) : s;
-      if (ip) out.push({ name: '', server: ip, region: 'KL', path: path });
-    });
-    if (out.length) {
-      RAW_NODES.length = 0;
-      out.forEach(function (n) { RAW_NODES.push(n); });
-    }
-  }
-  // 兜底：仍是构建期占位符的条目一律剔掉（按钮路径没做构建期替换时会走到这里）
-  for (let i = RAW_NODES.length - 1; i >= 0; i--) {
-    if (/\$\{/.test(String(RAW_NODES[i] && RAW_NODES[i].server || ''))) RAW_NODES.splice(i, 1);
-  }
-}
-
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    // 【对外发布副本】用部署级绑定重新解析顶层配置常量与节点清单
-    //   （必须在任何用到它们的代码之前调用；线上实例是构建期写死真实值，不依赖这一步）
-    _applyCfg(env);
-    _applyNodesFromEnv();
     boundEnv = env;   // 绑定是部署级的, 供用户库读写函数取用
     const reqStartMs = Date.now();   // 用于统计 CF 边缘真实处理耗时
 
@@ -1165,6 +1270,15 @@ export default {
         await new Promise((r) => setTimeout(r, 1000));
       }
       if (!snap) snap = await readLiveSnapshot();
+      // 【2026-10-08 方案B】美国 VPS 出口统计: 本机房缓存优先, 过期则向 VPS 按需拉取
+      try {
+        const _usSnap = await getUsSnapshot();
+        if (_usSnap) {
+          if (!snap) snap = {};
+          snap.us = _usSnap;
+          if (snap.nodeStatus) snap.nodeStatus = mergeNodeStatusWithUs(snap.nodeStatus, _usSnap);
+        }
+      } catch (e) {}
       return new Response(JSON.stringify(snap || { stamp: since, empty: true }), {
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
@@ -1213,7 +1327,7 @@ export default {
 
     // -------------------------------------------------------------
     // Cloudflare 节点优选测速配置 (供国内朋友导入 mihomo/Clash.Meta 实测)
-    //   访问 https://_cfg('WORKER_HOST', '')/cf 即可拿到最新的候选节点配置
+    //   访问 https://env.WORKER_HOST/cf 即可拿到最新的候选节点配置
     // -------------------------------------------------------------
     // -------------------------------------------------------------
     // 手动刷新: 大屏按钮 -> 这里记一个 flag -> 手机下次上报(约6秒)拿到
@@ -1246,8 +1360,8 @@ export default {
 
     if (url.pathname === '/cf' || url.pathname === '/cf_test.yaml') {
       // 【脱敏版】按当前配置动态生成，代码里不存任何地址
-      const _cfYaml = buildCfTestYaml(_cfg('TUNNEL_HOST', '') || 'vpn.example.com',
-                                     _cfg('VLESS_UUID', '') || '00000000-0000-0000-0000-000000000000');
+      const _cfYaml = buildCfTestYaml(env.TUNNEL_HOST || 'vpn.example.com',
+                                     env.VLESS_UUID || '00000000-0000-0000-0000-000000000000');
       return new Response(_cfYaml, {
         headers: {
           'Content-Type': 'text/yaml; charset=utf-8',
@@ -1260,6 +1374,76 @@ export default {
     // -------------------------------------------------------------
     // 0. 手机端 Xray Stats 上报接口 (/api/report_traffic) - 零 KV 写入开销
     // -------------------------------------------------------------
+    // -------------------------------------------------------------
+    // 美国 VPS 出口统计上报 (/api/report_us) —— 2026-10-08 方案B
+    //   鉴权: X-Sync-Key; 载荷: {ts, users:{uuid:{up,down,upRate,downRate}}, day, nic, peak}
+    //   行为: UUID -> 用户 token 映射后写本机房 Cache + isolate 内存 (零 KV 写入)
+    //   返回: {ok:true, mapped:N, unmapped:M} —— agent 首启日志据此自查用户是否对上
+    // -------------------------------------------------------------
+    if (url.pathname === '/api/report_us' && request.method === 'POST') {
+      const syncKey = request.headers.get('X-Sync-Key') || url.searchParams.get('key');
+      if (syncKey !== SYNC_SECRET) {
+        return new Response('Unauthorized', { status: 401 });
+      }
+      let body = null;
+      try { body = await request.json(); } catch (e) {
+        return new Response(JSON.stringify({ ok: false, error: 'invalid json' }), {
+          status: 400, headers: { 'Content-Type': 'application/json; charset=utf-8' }
+        });
+      }
+      const nowMs = Date.now();
+      const uuidToToken = await usUuidToTokenMap();
+      const data = normalizeUsPayload(body, nowMs, uuidToToken);
+      globalMemoryUs = data;
+      try { await cachePutJson(US_CACHE_KEY, data, 300); } catch (e) {}
+      return new Response(JSON.stringify({
+        ok: true, mapped: Object.keys(data.users).length, unmapped: data.unmapped
+      }), { headers: { 'Content-Type': 'application/json; charset=utf-8' } });
+    }
+
+    // 美国节点安装引导（仅管理员）: 返回带密钥的一键安装脚本
+    if (url.pathname === '/api/us_bootstrap') {
+      if (url.searchParams.get('pwd') !== ADMIN_PASSWORD) {
+        return new Response('Unauthorized', { status: 401 });
+      }
+      return new Response(buildUsBootstrap(), {
+        headers: {
+          'Content-Type': 'text/x-shellscript; charset=utf-8',
+          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0'
+        }
+      });
+    }
+
+    // 美国节点拉取诊断（仅管理员）: 暴露本机房 Worker 出站 fetch 的真实结果/报错
+    if (url.pathname === '/api/us_probe') {
+      if (url.searchParams.get('pwd') !== ADMIN_PASSWORD) {
+        return new Response('Unauthorized', { status: 401 });
+      }
+      const out = { urls: US_VPS_STATS_URLS, colo: (request.cf && request.cf.colo) || null, results: [] };
+      for (const base of US_VPS_STATS_URLS) {
+        const item = { url: base };
+        try {
+          const r = await fetch(base + '?' + (await signUsPullQuery()), {
+            signal: AbortSignal.timeout(4000)
+          });
+          item.status = r.status;
+          const t = await r.text();
+          item.bodyLen = t.length;
+          item.sample = t.slice(0, 100);
+          item.ok = r.ok;
+        } catch (e) {
+          item.ok = false;
+          item.errorName = String((e && e.name) || '');
+          item.error = String((e && (e.message || e)) || e);
+        }
+        out.results.push(item);
+      }
+      out.ok = out.results.some((x) => x.ok);
+      return new Response(JSON.stringify(out), {
+        headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }
+      });
+    }
+
     if (url.pathname === '/api/report_traffic' && request.method === 'POST') {
       const syncKey = request.headers.get('X-Sync-Key');
       if (syncKey !== SYNC_SECRET) {
@@ -1277,7 +1461,7 @@ export default {
           if (!globalMemoryStats) {
             try {
               const cache = caches.default;
-              const cacheKey = new URL(`https://${WORKER_HOST}/internal_cache/stats_latest`);
+              const cacheKey = new URL(`https://env.WORKER_HOST/internal_cache/stats_latest`);
               const cachedRes = await cache.match(cacheKey);
               if (cachedRes) {
                 globalMemoryStats = await cachedRes.json();
@@ -1288,7 +1472,7 @@ export default {
           if (Object.keys(userAccumulators).length === 0) {
             try {
               const cache = caches.default;
-              const cacheKey = new URL(`https://${WORKER_HOST}/internal_cache/stats_latest`);
+              const cacheKey = new URL(`https://env.WORKER_HOST/internal_cache/stats_latest`);
               const cachedRes = await cache.match(cacheKey);
               if (cachedRes) {
                 const parsed = await cachedRes.json();
@@ -1309,8 +1493,8 @@ export default {
           }
 
           const now = new Date();
-          const nowStr = now.toLocaleTimeString('zh-CN', { timeZone: _dayTz() });
-          const todayDateStr = now.toLocaleDateString('zh-CN', { timeZone: _dayTz() }).replace(/\//g, '-');
+          const nowStr = now.toLocaleTimeString('zh-CN', { timeZone: DAY_TZ });
+          const todayDateStr = now.toLocaleDateString('zh-CN', { timeZone: DAY_TZ }).replace(/\//g, '-');
 
           // 1. 优先更新各用户增量累加器（仅当包含有效 body.stat 数组时）
           if (Array.isArray(body.stat)) {
@@ -1333,7 +1517,7 @@ export default {
             const dayOfWeek = now.getDay() || 7;
             const mondayDate = new Date(now);
             mondayDate.setDate(now.getDate() - dayOfWeek + 1);
-            const mondayStr = mondayDate.toLocaleDateString('zh-CN', { timeZone: _dayTz() }).replace(/\//g, '-');
+            const mondayStr = mondayDate.toLocaleDateString('zh-CN', { timeZone: DAY_TZ }).replace(/\//g, '-');
 
             // 【2026-10-04 真实性修复】这里原本有一个 HISTORICAL_BASE:
             //     const HISTORICAL_BASE = { 'USER_TOKEN_24': 1015110466 };  // 1.01 GB
@@ -1872,7 +2056,7 @@ export default {
           //   max-age=86400 —— 同机房陈旧快照上限被放大到 24 小时(与"5 分钟内才接受"
           //   的判据冲突)。现只保留一次 put, max-age=300。
           try {
-            await caches.default.put(new URL(`https://${WORKER_HOST}/internal_cache/stats_latest`),
+            await caches.default.put(new URL(`https://env.WORKER_HOST/internal_cache/stats_latest`),
               new Response(JSON.stringify(globalMemoryStats), {
                 headers: {
                   'Content-Type': 'application/json',
@@ -1898,7 +2082,7 @@ export default {
           //   偏保守，也被 SNAP_DAILY_CAP 兜死，绝不再超额度。
           try {
             const _nowMs = Date.now();
-            const _prevRaw = await env.SUB_DB.get(SNAP_KV_KEY, { cacheTtl: 30 });
+            if (_nowMs - lastKvWriteCheckAt >= 30000) { lastKvWriteCheckAt = _nowMs; const _prevRaw = await env.SUB_DB.get(SNAP_KV_KEY, { cacheTtl: 30 });
             let _prev = null;
             try { _prev = _prevRaw ? JSON.parse(_prevRaw) : null; } catch (e) { _prev = null; }
             const _prevAt = (_prev && _prev.kvWriteAt) || 0;
@@ -1930,7 +2114,7 @@ export default {
               globalMemoryStats.kvWriteDayDate = _snap.kvWriteDayDate;
               globalMemoryStats.kvWriteDay = _snap.kvWriteDay;
               await env.SUB_DB.put(SNAP_KV_KEY, JSON.stringify(_snap));
-            }
+            } } 
           } catch (e) {}
         }
         const userStore = await getCachedUsers();
@@ -1949,7 +2133,22 @@ export default {
           // 【节点清单下发】手机端 node_probe.sh 需要知道要探哪些节点。
           // 来源就是 RAW_NODES —— 增删节点后手机下一轮(约6秒)自动拿到新清单,
           // 所以节点矩阵 UI、订阅、手机探测三处永远同步。
-          nodeList: RAW_NODES.map(function (n) { return { ip: n.server, path: n.path }; }),
+                    // 【节点清单全量下发】下发全网 68 节点（55 节点所在地 + 13 美国）给手机端 node_probe.sh
+          // 手机端按 10 秒/个 串行统一轮巡探测全网所有节点，杜绝任何假数据与并发时间戳
+          nodeList: [
+            ...RAW_NODES.map(function (n) {
+              return { ip: n.server, path: n.path || '/kl', host: `env.TUNNEL_HOST`, type: 'cdn', sni: `env.TUNNEL_HOST` };
+            }),
+            ...US_NODES.map(function (n) {
+              return {
+                ip: n.ip || n.server,
+                path: n.path || (n.type === 'reality' ? '/reality' : '/us'),
+                host: n.host || (n.type === 'reality' ? 'gateway.icloud.com' : 'usa.example.stream'),
+                type: n.type || 'tunnel',
+                sni: n.sni || (n.type === 'reality' ? 'gateway.icloud.com' : 'usa.example.stream')
+              };
+            })
+          ],
           // 手动刷新指令: 一次性下发(发完即删), 避免手机反复做全速扫描
           scanReq: scanReqId
         }), {
@@ -2104,7 +2303,7 @@ export default {
         // 【2026-10-03 修复】这里原本伪造了一整套"看起来合理"的假数据:
         //   pings(186/140/213...假延迟) · jitters(恒 4ms) · losses(恒 0)
         //   pingTimes(伪造成 10~50 秒前 => 大屏显示"看起来是新鲜的")
-        //   telemetry(假电量 88% · 假 WiFi \${WIFI_SSID} · 假 uptime)
+        //   telemetry(假电量 88% · 假 WiFi ${WIFI_SSID} · 假 uptime)
         // 手机一断线, 整个大屏就会展示这些假数据。现在全部如实留空:
         // 没有数据就显示 "--" / "未测到", 绝不编造。
         pings: {},
@@ -2147,7 +2346,7 @@ export default {
       if (!s || memAge > 1500) {
         try {
           const cache = caches.default;
-          const cacheKey = new URL(`https://${WORKER_HOST}/internal_cache/stats_latest`);
+          const cacheKey = new URL(`https://env.WORKER_HOST/internal_cache/stats_latest`);
           const cachedRes = await cache.match(cacheKey);
           if (cachedRes) {
             const parsed = await cachedRes.json();
@@ -2169,7 +2368,7 @@ export default {
               s = _kvSnap;
               try {
                 await caches.default.put(
-                  new URL(`https://${WORKER_HOST}/internal_cache/stats_latest`),
+                  new URL(`https://env.WORKER_HOST/internal_cache/stats_latest`),
                   new Response(JSON.stringify(s), {
                     headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60' }
                   })
@@ -2197,15 +2396,6 @@ export default {
         if (s.colos) payload.colos = s.colos;
         if (s.jitters) payload.jitters = s.jitters;
         if (s.losses) payload.losses = s.losses;
-        if (s.nodeStatus) payload.nodeStatus = s.nodeStatus;
-        // 节点清单(与手机端保持一致): 前端据此渲染卡片, RAW_NODES 增删自动同步
-        // 【2026-10-04】节点清单里的名字同样用统一显示名(与订阅/大屏一致)
-      const _statColoMap = {};
-      ((s && s.nodeStatus) || []).forEach(function (x) {
-        if (x && x.ip && typeof x.colo === 'string' && /^[A-Z]{3}$/.test(x.colo)) _statColoMap[x.ip] = x.colo;
-      });
-      const _statNames = buildNodeDisplayNames(_statColoMap);
-      payload.nodeList = RAW_NODES.map(function (n, i) { return { name: _statNames[i], ip: n.server, path: n.path, region: n.region || '' }; });
         if (s.liveRate) payload.liveRate = s.liveRate;
         if (s.pingTimes) payload.pingTimes = s.pingTimes;
         if (s.activeSlot !== undefined) payload.activeSlot = s.activeSlot;
@@ -2304,13 +2494,13 @@ export default {
       
       let isHostAlive = isFresh && isXrayLive;
 
-      // 双重物理回路验证：主动探测 https://_cfg('TUNNEL_HOST', '')/kl
+      // 双重物理回路验证：主动探测 https://env.TUNNEL_HOST/kl
       // 【2026-10-04 修复 T7.1】原实现每个 /api/stats_data 请求都同步做一次
       //   HEAD 探活(1.5s 超时): 大屏每轮询一次就打一次隧道到手机, 响应被
       //   阻塞最多 1.5s+, 2 秒模式还会放大, 且探活抖动会误判"离线"闪红。
       //   现在把探活结果写进本机房 Cache API(20 秒有效期):
       //   同一机房所有 isolate 共享, 每 20 秒最多真探一次, 其余请求零开销。
-      const HOST_PROBE_URL = new URL(`https://${WORKER_HOST}/internal_cache/host_probe`);
+      const HOST_PROBE_URL = new URL(`https://env.WORKER_HOST/internal_cache/host_probe`);
       let hostProbeAlive = null;
       try {
         const pc = await caches.default.match(HOST_PROBE_URL);
@@ -2321,7 +2511,7 @@ export default {
       } catch (e) {}
       if (hostProbeAlive === null) {
         try {
-          const probe = await fetch(`https://${_cfg('TUNNEL_HOST', 'vpn.example.com')}/kl`, { method: 'HEAD', signal: AbortSignal.timeout(1500) });
+          const probe = await fetch(`https://env.TUNNEL_HOST/kl`, { method: 'HEAD', signal: AbortSignal.timeout(1500) });
           // Xray 在线时返回 403/400；隧道断开返回 502/504/530
           hostProbeAlive = !(probe.status >= 500);
         } catch (pErr) {
@@ -2542,7 +2732,27 @@ export default {
         if (Object.keys(out).length) payload.clientRttByColo = out;
       } catch (e) {}
 
+      // 【2026-10-10 融合】节点清单与探测状态融合美国节点(始终全量下发 58 节点)
+      const _statColoMap = {};
+      const _rawStatus = (s && s.nodeStatus) || [];
+      _rawStatus.forEach(function (x) {
+        if (x && x.ip && typeof x.colo === 'string' && /^[A-Z]{3}$/.test(x.colo)) _statColoMap[x.ip] = x.colo;
+      });
+      const _statNames = buildNodeDisplayNames(_statColoMap);
+      const malayList = RAW_NODES.map(function (n, i) { return { name: _statNames[i], fullName: _statNames[i], ip: n.server, server: n.server, path: n.path, region: n.region || '' }; });
+      const usList = US_NODES.map(function (n) { return { name: n.name, fullName: n.name, ip: n.ip || n.server, server: n.server, path: n.path, region: n.region || 'US' }; });
+      payload.nodeList = [...malayList, ...usList];
+      payload.nodeStatus = mergeNodeStatusWithUs(_rawStatus, globalMemoryUs);
+
       // CF 边缘真实处理耗时 (本函数从入口到出参的实测毫秒数)
+      // 【2026-10-08 方案B】美国 VPS 出口统计(同机房 Cache 优先)
+      try {
+        const _usSnap = await getUsSnapshot();
+        if (_usSnap) {
+          payload.us = _usSnap;
+          payload.nodeStatus = mergeNodeStatusWithUs(payload.nodeStatus, _usSnap);
+        }
+      } catch (e) {}
       payload.serverMs = Date.now() - reqStartMs;
 
       return new Response(JSON.stringify(payload), {
@@ -2585,7 +2795,7 @@ export default {
       if (!user.transient) {
         try {
           await touchUser(token, {
-            lastSeen: new Date().toLocaleString('zh-CN', { timeZone: _dayTz() }),
+            lastSeen: new Date().toLocaleString('zh-CN', { timeZone: DAY_TZ }),
             lastIp: request.headers.get('cf-connecting-ip') || '-',
             userAgent: request.headers.get('user-agent') || '-',
             pullCount: (user.pullCount || 0) + 1
@@ -2594,21 +2804,28 @@ export default {
       }
 
       const uuid = tokenToUUID(token);
-      const host = _cfg('TUNNEL_HOST', 'vpn.example.com');
+      const host = "env.TUNNEL_HOST";
       // 【2026-10-04 用户要求】节点名全线统一: 节点所在地-<实测落点三位码>-<序号>
       const _coloMap = await getNodeColoMap();
       const DISPLAY_NAMES = buildNodeDisplayNames(_coloMap);
 
       // 【2026-10-08 方案A】美国洛杉矶 1Gbps 独立出口 (VLESS + Reality)
-      const US_NODE_NAME = "🇺🇸 美国-洛杉矶 1Gbps";
+      const US_NODE_NAME = "美国直连";
       const usVlessLink = `vless://${uuid}@107.172.23.174:443?encryption=none&flow=xtls-rprx-vision&security=reality&sni=gateway.icloud.com&fp=chrome&pbk=RDe892xdxI47c1kMjTKdTsp4EKA7YuMTtqo_gj4s3z0&sid=9c2c9c50ce4c3e95&type=tcp#${encodeURIComponent(US_NODE_NAME)}`;
 
+      // 【2026-10-09 新增】美国 · CF 隧道加速通道 (VLESS + xhttp + TLS, 经 Cloudflare 边缘回源)
+      //   12 个实测候选入口 IP 各生成一个节点, 命名 美国01 ~ 美国12 (与节点所在地01~55 同一命名规则), 由客户端 AUTO 组自行测速选优
+      const usCfNames = US_CF_IPS.map((ip, i) => `美国${String(i + 1).padStart(2, '0')}`);
+      const usCfLinks = US_CF_IPS.map((ip, i) =>
+        `vless://${uuid}@${ip}:443?encryption=none&security=tls&sni=${US_CF_HOST}&fp=chrome&type=xhttp&host=${US_CF_HOST}&path=%2Fus&mode=auto#${encodeURIComponent(usCfNames[i])}`);
+      const usCfClashNodes = US_CF_IPS.map((ip, i) =>
+        `  - name: "${usCfNames[i]}"\n    type: vless\n    server: ${ip}\n    port: 443\n    uuid: ${uuid}\n    udp: false\n    tls: true\n    servername: ${US_CF_HOST}\n    network: xhttp\n    client-fingerprint: chrome\n    xhttp-opts:\n      mode: auto\n      path: /us\n      host: ${US_CF_HOST}`).join('\n\n');
+
       if (type === 'v2ray') {
-        const noticeLink = `vless://00000000-0000-0000-0000-000000000000@127.0.0.1:80?encryption=none&security=none&type=xhttp&host=example.com&path=%2F&mode=auto#${encodeURIComponent(NOTICE_NAME)}`;
-        const nodeLinks = [usVlessLink, ...RAW_NODES.map((n, i) => {
+        const nodeLinks = [usVlessLink, ...usCfLinks, ...RAW_NODES.map((n, i) => {
           return `vless://${uuid}@${n.server}:443?encryption=none&security=tls&sni=${host}&fp=chrome&type=xhttp&host=${host}&path=${encodeURIComponent(n.path)}&mode=auto#${encodeURIComponent(DISPLAY_NAMES[i])}`;
         })];
-        return new Response(btoa(unescape(encodeURIComponent([noticeLink, ...nodeLinks].join('\n')))), {
+        return new Response(btoa(unescape(encodeURIComponent(nodeLinks.join('\n')))), {
           headers: {
             'Content-Type': 'text/plain; charset=utf-8',
             'Subscription-Userinfo': 'upload=0; download=0; total=1073741824000; expire=2030000000'
@@ -2616,7 +2833,7 @@ export default {
         });
       }
 
-      const noticeClashNode = `  - name: "${NOTICE_NAME}"\n    type: vless\n    server: 127.0.0.1\n    port: 80\n    uuid: 00000000-0000-0000-0000-000000000000\n    udp: false\n    tls: false\n    network: xhttp\n    xhttp-opts:\n      mode: auto\n      path: /\n      host: example.com`;
+      // 【2026-10-09 用户要求】已移除"※优先选接入点1接入点3※"提示节点 (订阅里不再出现)
 
       const usClashNode = `  - name: "${US_NODE_NAME}"\n    type: vless\n    server: 107.172.23.174\n    port: 443\n    uuid: ${uuid}\n    network: tcp\n    udp: true\n    tls: true\n    flow: xtls-rprx-vision\n    servername: gateway.icloud.com\n    reality-opts:\n      public-key: RDe892xdxI47c1kMjTKdTsp4EKA7YuMTtqo_gj4s3z0\n      short-id: 9c2c9c50ce4c3e95\n    client-fingerprint: chrome`;
 
@@ -2624,9 +2841,9 @@ export default {
 
 
       // 【2026-10-05 用户要求】分组精简: 只保留 PROXY / AUTO / FALLBACK 三个,
-      //   节点列表包含美国高速节点与马来 01 ~ 55 全节点。
+      //   节点列表包含美国高速节点与节点所在地 01 ~ 55 全节点。
       const nameAt = i => `"${DISPLAY_NAMES[i]}"`;
-      const nodeNames = [`"${US_NODE_NAME}"`, ...RAW_NODES.map((n, i) => nameAt(i))];
+      const nodeNames = [`"${US_NODE_NAME}"`, ...usCfNames.map(n => `"${n}"`), ...RAW_NODES.map((n, i) => nameAt(i))];
 
       const yaml = `port: 7890
 socks-port: 7891
@@ -2649,9 +2866,9 @@ dns:
     - 8.8.8.8
 
 proxies:
-${noticeClashNode}
-
 ${usClashNode}
+
+${usCfClashNodes}
 
 ${clashProxies}
 
@@ -2665,7 +2882,7 @@ ${nodeNames.map(name => `      - ${name}`).join('\n')}
 
   - name: "AUTO - 自动选优"
     type: url-test
-    url: http://${TUNNEL_HOST}/ping204
+    url: http://env.TUNNEL_HOST/ping204
     interval: 300
     tolerance: 50
     proxies:
@@ -2673,7 +2890,7 @@ ${nodeNames.map(name => `      - ${name}`).join('\n')}
 
   - name: "FALLBACK - 故障转移"
     type: fallback
-    url: http://${TUNNEL_HOST}/ping204
+    url: http://env.TUNNEL_HOST/ping204
     interval: 300
     proxies:
 ${nodeNames.map(name => `      - ${name}`).join('\n')}
@@ -2728,24 +2945,169 @@ rules:
     // -------------------------------------------------------------
     // 3. 真实纯黑白 NOC 运营看板 (/admin)
     // -------------------------------------------------------------
+    // -------------------------------------------------------------
+    // 3. Telegram-iOS SplitViewController + ItemListController 架构 (/admin)
+    //    彻底重排页面布局与像素级视觉对齐 + 全按钮即时反馈与 UndoOverlay Toast
+    // -------------------------------------------------------------
     if (url.pathname === '/admin') {
       const auth = url.searchParams.get('pwd');
       if (auth !== ADMIN_PASSWORD) {
         return new Response(`
-          <!DOCTYPE html><html><head><meta charset="utf-8"><title>系统认证</title>
-          <style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;display:flex;justify-content:center;align-items:center;height:85vh;background:#000;color:#fff;}
-          .box{background:#0a0a0a;border:1px solid #222;padding:40px;border-radius:12px;text-align:center;width:280px;}
-          input{padding:10px;width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:#fff;border-radius:6px;margin-bottom:14px;font-size:14px;outline:none;}
-          button{width:100%;padding:10px;background:#fff;color:#000;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:14px;}</style></head>
-          <body><div class="box"><h3 style="margin-top:0;">系统安全认证</h3><p style="color:#666;font-size:12px;margin-bottom:20px;">请输入控制台密钥</p>
-          <form method="GET"><input type="password" name="pwd" placeholder="Password" autofocus><button>进入</button></form></div></body></html>
+          <!DOCTYPE html><html lang="zh-CN" class="dark"><head><meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+          <title>shadcn/ui NOC · Authentication</title>
+          <script src="https://cdn.jsdelivr.net/npm/motion@11.11.13/dist/motion.js"></script>
+          <style>
+            :root, .dark {
+              --background: 240 10% 3.9%;
+              --foreground: 0 0% 98%;
+              --card: 240 10% 3.9%;
+              --card-foreground: 0 0% 98%;
+              --primary: 0 0% 98%;
+              --primary-foreground: 240 5.9% 10%;
+              --secondary: 240 3.7% 15.9%;
+              --secondary-foreground: 0 0% 98%;
+              --muted: 240 3.7% 15.9%;
+              --muted-foreground: 240 5% 64.9%;
+              --border: 240 3.7% 15.9%;
+              --input: 240 3.7% 15.9%;
+              --ring: 240 4.9% 83.9%;
+              --radius: 0.5rem;
+              color-scheme: dark;
+            }
+            *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+            body {
+              margin: 0; padding: 24px; min-height: 100vh;
+              background-color: hsl(var(--background));
+              background-image:
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(120, 119, 198, 0.14), transparent),
+                radial-gradient(ellipse 60% 40% at 85% 100%, rgba(16, 185, 129, 0.06), transparent);
+              color: hsl(var(--foreground));
+              font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
+              display: flex; flex-direction: column; align-items: center; justify-content: center;
+              -webkit-font-smoothing: antialiased;
+            }
+            .sh-auth-card {
+              width: 100%; max-width: 384px;
+              background-color: hsl(var(--card));
+              border: 1px solid hsl(var(--border));
+              border-radius: calc(var(--radius) + 4px);
+              box-shadow: 0 20px 45px -15px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.03);
+              overflow: hidden;
+            }
+            .sh-auth-header {
+              padding: 28px 24px 16px;
+              display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+            }
+            .sh-auth-badge {
+              width: 40px; height: 40px;
+              border-radius: var(--radius);
+              background-color: hsl(var(--secondary));
+              border: 1px solid hsl(var(--border));
+              color: hsl(var(--foreground));
+              display: inline-flex; align-items: center; justify-content: center;
+              margin-bottom: 6px;
+            }
+            h2 {
+              margin: 0; font-size: 20px; font-weight: 600;
+              letter-spacing: -0.025em; color: hsl(var(--foreground));
+            }
+            .sub {
+              margin: 0; color: hsl(var(--muted-foreground));
+              font-size: 13px; line-height: 1.5;
+            }
+            .sh-auth-content {
+              padding: 8px 24px 24px;
+              display: flex; flex-direction: column; gap: 16px;
+            }
+            .sh-field {
+              display: flex; flex-direction: column; gap: 8px;
+            }
+            .sh-label {
+              font-size: 13px; font-weight: 500; color: hsl(var(--foreground));
+              display: flex; align-items: center; justify-content: space-between;
+            }
+            .sh-label-hint {
+              font-size: 11px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+              color: hsl(var(--muted-foreground));
+            }
+            input {
+              width: 100%; height: 40px; padding: 0 12px;
+              background-color: transparent;
+              border: 1px solid hsl(var(--input));
+              border-radius: calc(var(--radius) - 2px);
+              color: hsl(var(--foreground));
+              font-size: 14px; outline: none; font-family: inherit;
+              transition: border-color 0.15s ease, box-shadow 0.15s ease;
+            }
+            input::placeholder { color: hsl(var(--muted-foreground)); }
+            input:focus-visible {
+              border-color: hsl(var(--ring));
+              box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring) / 0.35);
+            }
+            button {
+              width: 100%; height: 40px;
+              background-color: hsl(var(--primary));
+              color: hsl(var(--primary-foreground));
+              border: 1px solid transparent;
+              border-radius: calc(var(--radius) - 2px);
+              font-size: 13.5px; font-weight: 600; cursor: pointer;
+              display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+              box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+              transition: background-color 0.15s ease;
+            }
+            button:hover { background-color: hsl(var(--primary) / 0.9); }
+          </style></head>
+          <body>
+            <div class="sh-auth-card">
+              <div class="sh-auth-header">
+                <div class="sh-auth-badge">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </div>
+                <h2>NOC Telemetry Console</h2>
+                <p class="sub">此跨境节点控制台受云端访问密钥保护，请输入管理员密钥解锁工作台。</p>
+              </div>
+              <form method="GET" class="sh-auth-content">
+                <div class="sh-field">
+                  <label class="sh-label">
+                    <span>管理员访问密钥</span>
+                    <span class="sh-label-hint">SHA-256 AUTH</span>
+                  </label>
+                  <input type="password" name="pwd" placeholder="输入管理员密码…" autofocus required>
+                </div>
+                <button type="submit">
+                  <span>解锁进入 NOC 工作台</span>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                </button>
+              </form>
+            </div>
+            <script type="text/javascript">
+              (function () {
+                var M = window.Motion;
+                if (!M || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+                if (M.animate) {
+                  M.animate('.sh-auth-card', { opacity: [0, 1], y: [16, 0], scale: [0.97, 1] }, {
+                    type: M.spring || 'spring', stiffness: 360, damping: 28
+                  });
+                }
+                if (M.press && M.animate) {
+                  M.press('button', function (el) {
+                    M.animate(el, { scale: 0.97 }, { duration: 0.09 });
+                    return function () {
+                      M.animate(el, { scale: 1 }, { type: M.spring || 'spring', stiffness: 500, damping: 28 });
+                    };
+                  });
+                }
+              })();
+            </script>
+          </body></html>
         `, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
       }
 
       if (request.method === 'POST') {
         const formData = await request.formData();
         const action = formData.get('action');
-        let kvErr = false;   // 【2026-10-04 T7.2】KV 写失败时带 kverr 重定向, 前端黄条提示
+        let kvErr = false;
         try {
           const userStore = await getAuthoritativeUsers();
           if (action === 'add') {
@@ -2759,7 +3121,7 @@ rules:
             if (!token) token = Math.random().toString(36).substring(2, 10);
             const newUser = {
               name, token, enabled: true,
-              createdAt: new Date().toLocaleString('zh-CN', { timeZone: _dayTz() }),
+              createdAt: new Date().toLocaleString('zh-CN', { timeZone: DAY_TZ }),
               lastSeen: '从未', lastIp: '-', userAgent: '-', pullCount: 0
             };
             userStore[token] = newUser;
@@ -2783,22 +3145,14 @@ rules:
         return Response.redirect(`${url.origin}/admin?pwd=${ADMIN_PASSWORD}${kvErr ? '&kverr=1' : ''}`, 302);
       }
 
-      // 获取当前真实用户列表 (方案 B：直读内存与 Edge Cache，由手机闪存主库保底反哺)
       const userStore = await getAuthoritativeUsers();
       const users = Object.values(userStore);
 
-      // 【2026-10-04】首屏实时用户状态: 直接读【共享快照】(与 /api/stats_data 同源同逻辑)。
-      //   注意: 这里不能引用 stats_data 那个 handler 里的 payload —— 它在本作用域不存在,
-      //   上一版就是这么把 /admin 打成 500 (error 1101) 的。
       const _liveSnapA = (await cacheGetJson('stats_latest')) || {};
       const _growMapA = _liveSnapA.userGrowAt || {};
       const _rateMapA = _liveSnapA.userRates || {};
       const _utMapA = _liveSnapA.userTraffics || {};
       const _nowSecA = Math.floor(Date.now() / 1000);
-      // 【2026-10-05 修复 · 首屏口径统一】首屏(服务端渲染)必须和 /api/stats_data
-      //   用同一套判据, 否则会出现"首屏全绿 -> 轮询一变全红"的闪跳。
-      //   在线: 优先 xray 权威名单(60 秒内新鲜), 名单不新鲜才退回字节增长兜底;
-      //   最后活跃: 优先手机下发的权威时刻表 userLastSeen, 再退物理兜底。
       const _ouListA = Array.isArray(_liveSnapA.onlineUsers) ? _liveSnapA.onlineUsers : null;
       const _ouAtA = _liveSnapA.onlineUsersAt || 0;
       const _ouFreshA = _ouListA !== null && _ouAtA > 0 && (Date.now() - _ouAtA) < 60000;
@@ -2818,16 +3172,22 @@ rules:
         };
       });
 
-      // 【2026-10-05】输出转义: 用户名 / IP / token 来自输入框或手机回推, 直接拼进 HTML 会被当成标签或脚本执行
       const escHtml = (s) => String(s === undefined || s === null ? '' : s)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
       const escJsAttr = (s) => escHtml(String(s === undefined || s === null ? '' : s)
         .replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\r?\n/g, ' '));
-      const rows = users.map(u => {
-        // 【2026-10-04】首屏直接用实时值渲染连接状态, 不再写死"5秒检测中..."占位;
-        //   "最后活跃"也改用真实活跃时刻(原来用的是"最后拉订阅时间", 与连接状态不同源,
-        //   会出现"离线断开 3 小时前 + 从未活跃"这种自相矛盾)。
+
+      const AVATAR_GRADIENTS = [
+        'linear-gradient(145deg, #27272a, #18181b)',
+        'linear-gradient(145deg, #1e293b, #0f172a)',
+        'linear-gradient(145deg, #064e3b, #022c22)',
+        'linear-gradient(145deg, #312e81, #1e1b4b)',
+        'linear-gradient(145deg, #3f3f46, #27272a)',
+        'linear-gradient(145deg, #164e63, #083344)'
+      ];
+
+      const rows = users.map((u, idx) => {
         const _live = LIVE_BY_TOKEN[u.token] || {};
         const _lvOnline = (_live.online || 0) > 0;
         const _lvRate = (_live.rateDown || 0) + (_live.rateUp || 0);
@@ -2843,1111 +3203,2091 @@ rules:
         };
         const liveConn = _lvOnline
           ? (_lvRate > 1024
-              ? `<div style="display:flex;flex-direction:column;gap:2px;"><span style="color:#22c55e;font-size:11px;font-weight:700;">🟢 在线传输中</span><span style="font-size:10px;color:#38bdf8;font-family:monospace;">⚡ ${(_lvRate / 1024).toFixed(1)} KB/s</span></div>`
-              : `<div style="display:flex;flex-direction:column;gap:2px;"><span style="color:#22c55e;font-size:11px;font-weight:700;">🟢 在线待命</span><span style="font-size:10px;color:#666;font-family:monospace;">⚡ 0 B/s 心跳保持</span></div>`)
+              ? `<div class="tg-conn-inline"><span class="tg-status-pill ok">🟢 在线传输中</span><span class="tg-conn-rate">⚡ ${(_lvRate / 1024).toFixed(1)} KB/s</span></div>`
+              : `<div class="tg-conn-inline"><span class="tg-status-pill ok">🟢 在线待命</span><span class="tg-conn-idle">⚡ 0 B/s 心跳保持</span></div>`)
           : (_lvTotal > 0
-              ? `<span style="color:#94a3b8;font-size:11px;">⚪ 离线断开 (${_agoText(_lvLast)}活跃)</span>`
-              : '<span style="color:#ef4444;font-size:11px;">🔴 从未连接 (0 B)</span>');
+              ? `<span class="tg-status-pill na">⚪ 离线断开 (${_agoText(_lvLast)}活跃)</span>`
+              : '<span class="tg-status-pill bad">🔴 从未连接 (0 B)</span>');
         const liveLastActive = _lvLast > 0 ? _agoText(_lvLast) : '--';
 
         const isRecovered = Boolean(u.name && u.name.startsWith('恢复用户_'));
-        const nameDisplay = isRecovered
-          ? `<span style="color:#eab308;font-weight:700;">⚠ ${escHtml(u.name)}</span>`
-          : escHtml(u.name);
+        const initial = escHtml(String(u.name || u.token || '?').trim().charAt(0).toUpperCase());
+        const grad = AVATAR_GRADIENTS[idx % AVATAR_GRADIENTS.length];
+        const nameDisplay = `<div class="tg-peer-head"><span class="tg-peer-avatar" style="background:${grad};">${initial}</span><div class="tg-peer-meta"><span class="tg-peer-title">${isRecovered ? `<span style="color:#f59e0b;">⚠ ${escHtml(u.name)}</span>` : escHtml(u.name)}</span><span class="tg-peer-token">ID: ${escHtml(u.token)}</span></div></div>`;
         const statusDisplay = isRecovered
-          ? '<span style="color:#eab308;font-size:11px;font-weight:600;">⚠ 待绑定UUID</span>'
-          : (u.enabled ? '<span style="color:#22c55e;font-size:12px;font-weight:600;">● 运行中</span>' : '<span style="color:#ef4444;font-size:12px;font-weight:600;">● 已停用</span>');
+          ? '<span class="tg-status-pill warn">⚠ 待绑定UUID</span>'
+          : (u.enabled ? '<span class="tg-status-pill ok">● 运行中</span>' : '<span class="tg-status-pill bad">● 已停用</span>');
+
+        const clashUrl = `${url.origin}/sub?token=${u.token}&type=clash`;
+        const v2rayUrl = `${url.origin}/sub?token=${u.token}&type=v2ray`;
 
         return `
-        <tr style="border-bottom:1px solid #141414;">
-          <td data-label="用户" style="padding:10px 12px;font-weight:600;">${nameDisplay}</td>
-          <td data-label="订阅地址 (点击可全选)" style="padding:10px 12px;">
-            <div style="display:flex;gap:6px;align-items:center;margin-bottom:4px;">
-              <span style="font-size:10px;color:#777;width:35px;">Clash</span>
-              <input value="${url.origin}/sub?token=${u.token}&type=clash" readonly style="width:230px;padding:3px 6px;font-size:11px;background:#050505;color:#ddd;border:1px solid #222;border-radius:3px;" onclick="this.select()">
+        <tr class="tg-table-row">
+          <td class="td-user" data-label="用户">${nameDisplay}</td>
+          <td class="td-subs" data-label="订阅地址">
+            <div class="tg-sub-row">
+              <span class="tg-sub-tag">Clash</span>
+              <input class="tg-sub-input" value="${clashUrl}" readonly onclick="copySubInput(this, 'Clash')">
+              <button type="button" class="tg-copy-btn" onclick="copySubBtn(this, '${clashUrl}', 'Clash')">复制</button>
             </div>
-            <div style="display:flex;gap:6px;align-items:center;">
-              <span style="font-size:10px;color:#777;width:35px;">V2Ray</span>
-              <input value="${url.origin}/sub?token=${u.token}&type=v2ray" readonly style="width:230px;padding:3px 6px;font-size:11px;background:#050505;color:#ddd;border:1px solid #222;border-radius:3px;" onclick="this.select()">
+            <div class="tg-sub-row">
+              <span class="tg-sub-tag v2">V2Ray</span>
+              <input class="tg-sub-input" value="${v2rayUrl}" readonly onclick="copySubInput(this, 'V2Ray')">
+              <button type="button" class="tg-copy-btn" onclick="copySubBtn(this, '${v2rayUrl}', 'V2Ray')">复制</button>
             </div>
           </td>
-          <td data-label="服务状态" style="padding:10px 12px;">${statusDisplay}</td>
-          <td data-label="同步次数" style="padding:10px 12px;color:#888;font-size:12px;">${escHtml(u.pullCount || 0)}</td>
-          <td data-label="出口 IP" style="padding:10px 12px;font-size:11px;color:#777;">${(u.lastIp && u.lastIp !== '-') ? escHtml(u.lastIp) : '--'}</td>
-          <td style="padding:10px 12px;">
-            <form method="POST" style="display:inline;">
-              <input type="hidden" name="token" value="${u.token}">
-              <input type="hidden" name="action" value="toggle">
-              <button style="padding:4px 8px;background:#141414;color:#ccc;border:1px solid #282828;border-radius:3px;cursor:pointer;font-size:11px;">${u.enabled ? '停用' : '启用'}</button>
-            </form>
-            <form method="POST" style="display:inline;margin-left:4px;" onsubmit="return confirm('确定要删除 ${escJsAttr(u.name || u.token)} 吗？删除后其订阅立即失效。');">
-              <input type="hidden" name="token" value="${escHtml(u.token)}">
-              <input type="hidden" name="action" value="delete">
-              <button style="padding:4px 8px;background:#ef4444;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:11px;">删除</button>
-            </form>
+          <td class="td-status" data-label="账号状态">${statusDisplay}</td>
+          <td class="td-conn" data-label="实时连接">${liveConn}</td>
+          <td class="td-pulls" data-label="拉取次数">${escHtml(u.pullCount || 0)}</td>
+          <td class="td-active" data-label="最后活跃">${liveLastActive}</td>
+          <td class="td-ip" data-label="出口 IP">${(u.lastIp && u.lastIp !== '-') ? escHtml(u.lastIp) : '--'}</td>
+          <td class="td-actions" data-label="操作">
+            <div class="tg-card-actions">
+              <form method="POST" style="margin:0;flex:1;display:flex;">
+                <input type="hidden" name="token" value="${u.token}">
+                <input type="hidden" name="action" value="toggle">
+                <button type="submit" class="tg-btn-cell">${u.enabled ? '停用账号' : '启用账号'}</button>
+              </form>
+              <form method="POST" style="margin:0;flex:1;display:flex;" onsubmit="return confirm('确定要删除 ${escJsAttr(u.name || u.token)} 吗？删除后其订阅立即失效。');">
+                <input type="hidden" name="token" value="${escHtml(u.token)}">
+                <input type="hidden" name="action" value="delete">
+                <button type="submit" class="tg-btn-cell destructive">删除账号</button>
+              </form>
+            </div>
           </td>
         </tr>
       `;
       }).join('');
 
-      // 提取真实用户列表供排行榜渲染
       const realUsersJson = JSON.stringify(users.map(u => ({
         name: u.name,
         token: u.token,
         enabled: u.enabled,
         pullCount: u.pullCount || 0
       })))
-        // 【2026-10-05】内联进 <script> 的 JSON 必须转义 < > & 与行分隔符, 否则名字里带 </script> 会提前闭合脚本块
         .replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026')
         .replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
 
-      // 预编译各节点 JSON 传入前端矩阵
-      // 【2026-10-04 用户要求】大屏矩阵的节点名与订阅【逐字一致】——
-      //   两者都来自 buildNodeDisplayNames(同一函数、同一份实测落点) => 永远同源同步。
       const _adminColoMap = await getNodeColoMap();
       const _adminNames = buildNodeDisplayNames(_adminColoMap);
-      const nodesJson = JSON.stringify(RAW_NODES.map((n, i) => ({
-        name: _adminNames[i],
-        fullName: _adminNames[i],
-        region: n.region,
-        ip: n.server,
-        path: n.path
-      })));
+      const nodesJson = JSON.stringify([
+        ...RAW_NODES.map((n, i) => ({
+          name: _adminNames[i],
+          fullName: _adminNames[i],
+          region: n.region,
+          ip: n.server,
+          server: n.server,
+          path: n.path
+        })),
+        ...US_NODES.map((n) => ({
+          name: n.name,
+          fullName: n.name,
+          region: n.region || 'US',
+          ip: n.ip || n.server,
+          server: n.server,
+          path: n.path
+        }))
+      ]);
 
       return new Response(`
         <!DOCTYPE html>
-        <html lang="zh-CN">
+        <html lang="zh-CN" class="dark">
         <head>
           <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>NOC 运营监控中心 · 实时黑白看板</title>
-          <!-- 【2026-10-04 修复 T8.8】Chart.js 改为本地直出(/chart.js 由 Worker 内嵌源码),
-               不再依赖 CDN(jsdelivr 在国内常被墙, 加载失败时整页脚本死掉)。
-               保留 CDN 作为本地资源注入失败时的兜底。 -->
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+          <title>shadcn/ui NOC · Cross-Border Telemetry Console</title>
           <script src="/chart.js" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/chart.js';"></script>
+          <script src="https://cdn.jsdelivr.net/npm/motion@11.11.13/dist/motion.js"></script>
           <style>
             /* ============================================================
-               Material Design 3 (Material You) —— 深色方案
-               依据: https://m3.material.io/  (Color roles / Typescale / Shape / Elevation / State layers)
-               · 颜色: MD3 语义角色(primary / on-primary / …-container / surface-container-* / outline / …),
-                 取 Google Blue 种子色的 M3 深色基线值, 不改动任何数据与逻辑。
-               · 字阶: MD3 typescale(display/headline/title/body/label × L/M/S)。
-               · 形状: MD3 corner 阶梯 none/xs 4/sm 8/md 12/lg 16/xl 28/full。
-               · 高度: MD3 elevation level0-3(深色下用 surface-container 提亮 + 阴影表达)。
-               · 状态层: hover 8% / focus 10% / pressed 10%(MD3 state layer 规范值)。
+               shadcn/ui Official Zinc Dark Theme Variables (github.com/shadcn-ui/ui)
+               + Motion Choreography (github.com/motiondivision/motion)
                ============================================================ */
-            :root {
-              /* ---- Color: MD3 dark scheme (Google Blue source) ---- */
-              --md-sys-color-primary: #a8c7fa;
-              --md-sys-color-on-primary: #0a305f;
-              --md-sys-color-primary-container: #284777;
-              --md-sys-color-on-primary-container: #d3e3fd;
-              --md-sys-color-secondary: #bfc6dc;
-              --md-sys-color-on-secondary: #293042;
-              --md-sys-color-secondary-container: #3f4759;
-              --md-sys-color-on-secondary-container: #dbe2f9;
-              --md-sys-color-tertiary: #debcdf;
-              --md-sys-color-on-tertiary: #3f2841;
-              --md-sys-color-tertiary-container: #573e59;
-              --md-sys-color-on-tertiary-container: #fbd7fc;
-              --md-sys-color-error: #ffb4ab;
-              --md-sys-color-on-error: #690005;
-              --md-sys-color-error-container: #93000a;
-              --md-sys-color-on-error-container: #ffdad6;
-              --md-sys-color-background: #111318;
-              --md-sys-color-on-background: #e2e2e9;
-              --md-sys-color-surface: #111318;
-              --md-sys-color-on-surface: #e2e2e9;
-              --md-sys-color-surface-variant: #44474e;
-              --md-sys-color-on-surface-variant: #c4c6d0;
-              --md-sys-color-outline: #8e9099;
-              --md-sys-color-outline-variant: #44474e;
-              --md-sys-color-surface-container-lowest: #0c0e13;
-              --md-sys-color-surface-container-low: #191c20;
-              --md-sys-color-surface-container: #1d2024;
-              --md-sys-color-surface-container-high: #282a2f;
-              --md-sys-color-surface-container-highest: #33353a;
-              --md-sys-color-inverse-surface: #e2e2e9;
-              --md-sys-color-inverse-on-surface: #2f3033;
-              --md-sys-color-scrim: #000000;
-              /* 语义状态色(成功/警告) —— MD3 无对应角色, 按其 green/yellow 色调值补齐 */
-              --noc-color-success: #6dd58c;
-              --noc-color-on-success-container: #a6f2bd;
-              --noc-color-success-container: #0f5223;
-              --noc-color-warn: #f0c048;
-              --noc-color-on-warn-container: #ffe08a;
-              --noc-color-warn-container: #5a4213;
+            :root, .dark {
+              --background: 240 10% 3.9%;
+              --foreground: 0 0% 98%;
+              --card: 240 10% 3.9%;
+              --card-foreground: 0 0% 98%;
+              --popover: 240 10% 3.9%;
+              --popover-foreground: 0 0% 98%;
+              --primary: 0 0% 98%;
+              --primary-foreground: 240 5.9% 10%;
+              --secondary: 240 3.7% 15.9%;
+              --secondary-foreground: 0 0% 98%;
+              --muted: 240 3.7% 15.9%;
+              --muted-foreground: 240 5% 64.9%;
+              --accent: 240 3.7% 15.9%;
+              --accent-foreground: 0 0% 98%;
+              --destructive: 0 62.8% 30.6%;
+              --destructive-foreground: 0 0% 98%;
+              --border: 240 3.7% 15.9%;
+              --input: 240 3.7% 15.9%;
+              --ring: 240 4.9% 83.9%;
+              --radius: 0.5rem;
 
-              /* ---- Typescale: MD3 ---- */
-              --md-sys-typescale-display-small: 36px;
-              --md-sys-typescale-headline-small: 24px;
-              --md-sys-typescale-title-large: 22px;
-              --md-sys-typescale-title-medium: 16px;
-              --md-sys-typescale-title-small: 14px;
-              --md-sys-typescale-body-large: 16px;
-              --md-sys-typescale-body-medium: 14px;
-              --md-sys-typescale-body-small: 12px;
-              --md-sys-typescale-label-large: 14px;
-              --md-sys-typescale-label-medium: 12px;
-              --md-sys-typescale-label-small: 11px;
-              --md-sys-font-plain: Roboto, "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
-              --md-sys-font-mono: "Roboto Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+              /* shadcn Sidebar Block Tokens */
+              --sidebar-background: 240 5.9% 6%;
+              --sidebar-foreground: 240 4.8% 95.9%;
+              --sidebar-primary: 0 0% 98%;
+              --sidebar-primary-foreground: 240 5.9% 10%;
+              --sidebar-accent: 240 3.7% 13.5%;
+              --sidebar-accent-foreground: 240 4.8% 95.9%;
+              --sidebar-border: 240 3.7% 15.9%;
+              --sidebar-ring: 217.2 91.2% 59.8%;
 
-              /* ---- Shape: MD3 ---- */
-              --md-sys-shape-corner-none: 0;
-              --md-sys-shape-corner-extra-small: 4px;
-              --md-sys-shape-corner-small: 8px;
-              --md-sys-shape-corner-medium: 12px;
-              --md-sys-shape-corner-large: 16px;
-              --md-sys-shape-corner-extra-large: 28px;
-              --md-sys-shape-corner-full: 9999px;
+              /* Semantic Telemetry Tokens & Legacy Variable Aliases */
+              --tg-bg-canvas: hsl(var(--background));
+              --tg-bg-master: hsl(var(--sidebar-background));
+              --tg-bg-detail: hsl(var(--background));
+              --tg-navbar-bg: hsl(var(--background) / 0.84);
+              --tg-block-bg: hsl(var(--card));
+              --tg-cell-bg: hsl(240 5% 8.5%);
+              --tg-cell-hover: hsl(var(--accent));
+              --tg-separator: hsl(var(--border));
+              --tg-glass-border: hsl(var(--border));
+              --tg-glass-highlight: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
 
-              /* ---- Elevation: MD3 level 0-3 ---- */
-              --md-sys-elevation-level0: none;
-              --md-sys-elevation-level1: 0 1px 2px 0 rgba(0,0,0,.30), 0 1px 3px 1px rgba(0,0,0,.15);
-              --md-sys-elevation-level2: 0 1px 2px 0 rgba(0,0,0,.30), 0 2px 6px 2px rgba(0,0,0,.15);
-              --md-sys-elevation-level3: 0 1px 3px 0 rgba(0,0,0,.30), 0 4px 8px 3px rgba(0,0,0,.15);
+              --tg-text-primary: hsl(var(--foreground));
+              --tg-text-secondary: hsl(var(--muted-foreground));
+              --tg-text-tertiary: hsl(240 5% 45%);
 
-              /* ---- State layers: MD3 规范值 ---- */
-              --md-sys-state-hover-opacity: 0.08;
-              --md-sys-state-focus-opacity: 0.10;
-              --md-sys-state-pressed-opacity: 0.10;
+              --tg-accent: #38bdf8;
+              --tg-accent-bright: #38bdf8;
+              --tg-accent-soft: rgba(56, 189, 248, 0.12);
+              --tg-accent-border: rgba(56, 189, 248, 0.3);
 
-              /* 让浏览器原生控件(输入框/下拉/滚动条)也走深色, 与 MD3 深色方案一致 */
+              --tg-green: #10b981;
+              --tg-green-soft: rgba(16, 185, 129, 0.12);
+              --tg-green-border: rgba(16, 185, 129, 0.3);
+
+              --tg-amber: #f59e0b;
+              --tg-yellow: #fbbf24;
+              --tg-amber-soft: rgba(245, 158, 11, 0.12);
+              --tg-amber-border: rgba(245, 158, 11, 0.3);
+
+              --tg-red: #ef4444;
+              --tg-red-soft: rgba(239, 68, 68, 0.12);
+              --tg-red-border: rgba(239, 68, 68, 0.3);
+
+              --tg-cyan: #38bdf8;
+              --tg-cyan-soft: rgba(56, 189, 248, 0.12);
+              --tg-cyan-border: rgba(56, 189, 248, 0.3);
+
+              --tg-purple: #a855f7;
+              --tg-purple-soft: rgba(168, 85, 247, 0.12);
+              --tg-purple-border: rgba(168, 85, 247, 0.3);
+
+              --tg-radius-group: 0.625rem;
+              --tg-radius-cell: 0.5rem;
+              --tg-radius-pill: 9999px;
+
+              --tg-font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+              --tg-font-mono: "JetBrains Mono", "SF Mono", SFMono-Regular, ui-monospace, Menlo, Monaco, Consolas, monospace;
+
+              --tg-spring: cubic-bezier(0.22, 1, 0.36, 1);
+              --tg-spring-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+
               color-scheme: dark;
             }
 
-            * { box-sizing: border-box; }
+            *, *::before, *::after {
+              box-sizing: border-box;
+              border-color: hsl(var(--border));
+              -webkit-tap-highlight-color: transparent;
+            }
 
-            /* 【2026-10-04 用户要求】第三板块(用户排行榜 + 5 地区流量分布)从界面移除。
-               只隐藏不删 DOM: regionChart / rankList / regionStatusTag 仍被 JS 每轮写入,
-               删掉会让 fetchMetrics 抛错并中断整页渲染(违反"只改设计")。 */
+            @keyframes tgLiveHalo {
+              0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.65); }
+              70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+              100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+            }
+            @keyframes tgTestingRadar {
+              0%, 100% { box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.65), 0 4px 16px rgba(56, 189, 248, 0.18); }
+              50% { box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.35), 0 6px 22px rgba(56, 189, 248, 0.32); }
+            }
+            @keyframes tgShimmerSweep {
+              0% { transform: translateX(-130%) skewX(-18deg); }
+              100% { transform: translateX(220%) skewX(-18deg); }
+            }
+            @keyframes tgSpin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+
             .block3-hidden { display: none !important; }
-            /* 原 3.5 域名排行卡: 第三板块隐藏后独占整行 */
-            .domain-analytics-card { grid-column: 1 / -1; }
+            .tg-spin { display: inline-block; animation: tgSpin 1s linear infinite; }
 
-            body {
-              font-family: var(--md-sys-font-plain);
+            html, body {
               margin: 0;
-              background: var(--md-sys-color-surface-container-lowest);
-              color: var(--md-sys-color-on-surface);
-              padding: 24px;
-              font-size: var(--md-sys-typescale-body-medium);
-              line-height: 20px;
-              letter-spacing: 0.25px;
-              word-break: keep-all;
-              overflow-wrap: break-word;
-              line-break: strict;
-              -webkit-font-smoothing: antialiased;
-            }
-            .container { max-width: 1440px; margin: 0 auto; }
-
-            /* ---------- MD3 Top app bar (small) ---------- */
-            .header-bar {
-              display: flex; justify-content: space-between; align-items: center;
-              background: var(--md-sys-color-surface-container);
-              border-radius: var(--md-sys-shape-corner-large);
-              padding: 16px 20px; margin-bottom: 16px; gap: 12px; flex-wrap: wrap;
-            }
-            .title-group h1 { margin: 0; font-size: var(--md-sys-typescale-title-large); font-weight: 400; line-height: 28px; color: var(--md-sys-color-on-surface); }
-            .title-group span { font-size: var(--md-sys-typescale-label-small); color: var(--md-sys-color-on-surface-variant); font-family: var(--md-sys-font-mono); }
-            .header-meta { display: flex; align-items: center; gap: 14px; font-family: var(--md-sys-font-mono); font-size: var(--md-sys-typescale-label-small); color: var(--md-sys-color-on-surface-variant); }
-            .live-dot { width: 8px; height: 8px; background: var(--noc-color-success); border-radius: var(--md-sys-shape-corner-full); animation: pulse 1.4s ease-in-out infinite; }
-            @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
-
-            /* ---------- MD3 Card (filled / elevated) ---------- */
-            .card {
-              background: var(--md-sys-color-surface-container);
-              border: 1px solid var(--md-sys-color-outline-variant);
-              border-radius: var(--md-sys-shape-corner-medium);
-              padding: 16px;
-              position: relative;
-              box-shadow: var(--md-sys-elevation-level1);
-            }
-            .card-title {
-              font-size: var(--md-sys-typescale-title-small); font-weight: 500; line-height: 20px;
-              color: var(--md-sys-color-on-surface-variant);
-              letter-spacing: 0.1px; margin-bottom: 12px;
-              display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;
-            }
-            .card-title > span { min-width: 0; }
-            .card-title .title-ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-            /* ---------- 1. 跨境出口物理链路全景遥测 (MD3 emphasized card) ---------- */
-            .top-topology-card {
-              background: var(--md-sys-color-surface);
-              border: 1px solid var(--md-sys-color-outline-variant);
-              border-radius: var(--md-sys-shape-corner-extra-large);
-              padding: 20px 24px; margin-bottom: 16px;
-              box-shadow: var(--md-sys-elevation-level2);
-            }
-            .telemetry-pipeline-grid { display: flex; flex-direction: row; align-items: center; justify-content: space-between; overflow-x: auto; -webkit-overflow-scrolling: touch; padding: 12px 2px 16px; gap: 8px; margin: 10px 0 14px; scrollbar-width: thin; }
-            .telemetry-pipeline-grid::-webkit-scrollbar { height: 4px; }
-            .telemetry-pipeline-grid::-webkit-scrollbar-thumb { background: var(--md-sys-color-outline-variant); border-radius: var(--md-sys-shape-corner-full); }
-            .pipe-node {
-              flex: 0 0 152px; min-width: 146px;
-              background: var(--md-sys-color-surface-container-high);
-              border: 1px solid var(--md-sys-color-outline-variant);
-              border-radius: var(--md-sys-shape-corner-medium);
-              padding: 12px 8px; text-align: center;
-            }
-            .pipe-node.active-tunnel { border-color: var(--md-sys-color-primary); background: var(--md-sys-color-primary-container); }
-            .pipe-node.hardware-node { border-color: var(--noc-color-success); background: var(--noc-color-success-container); }
-            .pipe-label { font-size: var(--md-sys-typescale-label-small); color: var(--md-sys-color-on-surface-variant); font-family: var(--md-sys-font-mono); letter-spacing: 0.5px; white-space: nowrap; }
-            .pipe-title { font-size: var(--md-sys-typescale-title-small); font-weight: 500; color: var(--md-sys-color-on-surface); margin: 4px 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .pipe-desc { font-size: var(--md-sys-typescale-label-small); color: var(--md-sys-color-on-surface-variant); font-family: var(--md-sys-font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            /* MD3 assist chip */
-            .pipe-tag { font-size: var(--md-sys-typescale-label-small); font-weight: 500; padding: 3px 8px; border-radius: var(--md-sys-shape-corner-small); display: inline-block; margin-top: 6px; border: 1px solid transparent; white-space: nowrap; }
-            .relay-node.invalid { background: var(--noc-color-success-container); color: var(--noc-color-on-success-container); }
-            .pipe-tag.edge { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
-            .pipe-tag.tunnel { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
-            .pipe-tag.host { background: var(--noc-color-success-container); color: var(--noc-color-on-success-container); }
-            .pipe-tag.egress { background: var(--md-sys-color-tertiary-container); color: var(--md-sys-color-on-tertiary-container); }
-            .pipe-arrow { flex: 0 0 auto; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 5px; }
-            .hop-arrow { color: var(--md-sys-color-outline); font-size: 16px; font-family: var(--md-sys-font-mono); }
-            /* MD3 chip(承载实测数值) */
-            .hop-badge {
-              font-size: var(--md-sys-typescale-label-medium); font-weight: 500;
-              font-family: var(--md-sys-font-mono);
-              color: var(--md-sys-color-on-primary-container);
-              background: var(--md-sys-color-primary-container);
-              border: 1px solid transparent;
-              padding: 4px 10px; border-radius: var(--md-sys-shape-corner-small); white-space: nowrap;
-            }
-            /* MD3 segmented button */
-            .freq-btn {
-              background: transparent; border: 1px solid var(--md-sys-color-outline);
-              color: var(--md-sys-color-on-surface-variant);
-              font-size: var(--md-sys-typescale-label-medium); font-weight: 500;
-              padding: 6px 12px; border-radius: var(--md-sys-shape-corner-full); cursor: pointer;
-              transition: background-color .15s, color .15s, border-color .15s;
-              font-family: var(--md-sys-font-plain); position: relative; overflow: hidden;
-            }
-            .freq-btn:hover { background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent); color: var(--md-sys-color-on-surface); }
-            .freq-btn.active { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); border-color: transparent; }
-
-            .telemetry-hw-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-bottom: 16px; }
-            .hw-card {
-              background: var(--md-sys-color-surface-container-high);
-              border: none; border-radius: var(--md-sys-shape-corner-medium);
-              padding: 12px; display: flex; align-items: center; gap: 12px;
-            }
-            .hw-icon { font-size: 22px; line-height: 1; }
-            .hw-content { flex: 1; min-width: 0; }
-            .hw-title { font-size: var(--md-sys-typescale-label-small); color: var(--md-sys-color-on-surface-variant); font-weight: 500; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .hw-value { font-size: var(--md-sys-typescale-title-small); font-weight: 500; color: var(--md-sys-color-on-surface); font-family: var(--md-sys-font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .hw-sub { font-size: var(--md-sys-typescale-label-small); color: var(--noc-color-success); font-family: var(--md-sys-font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-
-            .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(232px, 1fr)); gap: 16px; margin-bottom: 16px; }
-            .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; margin-bottom: 16px; }
-
-            @media (max-width: 960px) {
-              body { padding: 12px; font-size: var(--md-sys-typescale-body-small); }
-              .grid-4 { grid-template-columns: 1fr 1fr; gap: 10px; }
-              .grid-2 { grid-template-columns: 1fr; gap: 10px; }
-              .card { padding: 12px; }
-              .top-topology-card { padding: 16px; }
-              .metric-large { font-size: var(--md-sys-typescale-headline-small); }
-              .telemetry-pipeline-grid { display: flex; flex-direction: row; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 12px; gap: 8px; }
-              .pipe-arrow { transform: none; display: flex; flex-direction: row; align-items: center; gap: 4px; }
-              .pipe-node { flex: 0 0 120px; }
-              .telemetry-hw-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
-            }
-
-            /* MD3 display metric */
-            .metric-large { font-size: var(--md-sys-typescale-display-small); font-weight: 400; color: var(--md-sys-color-on-surface); font-family: var(--md-sys-font-mono); line-height: 44px; margin: 4px 0 2px; }
-            .metric-sub { font-size: var(--md-sys-typescale-body-small); color: var(--md-sys-color-on-surface-variant); }
-
-            .gauge-wrap { position: relative; width: 100%; height: 130px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
-            .gauge-canvas { max-width: 220px; max-height: 110px; }
-            .gauge-num-overlay { position: absolute; bottom: 8px; text-align: center; }
-            .gauge-val { font-size: var(--md-sys-typescale-headline-small); font-weight: 400; font-family: var(--md-sys-font-mono); color: var(--md-sys-color-on-surface); }
-            .gauge-limit { font-size: var(--md-sys-typescale-label-small); color: var(--md-sys-color-on-surface-variant); }
-
-            /* MD3 outlined / tonal buttons */
-            .tab-btn {
-              background: transparent; color: var(--md-sys-color-on-surface-variant);
-              border: 1px solid var(--md-sys-color-outline);
-              padding: 6px 12px; border-radius: var(--md-sys-shape-corner-full);
-              font-size: var(--md-sys-typescale-label-medium); font-weight: 500; cursor: pointer;
-              transition: background-color .15s, color .15s;
-            }
-            .tab-btn:hover { background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent); }
-            .tab-btn.active { background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); border-color: transparent; font-weight: 500; }
-            /* MD3 list item */
-            .rank-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--md-sys-color-outline-variant); font-size: var(--md-sys-typescale-body-medium); }
-            .rank-bar-bg { width: 130px; height: 6px; background: var(--md-sys-color-surface-container-highest); border-radius: var(--md-sys-shape-corner-full); overflow: hidden; margin-left: 10px; }
-            .rank-bar-fill { height: 100%; background: var(--md-sys-color-primary); width: 0%; transition: width .3s; }
-
-            .water-level-wrap { display: flex; align-items: center; gap: 16px; padding: 6px 0; }
-            .water-tank { width: 36px; height: 120px; background: var(--md-sys-color-surface-container-highest); border: 1px solid var(--md-sys-color-outline-variant); border-radius: var(--md-sys-shape-corner-small); position: relative; overflow: hidden; display: flex; flex-direction: column-reverse; }
-            .water-liquid { background: var(--md-sys-color-primary); width: 100%; height: 0%; transition: height .4s ease; }
-            .water-detail { flex: 1; min-width: 0; }
-            .water-detail > div, .water-detail span { word-break: keep-all; }
-
-            .node-matrix-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 8px; }
-            /* MD3 assist chip */
-            .node-chip {
-              background: var(--md-sys-color-surface-container-high);
-              border: 1px solid var(--md-sys-color-outline-variant);
-              border-radius: var(--md-sys-shape-corner-small);
-              padding: 6px 8px; display: flex; justify-content: space-between; align-items: center; gap: 6px;
-              font-size: var(--md-sys-typescale-label-small); font-family: var(--md-sys-font-mono);
-            }
-            .node-chip > span:first-child { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .node-chip > span:last-child { flex-shrink: 0; white-space: nowrap; }
-            .node-status-dot { width: 6px; height: 6px; border-radius: var(--md-sys-shape-corner-full); background: var(--noc-color-success); }
-            .node-ping { color: var(--md-sys-color-on-surface-variant); }
-
-            /* MD3 data table */
-            table { width: 100%; min-width: 960px; border-collapse: collapse; text-align: left; }
-            th, td { white-space: nowrap; }
-            th {
-              border-bottom: 1px solid var(--md-sys-color-outline-variant);
-              padding: 12px 12px; font-size: var(--md-sys-typescale-label-medium); font-weight: 500;
-              color: var(--md-sys-color-on-surface-variant); letter-spacing: 0.5px;
-            }
-            td { padding: 12px; font-size: var(--md-sys-typescale-body-medium); border-bottom: 1px solid var(--md-sys-color-surface-container-highest); }
-            /* MD3 outlined text field */
-            input[type="text"], input[type="password"], select, textarea {
-              padding: 8px 12px; background: var(--md-sys-color-surface-container-highest);
-              border: 1px solid var(--md-sys-color-outline);
-              border-radius: var(--md-sys-shape-corner-extra-small);
-              color: var(--md-sys-color-on-surface); font-size: var(--md-sys-typescale-body-medium);
-              font-family: var(--md-sys-font-plain); outline: none;
-              transition: border-color .15s, box-shadow .15s;
-            }
-            input[type="text"]:focus, input[type="password"]:focus, select:focus, textarea:focus {
-              border-color: var(--md-sys-color-primary);
-              box-shadow: inset 0 0 0 1px var(--md-sys-color-primary);
-            }
-            /* MD3 filled button */
-            .btn-action {
-              background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);
-              font-weight: 500; padding: 10px 24px; border: none;
-              border-radius: var(--md-sys-shape-corner-full); cursor: pointer;
-              font-size: var(--md-sys-typescale-label-large); font-family: var(--md-sys-font-plain);
-              transition: box-shadow .15s, background-color .15s; position: relative; overflow: hidden;
-            }
-            .btn-action:hover { box-shadow: var(--md-sys-elevation-level1); background: color-mix(in srgb, var(--md-sys-color-primary) 92%, #fff); }
-
-            /* 【单点修复】顶部卡片主标题在本页不渲染(占位但不画字, 改版前即存在)。
-               本地最小复现同结构正常, 线上异常 —— 用结构性规则强制它可见: 解除 flex 压缩、
-               解除 overflow 裁剪、显式给亮色。只作用于这一处, 不影响其它标题。 */
-            .top-topology-card .card-title > div:first-child > span:nth-child(2) {
-              color: #ffffff !important;
-              min-width: auto !important;
-              flex: 0 1 auto !important;
-              overflow: visible !important;
-              text-overflow: clip !important;
-              opacity: 1 !important;
-              visibility: visible !important;
-            }
-
-            /* MD3 focus indicator */
-            :focus-visible { outline: 2px solid var(--md-sys-color-primary); outline-offset: 2px; border-radius: var(--md-sys-shape-corner-extra-small); }
-                      /* ============================================================
-               【2026-10-04 v2 重构】布局与响应式设计层
-               ------------------------------------------------------------
-               目标:
-                 1) 桌面(≥1200px) 充分用满宽度、卡片等高、无大片留白;
-                    平板(768-1199) 两栏; 手机(<640px) 单栏、可点区域≥44px、无横向溢出。
-                 2) 每个真实指标只出现一次(去重后由 JS 只写唯一来源)。
-                 3) 所有网格用 auto-fit/minmax, 不再出现"项目少被拉满整行"。
-                 4) 各板块样式在本层集中微调(时延分布等)。
-               本层放在样式表末尾, 通过同优先级后者胜出来覆盖前面的旧规则。
-               ============================================================ */
-
-            /* ---------- 页面骨架与安全区 ---------- */
-            html { -webkit-text-size-adjust: 100%; }
-            body {
-              padding: clamp(8px, 1.6vw, 24px) !important;
+              padding: 0;
               min-height: 100vh;
+              background-color: hsl(var(--background));
+              background-image:
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(120, 119, 198, 0.12), transparent),
+                radial-gradient(ellipse 60% 40% at 90% 100%, rgba(16, 185, 129, 0.04), transparent);
+              color: hsl(var(--foreground));
+              font-family: var(--tg-font-sans);
+              font-size: 13.5px;
+              line-height: 1.5;
+              letter-spacing: -0.011em;
+              -webkit-font-smoothing: antialiased;
               overflow-x: hidden;
             }
-            .container { max-width: 1560px !important; }
 
-            /* ---------- 顶栏: 桌面一行 / 手机两行 ---------- */
-            .header-bar {
-              display: grid !important;
-              grid-template-columns: minmax(0, 1fr) auto;
+            /* ============================================================
+               1. shadcn/ui SidebarProvider + SidebarInset Layout Shell
+               ============================================================ */
+            .tg-split-shell {
+              display: grid;
+              grid-template-columns: 356px minmax(0, 1fr);
+              min-height: 100vh;
+              max-width: 1880px;
+              margin: 0 auto;
+              border-left: 1px solid hsl(var(--border));
+              border-right: 1px solid hsl(var(--border));
+            }
+
+            /* ---- Left Sidebar (shadcn Sidebar) ---- */
+            .tg-master-pane {
+              background-color: hsl(var(--sidebar-background));
+              border-right: 1px solid hsl(var(--sidebar-border));
+              display: flex;
+              flex-direction: column;
+              position: sticky;
+              top: 0;
+              height: 100vh;
+              overflow-y: auto;
+              scrollbar-width: thin;
+            }
+            .tg-master-pane::-webkit-scrollbar { width: 4px; }
+            .tg-master-pane::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 999px; }
+
+            .tg-master-navbar {
+              position: sticky;
+              top: 0;
+              z-index: 95;
+              height: 56px;
+              min-height: 56px;
+              padding: 0 16px;
+              background-color: hsl(var(--sidebar-background) / 0.88);
+              backdrop-filter: blur(12px);
+              -webkit-backdrop-filter: blur(12px);
+              border-bottom: 1px solid hsl(var(--sidebar-border));
+              display: flex;
               align-items: center;
-              gap: 10px 16px;
-            }
-            .title-group h1 { font-size: clamp(17px, 1.4vw, 22px) !important; }
-            .title-group .sub-line {
-              display: flex; flex-wrap: wrap; gap: 4px 12px;
-              font-size: var(--md-sys-typescale-label-small);
-              color: var(--md-sys-color-on-surface-variant);
-              font-family: var(--md-sys-font-mono);
-              margin-top: 2px;
-            }
-            .header-meta { flex-wrap: wrap; gap: 8px 14px !important; justify-content: flex-end; }
-
-            /* ---------- 通用卡片: 内容驱动高度, 不再拉伸留白 ---------- */
-            .card { display: flex; flex-direction: column; }
-            .card > .card-title { flex: 0 0 auto; }
-            .card-title {
-              font-size: var(--md-sys-typescale-title-small);
-              text-transform: none !important;
-              letter-spacing: 0.1px;
-            }
-            .card-title .tag {
-              font-size: var(--md-sys-typescale-label-small);
-              font-family: var(--md-sys-font-mono);
-              color: var(--md-sys-color-on-surface-variant);
-              background: var(--md-sys-color-surface-container-high);
-              border-radius: var(--md-sys-shape-corner-small);
-              padding: 2px 8px; white-space: nowrap;
-            }
-
-            /* ---------- 统一网格工具类 ---------- */
-            .grid-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(272px, 1fr)); gap: 14px; margin-bottom: 14px; }
-            .grid-half    { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 14px; margin-bottom: 14px; }
-            .grid-thirds  { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; margin-bottom: 14px; }
-
-            /* ---------- 流水线: 手机端 2 列网格, 不再横向滚动 ---------- */
-            .telemetry-pipeline-grid { gap: 10px !important; }
-            .pipe-node { flex: 1 1 0 !important; min-width: 0 !important; }
-            .pipe-arrow { flex: 0 0 auto; }
-            .hop-badge { font-variant-numeric: tabular-nums; }
-
-
-            /* ---------- 设备与链路健康(合并去重后) ---------- */
-            .health-strip {
-              display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+              justify-content: space-between;
               gap: 10px;
             }
-            .health-item {
-              background: var(--md-sys-color-surface-container-high);
-              border-radius: var(--md-sys-shape-corner-medium);
-              padding: 10px 12px; min-width: 0;
+            .tg-brand-row {
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              min-width: 0;
             }
-            .health-k { font-size: var(--md-sys-typescale-label-small); color: var(--md-sys-color-on-surface-variant); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .health-v { font-size: var(--md-sys-typescale-title-medium); font-weight: 500; color: var(--md-sys-color-on-surface); font-family: var(--md-sys-font-mono); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .health-hero { display: flex; align-items: baseline; gap: 10px; }
-            .health-hero .big { font-size: clamp(26px, 3vw, 36px); font-weight: 500; font-family: var(--md-sys-font-mono); color: var(--md-sys-color-on-surface); line-height: 1.1; }
-
-            /* ---------- 时延分布直方图 ---------- */
-            /* ---------- 新增② 时延分布直方图 ---------- */
-
-
-            /* ---------- 用户表: 桌面表格 / 手机卡片 ---------- */
-            .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-            .user-cards { display: none; }
-
-            @media (max-width: 720px) {
-              .table-scroll { display: none; }
-              .user-cards { display: grid; gap: 10px; }
-              .user-card {
-                background: var(--md-sys-color-surface-container-high);
-                border-radius: var(--md-sys-shape-corner-medium); padding: 12px;
-              }
-              .user-card .uc-hd { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
-              .user-card .uc-nm { font-size: var(--md-sys-typescale-title-medium); font-weight: 500; color: var(--md-sys-color-on-surface); }
-              .user-card .uc-kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; font-size: var(--md-sys-typescale-label-small); font-family: var(--md-sys-font-mono); }
-              .user-card .uc-kv .k { color: var(--md-sys-color-on-surface-variant); white-space: nowrap; }
-              .user-card .uc-kv .v { color: var(--md-sys-color-on-surface); word-break: break-all; }
+            .tg-brand-orb {
+              width: 32px;
+              height: 32px;
+              border-radius: calc(var(--radius) - 1px);
+              background-color: hsl(var(--primary));
+              color: hsl(var(--primary-foreground));
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              position: relative;
+              flex-shrink: 0;
+              box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
             }
-
-            /* ---------- 手机端整体降级规则 ---------- */
-            @media (max-width: 900px) {
-              .grid-half { grid-template-columns: 1fr !important; }
-              .grid-thirds { grid-template-columns: 1fr !important; }
-              .grid-metrics { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)) !important; }
+            .tg-brand-dot-wrap {
+              position: absolute;
+              right: -3px;
+              bottom: -3px;
+              background: hsl(var(--sidebar-background));
+              padding: 2px;
+              border-radius: 50%;
+              display: flex;
             }
-            @media (max-width: 640px) {
-              :root { --md-sys-typescale-display-small: 28px; }
-              .grid-4, .grid-2, .grid-metrics, .grid-half, .grid-thirds { grid-template-columns: 1fr !important; gap: 10px !important; }
-              .card { padding: 12px !important; }
-              .top-topology-card { padding: 14px !important; }
-
-              /* 流水线改成 2 列网格, 箭头隐藏(用编号顺序表达方向), 彻底消除横向滚动 */
-              .telemetry-pipeline-grid {
-                display: grid !important; grid-template-columns: 1fr 1fr !important;
-                gap: 8px !important; overflow: visible !important; padding: 4px 0 8px !important;
-              }
-              .telemetry-pipeline-grid .pipe-arrow { display: none !important; }
-              .pipe-node { flex: none !important; width: auto !important; padding: 10px 8px !important; }
-              .pipe-node::before {
-                content: attr(data-step); display: block;
-                font-size: 9px; color: var(--md-sys-color-outline);
-                font-family: var(--md-sys-font-mono); margin-bottom: 2px;
-              }
-
-
-              /* 触控目标 */
-              .freq-btn, .tab-btn, .btn-action, select { min-height: 40px; }
-              .freq-btn { padding: 8px 14px !important; }
-
-              /* 顶栏堆叠 */
-              .header-bar { grid-template-columns: 1fr !important; }
-              .header-meta { justify-content: flex-start !important; }
-              .title-group h1 { font-size: 17px !important; }
-
-              /* 表格与用户区 */
-              .health-strip { grid-template-columns: 1fr 1fr; }
+            .live-dot {
+              width: 7px;
+              height: 7px;
+              background: var(--tg-green);
+              border-radius: 50%;
+              animation: tgLiveHalo 1.8s infinite;
+            }
+            .tg-brand-titles {
+              display: flex;
+              flex-direction: column;
+              min-width: 0;
+            }
+            .tg-brand-title {
+              font-size: 14px;
+              font-weight: 600;
+              letter-spacing: -0.02em;
+              color: hsl(var(--foreground));
+              line-height: 1.2;
+            }
+            .tg-brand-sub {
+              font-size: 11px;
+              color: hsl(var(--muted-foreground));
+              font-family: var(--tg-font-mono);
+              display: flex;
+              align-items: center;
+              gap: 5px;
+              white-space: nowrap;
             }
 
-            @media (max-width: 420px) {
-              .health-strip { grid-template-columns: 1fr; }
-              .pipe-node { padding: 8px 6px !important; }
+            .tg-master-body {
+              padding: 16px 14px 96px;
+              display: flex;
+              flex-direction: column;
+              gap: 18px;
             }
 
+            /* ---- Control Console Card (shadcn Card + Button Grid) ---- */
+            .tg-console-card {
+              background-color: hsl(var(--card));
+              border: 1px solid hsl(var(--border));
+              border-radius: var(--tg-radius-group);
+              box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.25);
+              padding: 12px;
+              display: flex;
+              flex-direction: column;
+              gap: 10px;
+            }
+            .tg-build-bar {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 8px;
+              padding: 6px 10px;
+              background-color: hsl(var(--muted) / 0.55);
+              border: 1px solid hsl(var(--border));
+              border-radius: calc(var(--radius) - 2px);
+              font-size: 11px;
+              font-family: var(--tg-font-mono);
+            }
+            .tg-quick-actions {
+              display: grid;
+              grid-template-columns: repeat(4, minmax(0, 1fr));
+              gap: 6px;
+              width: 100%;
+            }
+            .tg-action-tile {
+              height: 54px;
+              background-color: hsl(var(--secondary) / 0.55) !important;
+              border: 1px solid hsl(var(--border)) !important;
+              border-radius: calc(var(--radius) - 1px) !important;
+              padding: 6px 4px !important;
+              display: flex !important;
+              flex-direction: column !important;
+              align-items: center !important;
+              justify-content: center !important;
+              gap: 4px !important;
+              color: hsl(var(--muted-foreground)) !important;
+              cursor: pointer;
+              user-select: none;
+              font-family: var(--tg-font-sans);
+              transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+            }
+            .tg-action-tile .act-ico {
+              font-size: 14px;
+              line-height: 1;
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+            }
+            .tg-action-tile .act-lbl {
+              font-size: 11px;
+              font-weight: 500;
+              letter-spacing: -0.01em;
+              color: hsl(var(--foreground));
+              white-space: nowrap;
+            }
+            .tg-action-tile:hover {
+              background-color: hsl(var(--accent)) !important;
+              color: hsl(var(--foreground)) !important;
+              border-color: hsl(var(--ring) / 0.35) !important;
+            }
+            .tg-action-tile.active {
+              background-color: hsl(var(--primary)) !important;
+              border-color: hsl(var(--primary)) !important;
+              color: hsl(var(--primary-foreground)) !important;
+              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35) !important;
+            }
+            .tg-action-tile.active .act-lbl {
+              color: hsl(var(--primary-foreground)) !important;
+              font-weight: 600;
+            }
+            .tg-action-tile.busy {
+              background-color: var(--tg-amber-soft) !important;
+              border-color: var(--tg-amber-border) !important;
+              color: var(--tg-yellow) !important;
+            }
+            .tg-action-tile.busy .act-lbl {
+              color: var(--tg-yellow) !important;
+            }
+
+            /* ---- Section Group & shadcn Card List ---- */
+            .tg-section-group {
+              display: flex;
+              flex-direction: column;
+              gap: 8px;
+            }
+            .tg-section-header {
+              min-height: 24px;
+              padding: 0 4px;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 8px;
+              font-size: 11.5px;
+              font-weight: 600;
+              text-transform: uppercase;
+              letter-spacing: 0.05em;
+              color: hsl(var(--muted-foreground));
+            }
+            .tg-section-footer {
+              padding: 2px 4px 0;
+              font-size: 11.5px;
+              color: hsl(var(--muted-foreground));
+              line-height: 1.5;
+            }
+            .tg-inset-list {
+              background-color: hsl(var(--card));
+              border-radius: var(--tg-radius-group);
+              border: 1px solid hsl(var(--border));
+              box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.25), 0 1px 2px -1px rgba(0, 0, 0, 0.25);
+              overflow: hidden;
+            }
+
+            /* ---- shadcn List Rows ---- */
+            .tg-ios-row {
+              display: grid;
+              grid-template-columns: 30px minmax(0, 1fr) auto;
+              align-items: center;
+              gap: 11px;
+              min-height: 44px;
+              padding: 7px 12px;
+              border-bottom: 1px solid hsl(var(--border));
+              transition: background-color 0.15s ease;
+            }
+            .tg-ios-row:last-child {
+              border-bottom: none;
+            }
+            .tg-row-icon {
+              width: 28px;
+              height: 28px;
+              border-radius: calc(var(--radius) - 2px);
+              background-color: hsl(var(--secondary));
+              border: 1px solid hsl(var(--border));
+              color: hsl(var(--muted-foreground));
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 12px;
+              font-weight: 600;
+              flex-shrink: 0;
+            }
+            .tg-row-icon.blue   { color: #38bdf8; }
+            .tg-row-icon.green  { color: #10b981; }
+            .tg-row-icon.orange { color: #f59e0b; }
+            .tg-row-icon.red    { color: #ef4444; }
+            .tg-row-icon.purple { color: #a855f7; }
+            .tg-row-icon.cyan   { color: #38bdf8; }
+            .tg-row-icon.teal   { color: #2dd4bf; }
+            .tg-row-icon.gray   { color: hsl(var(--muted-foreground)); }
+
+            .tg-row-body {
+              min-width: 0;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+            }
+            .tg-row-title {
+              font-size: 13px;
+              font-weight: 500;
+              color: hsl(var(--foreground));
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+            .tg-row-sub {
+              font-size: 11px;
+              color: hsl(var(--muted-foreground));
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+            .tg-row-val {
+              font-size: 12.5px;
+              font-weight: 600;
+              font-family: var(--tg-font-mono);
+              font-variant-numeric: tabular-nums;
+              color: hsl(var(--muted-foreground));
+              text-align: right;
+              white-space: nowrap;
+            }
+            .tg-row-val.bright { color: hsl(var(--foreground)); }
+
+            /* Clickable SidebarMenuButton Navigation Rows */
+            .tg-nav-item {
+              cursor: pointer;
+              user-select: none;
+            }
+            .tg-nav-item:hover {
+              background-color: hsl(var(--sidebar-accent));
+            }
+            .tg-nav-item.active {
+              background-color: hsl(var(--sidebar-accent));
+              border-left: 2px solid hsl(var(--primary));
+            }
+            .tg-nav-item.active .tg-row-icon {
+              background-color: hsl(var(--primary));
+              color: hsl(var(--primary-foreground));
+              border-color: hsl(var(--primary));
+            }
+            .tg-nav-item.active .tg-row-title {
+              color: hsl(var(--foreground));
+              font-weight: 600;
+            }
+            .tg-nav-item.active .tg-row-val {
+              color: hsl(var(--foreground));
+            }
+
+            /* Bandwidth Gauge Header */
+            .tg-storage-ring-box {
+              padding: 16px 14px 12px;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              border-bottom: 1px solid hsl(var(--border));
+              background: radial-gradient(circle at 50% 10%, rgba(56, 189, 248, 0.08), transparent 72%);
+            }
+            .gauge-wrap {
+              position: relative;
+              width: 100%;
+              height: 108px;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: flex-end;
+            }
+            .gauge-canvas { max-width: 196px; max-height: 94px; }
+            .gauge-num-overlay { position: absolute; bottom: 2px; text-align: center; }
+            .gauge-val {
+              font-size: 18px;
+              font-weight: 700;
+              font-family: var(--tg-font-mono);
+              font-variant-numeric: tabular-nums;
+              color: hsl(var(--foreground));
+            }
+            .gauge-limit { font-size: 10.5px; color: hsl(var(--muted-foreground)); }
+
+            .water-tank {
+              width: 82px;
+              height: 16px;
+              background-color: hsl(var(--secondary));
+              border-radius: calc(var(--radius) - 3px);
+              overflow: hidden;
+              display: flex;
+              flex-direction: column-reverse;
+              position: relative;
+              border: 1px solid hsl(var(--border));
+            }
+            .water-liquid {
+              width: 100%;
+              height: 0%;
+              background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
+              transition: height 0.5s var(--tg-spring), background 0.3s ease;
+            }
 
             /* ============================================================
-               【2026-10-04 v2 修复】审计问题集中修复
+               2. Right Detail Stage (shadcn SidebarInset + Header + TabsList)
                ============================================================ */
-            /* --- 1. 横向溢出根治 ---
-               根因: 用户表 「min-width:960px」 经 .card(flex 容器) 的 min-width:auto
-               传播成整页最小宽度 ~1158px, 手机/平板整页被撑宽、右侧被裁掉。 */
-            .card, .top-topology-card,
-            .grid-2 > *, .grid-4 > *, .grid-metrics > *, .grid-half > *, .grid-thirds > *, .grid-bottom > *,
-            .telemetry-pipeline-grid > *, .health-strip > * { min-width: 0; }
-            html, body { max-width: 100%; }
-            canvas { max-width: 100% !important; }
-
-            /* --- 2. 底部三栏: 桌面固定 3 等分撑满容器(原来只占 1163px, 右侧空 455px),
-                   且 align-items:start 让每张卡按内容高度, 不再被最高的卡拉到 2400px。 --- */
-            .grid-bottom {
-              display: grid; grid-template-columns: repeat(6, minmax(0, 1fr));
-              gap: 14px; margin-bottom: 14px; align-items: start;
-            }
-            /* 【2026-10-04 重排】原来三等分: 55 个节点的阵列只分到 1/3 宽, 被挤成 19 行高。
-               现在: 第一行 = 示波器(半宽) + 用户管理(半宽); 第二行 = 节点阵列(整行, 铺满宽度)。 */
-            .grid-bottom > .card:nth-child(1) { grid-column: span 3; }              /* 示波器 */
-            .grid-bottom > .card:nth-child(3) { grid-column: span 3; order: 2; }    /* 用户管理 */
-            .grid-bottom > .card:nth-child(2) { grid-column: span 6; order: 3; }    /* 节点阵列 -> 整行 */
-            @media (max-width: 1100px) {
-              .grid-bottom { grid-template-columns: 1fr; }
-              .grid-bottom > .card:nth-child(1),
-              .grid-bottom > .card:nth-child(2),
-              .grid-bottom > .card:nth-child(3) { grid-column: span 1; order: 0; }
-            }
-            .grid-metrics, .grid-half, .grid-thirds, .grid-2, .grid-4 { align-items: start; }
-
-            /* --- 3. 页头: 修"auto 列吃掉全部宽度导致 H1 一字一行(平板下页头高 2048px)" --- */
-            .title-group { min-width: 0; }
-            .title-group h1 { overflow-wrap: anywhere; }
-            .header-meta { min-width: 0; }
-            @media (max-width: 1100px) {
-              .header-bar { grid-template-columns: minmax(0, 1fr) !important; }
-              .header-meta { justify-content: flex-start !important; }
-            }
-            @media (max-width: 900px) {
-              .header-meta .hd-long { display: none; }
+            .tg-detail-pane {
+              background-color: transparent;
+              min-width: 0;
+              display: flex;
+              flex-direction: column;
+              padding-bottom: 90px;
             }
 
-            /* --- 4. 示波器图表固定高, 卡片不再被拉长 --- */
-            .live-chart-box { height: 150px; position: relative; }
-            @media (max-width: 640px) { .live-chart-box { height: 120px; } }
-
-            /* --- 4.5 手机端不再把文字切成 "客户..." / "本机接入质量 · C..." --- */
-            @media (max-width: 640px) {
-              .pipe-title, .pipe-desc { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; }
-              .pipe-title { font-size: 13px !important; line-height: 1.3; }
+            .tg-detail-navbar {
+              position: sticky;
+              top: 0;
+              z-index: 90;
+              min-height: 56px;
+              padding: 8px 24px;
+              background-color: hsl(var(--background) / 0.84);
+              backdrop-filter: blur(12px);
+              -webkit-backdrop-filter: blur(12px);
+              border-bottom: 1px solid hsl(var(--border));
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 12px;
+              flex-wrap: wrap;
+            }
+            .tg-navbar-left {
+              display: flex;
+              align-items: center;
+              gap: 14px;
+              flex-wrap: wrap;
+            }
+            .tg-navbar-title {
+              font-size: 15px;
+              font-weight: 600;
+              letter-spacing: -0.02em;
+              color: hsl(var(--foreground));
+              white-space: nowrap;
             }
 
-            /* --- 5. 触控目标与手机端细则 --- */
-            @media (max-width: 760px) {
-              .freq-btn, .tab-btn, .btn-action, button, select { min-height: 44px; }
-              .freq-btn { padding: 10px 16px !important; font-size: 13px !important; }
-              .card-title { align-items: flex-start !important; }
-              /* 用户管理卡的操作按钮原来在视口外 -> 换行到标题下方并占满宽度 */
-              .card-title > div[style*="display:flex"] { flex-wrap: wrap !important; }
-              #btnPhoneSync, #btnToggleAdd, #btnManualScan, #btnSpeedTest { flex: 1 1 auto; }
-              /* 9/10px 小字在深色底上读不清 -> 统一提到 11px */
-            .pipe-label, .pipe-desc,
-              .hw-title, .hw-sub, .health-k, .node-chip, .metric-sub,
-              [style*="font-size:9px"], [style*="font-size: 9px"],
-              [style*="font-size:10px"], [style*="font-size: 10px"] { font-size: 11px !important; }
+            /* shadcn TabsList + Motion Shared Layout Active Indicator */
+            .tg-seg-control {
+              position: relative;
+              display: inline-flex;
+              height: 34px;
+              align-items: center;
+              background-color: hsl(var(--muted));
+              border: 1px solid hsl(var(--border));
+              border-radius: var(--radius);
+              padding: 3px;
+              gap: 2px;
+            }
+            .sh-tabs-pill {
+              position: absolute;
+              top: 3px;
+              bottom: 3px;
+              left: 3px;
+              border-radius: calc(var(--radius) - 2px);
+              background-color: hsl(var(--background));
+              box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+              pointer-events: none;
+              z-index: 0;
+            }
+            .tg-seg-btn {
+              position: relative;
+              z-index: 1;
+              background: transparent !important;
+              border: none !important;
+              color: hsl(var(--muted-foreground)) !important;
+              font-size: 12px !important;
+              font-weight: 500 !important;
+              height: 100%;
+              padding: 0 12px !important;
+              border-radius: calc(var(--radius) - 2px) !important;
+              cursor: pointer;
+              white-space: nowrap;
+              transition: color 0.15s ease;
+            }
+            .tg-seg-btn:hover {
+              color: hsl(var(--foreground)) !important;
+            }
+            .tg-seg-btn.active {
+              color: hsl(var(--foreground)) !important;
+              font-weight: 600 !important;
             }
 
-            /* --- 6. 手机端: 接入质量标题行允许换行(否则"实测落点/正在测速"被裁掉);
-                   矩阵/节点网格一律单列或两列, 不再出现只看得见 1.6 列 --- */
-            @media (max-width: 720px) {
-              table { min-width: 0 !important; width: 100% !important; display: block; }
-              thead { display: none; }
-              tbody { display: block; }
-              tr {
-                display: block; background: var(--md-sys-color-surface-container-high);
-                border-radius: var(--md-sys-shape-corner-medium);
-                padding: 10px 12px; margin-bottom: 10px; border: none !important;
-              }
-              td {
-                display: block !important; width: auto !important; border: none !important;
-                padding: 6px 0 !important; white-space: normal !important;
-                font-size: var(--md-sys-typescale-body-small) !important;
-              }
-              td::before {
-                content: attr(data-label); display: block;
-                font-size: 10px; color: var(--md-sys-color-on-surface-variant);
-                margin-bottom: 3px; letter-spacing: 0.3px;
-              }
-              td:empty { display: none !important; }
-              td input { width: 100% !important; box-sizing: border-box; }
-              .node-matrix-grid { grid-template-columns: 1fr !important; }
+            .tg-navbar-right {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              flex-wrap: wrap;
             }
-            @media (max-width: 1024px) and (min-width: 721px) {
-              .node-matrix-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important; }
+            .tg-capsule {
+              height: 28px;
+              display: inline-flex;
+              align-items: center;
+              gap: 6px;
+              background-color: hsl(var(--secondary) / 0.65);
+              border: 1px solid hsl(var(--border));
+              padding: 0 11px;
+              border-radius: var(--tg-radius-pill);
+              font-size: 11.5px;
+              font-family: var(--tg-font-mono);
+              font-variant-numeric: tabular-nums;
+              color: hsl(var(--muted-foreground));
+              white-space: nowrap;
             }
-            /* 流水线步骤序号原来是 9px + outline 色(约 4.5:1, 卡在 AA 边缘) -> 提亮放大 */
-            .pipe-node::before { font-size: 10px !important; color: var(--md-sys-color-on-surface-variant) !important; }
 
-            
+            .tg-detail-content {
+              padding: 24px 28px;
+              display: flex;
+              flex-direction: column;
+              gap: 22px;
+              max-width: 1440px;
+              width: 100%;
+              margin: 0 auto;
+            }
+
+            /* ---- shadcn Badges & Buttons ---- */
+            .tag, .tg-status-pill {
+              height: 22px;
+              display: inline-flex;
+              align-items: center;
+              gap: 5px;
+              font-size: 11px;
+              font-weight: 600;
+              font-family: var(--tg-font-mono);
+              font-variant-numeric: tabular-nums;
+              color: hsl(var(--muted-foreground));
+              background-color: hsl(var(--secondary));
+              border: 1px solid hsl(var(--border));
+              border-radius: var(--tg-radius-pill);
+              padding: 0 9px;
+              white-space: nowrap;
+            }
+            .tg-status-pill.ok   { background: var(--tg-green-soft); color: var(--tg-green); border-color: var(--tg-green-border); }
+            .tg-status-pill.warn { background: var(--tg-amber-soft); color: var(--tg-yellow); border-color: var(--tg-amber-border); }
+            .tg-status-pill.bad  { background: var(--tg-red-soft);   color: var(--tg-red);    border-color: var(--tg-red-border); }
+            .tg-status-pill.na   { background: hsl(var(--secondary)); color: hsl(var(--muted-foreground)); border-color: hsl(var(--border)); }
+
+            button, .btn-action, .tg-btn-cell, .tg-pill-btn, .tg-copy-btn {
+              font-family: var(--tg-font-sans);
+              cursor: pointer;
+              user-select: none;
+              transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+            }
+
+            .tg-pill-btn {
+              height: 30px;
+              background-color: hsl(var(--secondary)) !important;
+              color: hsl(var(--foreground)) !important;
+              border: 1px solid hsl(var(--border)) !important;
+              border-radius: calc(var(--radius) - 2px) !important;
+              padding: 0 12px !important;
+              font-size: 12px !important;
+              font-weight: 500 !important;
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              gap: 6px;
+              white-space: nowrap;
+            }
+            .tg-pill-btn:hover {
+              background-color: hsl(var(--primary)) !important;
+              color: hsl(var(--primary-foreground)) !important;
+              border-color: hsl(var(--primary)) !important;
+            }
+            .tg-pill-btn.busy {
+              background-color: var(--tg-amber-soft) !important;
+              color: var(--tg-yellow) !important;
+              border-color: var(--tg-amber-border) !important;
+            }
+
+            .btn-action {
+              height: 34px;
+              background-color: hsl(var(--primary)) !important;
+              color: hsl(var(--primary-foreground)) !important;
+              font-weight: 600;
+              padding: 0 16px;
+              border: 1px solid transparent !important;
+              border-radius: calc(var(--radius) - 2px) !important;
+              font-size: 12.5px;
+              box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              gap: 6px;
+            }
+            .btn-action:hover {
+              background-color: hsl(var(--primary) / 0.9) !important;
+            }
+
             /* ============================================================
-               【2026-10-04 · 55 节点蜂窝矩阵】第一板块内"手机 → 中转节点延迟"
+               3. Controller 1: Oscilloscope + 5-Col Route + 4-Col Hop Strip
                ============================================================ */
-            #relayMatrix { grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); }
+            .tg-oscilloscope-pad {
+              padding: 18px 20px 14px;
+              border-bottom: 1px solid hsl(var(--border));
+            }
+            .live-chart-box {
+              height: 184px;
+              position: relative;
+            }
+
+            .tg-route-stages {
+              display: grid;
+              grid-template-columns: repeat(5, minmax(0, 1fr));
+              gap: 10px;
+              padding: 16px 16px 10px;
+              background-color: hsl(var(--muted) / 0.2);
+            }
+            .pipe-node {
+              height: 110px;
+              background-color: hsl(var(--card));
+              border: 1px solid hsl(var(--border));
+              border-radius: var(--tg-radius-cell);
+              padding: 12px 14px;
+              min-width: 0;
+              display: flex;
+              flex-direction: column;
+              justify-content: space-between;
+              position: relative;
+              overflow: hidden;
+              transition: border-color 0.15s ease, background-color 0.15s ease;
+            }
+            .pipe-node:hover {
+              border-color: hsl(var(--ring) / 0.45);
+            }
+            .pipe-node.active-tunnel {
+              border-color: var(--tg-accent-border);
+              background: linear-gradient(160deg, rgba(56, 189, 248, 0.08), hsl(var(--card)));
+            }
+            .pipe-node.hardware-node {
+              border-color: var(--tg-green-border);
+              background: linear-gradient(160deg, rgba(16, 185, 129, 0.08), hsl(var(--card)));
+            }
+            .pipe-label { font-size: 10px; font-weight: 600; color: hsl(var(--muted-foreground)); font-family: var(--tg-font-mono); letter-spacing: 0.04em; }
+            .pipe-title { font-size: 13.5px; font-weight: 600; color: hsl(var(--foreground)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.015em; }
+            .pipe-desc  { font-size: 11px; color: hsl(var(--muted-foreground)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .pipe-tag {
+              align-self: flex-start;
+              font-size: 10.5px;
+              font-weight: 600;
+              font-family: var(--tg-font-mono);
+              padding: 2px 8px;
+              border-radius: var(--tg-radius-pill);
+              white-space: nowrap;
+            }
+            .relay-node.invalid, .pipe-tag.host { background: var(--tg-green-soft); color: var(--tg-green); border: 1px solid var(--tg-green-border); }
+            .pipe-tag.edge   { background: var(--tg-cyan-soft);   color: var(--tg-cyan);          border: 1px solid var(--tg-cyan-border); }
+            .pipe-tag.tunnel { background: var(--tg-accent-soft); color: var(--tg-accent-bright); border: 1px solid var(--tg-accent-border); }
+            .pipe-tag.egress { background: var(--tg-purple-soft); color: #c084fc;                 border: 1px solid var(--tg-purple-border); }
+
+            .tg-hop-strip {
+              display: grid;
+              grid-template-columns: repeat(4, minmax(0, 1fr));
+              gap: 10px;
+              padding: 0 16px 16px;
+              background-color: hsl(var(--muted) / 0.2);
+            }
+            .tg-hop-cell {
+              height: 40px;
+              background-color: hsl(var(--card));
+              border: 1px solid hsl(var(--border));
+              border-radius: calc(var(--radius) - 2px);
+              padding: 0 12px;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 8px;
+              min-width: 0;
+            }
+            .tg-hop-lbl {
+              font-size: 11.5px;
+              color: hsl(var(--muted-foreground));
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+            .hop-badge {
+              font-size: 12px;
+              font-weight: 600;
+              font-family: var(--tg-font-mono);
+              font-variant-numeric: tabular-nums;
+              color: hsl(var(--foreground));
+              background-color: hsl(var(--secondary));
+              border: 1px solid hsl(var(--border));
+              padding: 2px 8px;
+              border-radius: var(--tg-radius-pill);
+              white-space: nowrap;
+              flex-shrink: 0;
+            }
+
+            /* ============================================================
+               4. Controller 2: US Los Angeles 1Gbps VPS Gateway (#usCard)
+               ============================================================ */
+            .tg-us-hero {
+              min-height: 60px;
+              padding: 14px 20px;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              flex-wrap: wrap;
+              gap: 12px;
+              border-bottom: 1px solid hsl(var(--border));
+              background: linear-gradient(90deg, rgba(56, 189, 248, 0.06), transparent 70%);
+            }
+            .tg-us-rate {
+              font-size: 24px;
+              font-weight: 700;
+              font-family: var(--tg-font-mono);
+              font-variant-numeric: tabular-nums;
+              letter-spacing: -0.03em;
+              color: hsl(var(--foreground));
+            }
+            .tg-us-grid {
+              display: grid;
+              grid-template-columns: repeat(5, minmax(0, 1fr));
+            }
+            .tg-us-cell {
+              height: 66px;
+              padding: 10px 16px;
+              border-right: 1px solid hsl(var(--border));
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              min-width: 0;
+            }
+            .tg-us-cell:last-child { border-right: none; }
+            .tg-us-k { font-size: 11px; color: hsl(var(--muted-foreground)); white-space: nowrap; }
+            .tg-us-v { font-size: 13.5px; font-weight: 600; font-family: var(--tg-font-mono); font-variant-numeric: tabular-nums; color: hsl(var(--foreground)); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+            /* ============================================================
+               5. Controller 3: Peer Contact Cards (#userTableBody)
+                  shadcn Input, Select, Avatar, and 6x5 Card Grid
+               ============================================================ */
+            input[type="text"], input[type="password"], select, textarea, .tg-sub-input {
+              height: 34px;
+              padding: 0 11px;
+              background-color: hsl(var(--background));
+              border: 1px solid hsl(var(--input));
+              border-radius: calc(var(--radius) - 2px) !important;
+              color: hsl(var(--foreground));
+              font-size: 12.5px;
+              font-family: var(--tg-font-sans);
+              outline: none;
+              transition: border-color 0.15s ease, box-shadow 0.15s ease;
+            }
+            input[type="text"]:focus, select:focus, .tg-sub-input:focus {
+              border-color: hsl(var(--ring));
+              box-shadow: 0 0 0 2px hsl(var(--ring) / 0.25);
+            }
+
+            .tg-user-table-wrap table {
+              width: 100%;
+              display: block;
+              border-collapse: collapse;
+            }
+            .tg-user-table-wrap thead {
+              display: none;
+            }
+            .tg-user-table-wrap tbody {
+              display: grid;
+              grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+              gap: 14px;
+              padding: 16px;
+            }
+            .tg-user-table-wrap tr.tg-table-row {
+              display: grid;
+              grid-template-columns: repeat(6, minmax(0, 1fr));
+              grid-template-rows: auto auto auto auto auto;
+              gap: 10px;
+              background-color: hsl(240 5% 6.5%);
+              border: 1px solid hsl(var(--border));
+              border-radius: var(--tg-radius-group);
+              padding: 16px;
+              box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+              transition: border-color 0.15s ease;
+            }
+            .tg-user-table-wrap tr.tg-table-row:hover {
+              border-color: hsl(var(--ring) / 0.4);
+            }
+            .tg-user-table-wrap td {
+              display: block;
+              padding: 0;
+              border: none;
+              min-width: 0;
+            }
+            .tg-user-table-wrap td.td-user {
+              grid-column: 1 / 5;
+              grid-row: 1;
+              align-self: center;
+            }
+            .tg-user-table-wrap td.td-status {
+              grid-column: 5 / 7;
+              grid-row: 1;
+              justify-self: end;
+              align-self: center;
+            }
+            .tg-user-table-wrap td.td-conn {
+              grid-column: 1 / 7;
+              grid-row: 2;
+              min-height: 36px;
+              padding: 6px 10px;
+              background-color: hsl(var(--muted) / 0.45);
+              border: 1px solid hsl(var(--border));
+              border-radius: calc(var(--radius) - 2px);
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              flex-wrap: wrap;
+              gap: 6px;
+            }
+            .tg-user-table-wrap td.td-subs {
+              grid-column: 1 / 7;
+              grid-row: 3;
+              display: flex;
+              flex-direction: column;
+              gap: 6px;
+            }
+            .tg-user-table-wrap td.td-pulls {
+              grid-column: 1 / 3;
+              grid-row: 4;
+            }
+            .tg-user-table-wrap td.td-active {
+              grid-column: 3 / 5;
+              grid-row: 4;
+            }
+            .tg-user-table-wrap td.td-ip {
+              grid-column: 5 / 7;
+              grid-row: 4;
+            }
+            .tg-user-table-wrap td.td-pulls,
+            .tg-user-table-wrap td.td-active,
+            .tg-user-table-wrap td.td-ip {
+              height: 44px;
+              background-color: hsl(var(--muted) / 0.3);
+              border: 1px solid hsl(var(--border));
+              border-radius: calc(var(--radius) - 2px);
+              padding: 4px 10px;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              font-size: 12px;
+              font-weight: 600;
+              font-family: var(--tg-font-mono);
+              font-variant-numeric: tabular-nums;
+              color: hsl(var(--foreground));
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+            .tg-user-table-wrap td.td-pulls::before  { content: "拉取次数"; font-size: 10px; font-weight: 500; color: hsl(var(--muted-foreground)); font-family: var(--tg-font-sans); }
+            .tg-user-table-wrap td.td-active::before { content: "最后活跃"; font-size: 10px; font-weight: 500; color: hsl(var(--muted-foreground)); font-family: var(--tg-font-sans); }
+            .tg-user-table-wrap td.td-ip::before     { content: "出口 IP";  font-size: 10px; font-weight: 500; color: hsl(var(--muted-foreground)); font-family: var(--tg-font-sans); }
+
+            .tg-user-table-wrap td.td-actions {
+              grid-column: 1 / 7;
+              grid-row: 5;
+              padding-top: 2px;
+            }
+            .tg-card-actions {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 8px;
+              width: 100%;
+            }
+            .tg-btn-cell {
+              width: 100%;
+              height: 32px;
+              background-color: hsl(var(--secondary));
+              color: hsl(var(--foreground));
+              border: 1px solid hsl(var(--border));
+              border-radius: calc(var(--radius) - 2px);
+              font-size: 12px;
+              font-weight: 500;
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              gap: 6px;
+            }
+            .tg-btn-cell:hover {
+              background-color: hsl(var(--primary));
+              color: hsl(var(--primary-foreground));
+              border-color: hsl(var(--primary));
+            }
+            .tg-btn-cell.destructive {
+              background-color: var(--tg-red-soft);
+              color: var(--tg-red);
+              border-color: var(--tg-red-border);
+            }
+            .tg-btn-cell.destructive:hover {
+              background-color: var(--tg-red);
+              color: #ffffff;
+            }
+
+            .tg-peer-head {
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              min-width: 0;
+            }
+            .tg-peer-avatar {
+              width: 36px;
+              height: 36px;
+              border-radius: 9999px;
+              border: 1px solid hsl(var(--border));
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 14px;
+              font-weight: 600;
+              color: hsl(var(--foreground));
+              flex-shrink: 0;
+            }
+            .tg-peer-meta {
+              display: flex;
+              flex-direction: column;
+              min-width: 0;
+            }
+            .tg-peer-title {
+              font-size: 14px;
+              font-weight: 600;
+              color: hsl(var(--foreground));
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+            .tg-peer-token {
+              font-size: 10.5px;
+              font-family: var(--tg-font-mono);
+              color: hsl(var(--muted-foreground));
+            }
+
+            .tg-conn-inline {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              flex-wrap: wrap;
+            }
+            .tg-conn-rate { font-size: 11px; color: var(--tg-cyan); font-family: var(--tg-font-mono); font-weight: 600; }
+            .tg-conn-idle { font-size: 11px; color: hsl(var(--muted-foreground)); font-family: var(--tg-font-mono); }
+
+            .tg-sub-row {
+              display: grid;
+              grid-template-columns: 52px minmax(0, 1fr) 56px;
+              gap: 6px;
+              align-items: center;
+            }
+            .tg-sub-tag {
+              height: 30px;
+              font-size: 11px;
+              font-weight: 600;
+              font-family: var(--tg-font-mono);
+              color: hsl(var(--foreground));
+              background-color: hsl(var(--secondary));
+              border: 1px solid hsl(var(--border));
+              border-radius: calc(var(--radius) - 2px);
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+            }
+            .tg-sub-tag.v2 {
+              color: #c084fc;
+              background-color: var(--tg-purple-soft);
+              border-color: var(--tg-purple-border);
+            }
+            .tg-sub-input {
+              height: 30px !important;
+              width: 100%;
+              padding: 0 9px !important;
+              font-size: 11px !important;
+              font-family: var(--tg-font-mono) !important;
+              color: hsl(var(--muted-foreground)) !important;
+              cursor: pointer;
+            }
+            .tg-copy-btn {
+              height: 30px;
+              background-color: hsl(var(--secondary));
+              color: hsl(var(--foreground));
+              border: 1px solid hsl(var(--border));
+              border-radius: calc(var(--radius) - 2px);
+              font-size: 11.5px;
+              font-weight: 500;
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+            }
+            .tg-copy-btn:hover {
+              background-color: hsl(var(--primary));
+              color: hsl(var(--primary-foreground));
+            }
+            .tg-copy-btn.copied {
+              background-color: var(--tg-green-soft) !important;
+              color: var(--tg-green) !important;
+              border-color: var(--tg-green-border) !important;
+            }
+
+            /* ============================================================
+               6. Controller 4: 68-Node Proxy Matrix (#relayMatrix)
+               ============================================================ */
+            #relayMatrix {
+              display: grid;
+              grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
+              gap: 10px;
+              padding: 16px;
+            }
             .relay-chip {
-              background: var(--md-sys-color-surface-container-high);
-              border: 1px solid var(--md-sys-color-outline-variant);
-              border-radius: var(--md-sys-shape-corner-medium);
-              padding: 8px 10px; min-width: 0;
-              display: flex; flex-direction: column; gap: 4px;
-              transition: border-color .2s, background-color .2s;
+              height: 86px;
+              background-color: hsl(240 5% 6.5%) !important;
+              border: 1px solid hsl(var(--border)) !important;
+              border-radius: var(--tg-radius-cell) !important;
+              padding: 10px 12px;
+              min-width: 0;
+              position: relative;
+              overflow: hidden;
+              cursor: pointer;
+              display: grid;
+              grid-template-rows: 20px 16px 22px;
+              align-content: space-between;
+              transition: border-color 0.15s ease, background-color 0.15s ease;
             }
-            .relay-chip .rc-top { display: flex; align-items: center; gap: 6px; min-width: 0; }
-            .relay-chip .rc-name {
-              flex: 1 1 auto; min-width: 0;
-              font-size: 11px; font-weight: 600; color: var(--md-sys-color-on-surface);
-              white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            .relay-chip:hover {
+              background-color: hsl(var(--accent)) !important;
+              border-color: hsl(var(--ring) / 0.45) !important;
             }
-            .relay-chip .rc-badge {
-              flex-shrink: 0; font-size: 10px; font-family: var(--md-sys-font-mono);
-              padding: 1px 6px; border-radius: var(--md-sys-shape-corner-full);
-            }
-            .relay-chip .rc-badge.ok { background: var(--noc-color-success-container); color: var(--noc-color-on-success-container); }
-            .relay-chip .rc-badge.warn { background: var(--noc-color-warn-container); color: var(--noc-color-on-warn-container); }
-            .relay-chip .rc-badge.bad { background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container); }
-            .relay-chip .rc-badge.na { background: var(--md-sys-color-surface-container-highest); color: var(--md-sys-color-on-surface-variant); }
-            .relay-chip .rc-sub {
-              font-size: 10px; font-family: var(--md-sys-font-mono);
-              color: var(--md-sys-color-on-surface-variant);
-              white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            }
-            .relay-chip .rc-ms {
-              display: flex; align-items: baseline; justify-content: space-between; gap: 6px;
-              font-size: 15px; font-weight: 600; font-family: var(--md-sys-font-mono);
-              color: var(--md-sys-color-on-surface);
-            }
-            .relay-chip .rc-colo { color: var(--noc-color-warn-container, #f0c048); font-weight: 600; }
-            .relay-chip .rc-age {
-              font-size: 10px; font-weight: 400;
-              color: var(--md-sys-color-on-surface-variant); white-space: nowrap;
-            }
-            .relay-chip.testing .rc-age { color: var(--md-sys-color-on-primary-container); }
-            /* 正在测的节点: 主色边框 + 容器色底 + 徽标动画 */
+            .relay-chip .rc-top { display: flex; align-items: center; gap: 6px; min-width: 0; height: 20px; }
+            .node-status-dot { width: 7px !important; height: 7px !important; border-radius: 50% !important; flex-shrink: 0 !important; }
+            .relay-chip .rc-name { flex: 1; min-width: 0; font-size: 12.5px; font-weight: 600; color: hsl(var(--foreground)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .relay-chip .rc-badge { font-size: 10px; font-family: var(--tg-font-mono); padding: 1px 7px !important; border-radius: var(--tg-radius-pill) !important; font-weight: 600; flex-shrink: 0; }
+            .relay-chip .rc-badge.ok   { background: var(--tg-green-soft) !important; color: var(--tg-green) !important; border: 1px solid var(--tg-green-border) !important; }
+            .relay-chip .rc-badge.warn { background: var(--tg-amber-soft) !important; color: var(--tg-yellow) !important; border: 1px solid var(--tg-amber-border) !important; }
+            .relay-chip .rc-badge.bad  { background: var(--tg-red-soft) !important;   color: var(--tg-red) !important;    border: 1px solid var(--tg-red-border) !important; }
+            .relay-chip .rc-badge.na   { background: hsl(var(--secondary)) !important; color: hsl(var(--muted-foreground)) !important; border: 1px solid hsl(var(--border)) !important; }
+            .relay-chip .rc-sub  { font-size: 10.5px; font-family: var(--tg-font-mono); color: hsl(var(--muted-foreground)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 16px; }
+            .relay-chip .rc-colo { color: var(--tg-yellow) !important; font-weight: 600 !important; }
+            .relay-chip .rc-ms   { display: flex; align-items: baseline; justify-content: space-between; font-size: 14px; font-weight: 700; font-family: var(--tg-font-mono); font-variant-numeric: tabular-nums; color: hsl(var(--foreground)); line-height: 22px; }
+            .relay-chip .rc-age  { font-size: 10.5px; font-weight: 500; color: hsl(var(--muted-foreground)); }
+
             .relay-chip.testing {
-              border-color: var(--md-sys-color-primary) !important;
-              background: var(--md-sys-color-primary-container) !important;
+              border-color: var(--tg-accent-bright) !important;
+              background: linear-gradient(145deg, rgba(56, 189, 248, 0.14), rgba(56, 189, 248, 0.04)) !important;
+              animation: tgTestingRadar 1.8s ease-in-out infinite;
+            }
+            .relay-chip.testing::after {
+              content: "";
+              position: absolute;
+              top: 0; left: 0; width: 50%; height: 100%;
+              background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.16), transparent);
+              animation: tgShimmerSweep 1.5s ease-in-out infinite;
+              pointer-events: none;
             }
             .relay-chip.testing .rc-badge {
-              background: var(--md-sys-color-primary) !important;
-              color: var(--md-sys-color-on-primary) !important;
-              animation: pulseTesting 1.6s ease-in-out infinite;
+              background: hsl(var(--primary)) !important;
+              color: hsl(var(--primary-foreground)) !important;
+              border: 1px solid hsl(var(--primary)) !important;
             }
-            .relay-chip.testing .rc-ms { color: var(--md-sys-color-on-primary-container); }
-            .relay-chip.testing .rc-name { color: var(--md-sys-color-on-primary-container); }
+            .relay-chip.testing .rc-ms, .relay-chip.testing .rc-name { color: #38bdf8 !important; }
 
-            /* 底部: 删掉重复的节点阵列后, .grid-bottom 只剩 2 张卡(示波器 + 用户管理) */
-            .grid-bottom { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-            .grid-bottom > .card:nth-child(1),
-            .grid-bottom > .card:nth-child(2),
-            .grid-bottom > .card:nth-child(3) { grid-column: auto; order: 0; }
-            @media (max-width: 1100px) { .grid-bottom { grid-template-columns: 1fr; } }
-
-            /* 手机端: 矩阵两列, 触控友好。
-               注意必须带 !important: 上面的 @media (max-width:720px) 里有一条
-               .node-matrix-grid { grid-template-columns: 1fr !important; }(为底部域名榜写的),
-               它同样命中 #relayMatrix, 不加 !important 时两列设置会被压掉。 */
-            @media (max-width: 640px) {
-              #relayMatrix { grid-template-columns: 1fr 1fr !important; }
-              .relay-chip { padding: 10px; }
+            /* Domain & Peer Connection Cells */
+            .tg-domain-cell, .tg-peer-cell {
+              background-color: hsl(240 5% 6.5%);
+              border: 1px solid hsl(var(--border));
+              border-radius: var(--tg-radius-cell);
+              padding: 12px 14px;
+              transition: border-color 0.15s ease;
+            }
+            .tg-domain-cell:hover, .tg-peer-cell:hover {
+              border-color: hsl(var(--ring) / 0.35);
+            }
+            .relay-node.invalid {
+              border-color: var(--tg-green-border);
+              background: linear-gradient(155deg, rgba(16, 185, 129, 0.08), hsl(240 5% 6.5%));
             }
 
-            /* ---------- 打印/无障碍小改进 ---------- */
+            /* ============================================================
+               7. shadcn/ui Sonner Toast Notification
+               ============================================================ */
+            #tgToastHost {
+              position: fixed;
+              bottom: 24px;
+              right: 24px;
+              z-index: 9999;
+              pointer-events: none;
+              opacity: 0;
+              transform: translate3d(0, 14px, 0) scale(0.96);
+              transition: opacity 0.2s ease, transform 0.26s var(--tg-spring);
+            }
+            #tgToastHost.show {
+              opacity: 1;
+              transform: translate3d(0, 0, 0) scale(1);
+            }
+            .tg-toast-pill {
+              background-color: hsl(var(--popover));
+              color: hsl(var(--popover-foreground));
+              border: 1px solid hsl(var(--border));
+              box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.65);
+              border-radius: var(--radius);
+              padding: 11px 16px;
+              display: inline-flex;
+              align-items: center;
+              gap: 10px;
+              font-size: 13px;
+              font-weight: 500;
+              white-space: nowrap;
+            }
+
+            /* ============================================================
+               8. Mobile & Tablet Bottom Bar
+               ============================================================ */
+            .tg-bottom-tabbar {
+              position: fixed;
+              bottom: 0; left: 0; right: 0;
+              z-index: 200;
+              background-color: hsl(var(--background) / 0.9);
+              backdrop-filter: blur(12px);
+              -webkit-backdrop-filter: blur(12px);
+              border-top: 1px solid hsl(var(--border));
+              display: none;
+              grid-template-columns: repeat(5, 1fr);
+              padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+            }
+            .tg-tabbar-btn {
+              background: transparent !important;
+              border: none !important;
+              color: hsl(var(--muted-foreground));
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              gap: 3px;
+              padding: 4px 2px;
+              cursor: pointer;
+            }
+            .tg-tabbar-btn .tb-ico { font-size: 16px; line-height: 1; display: inline-flex; }
+            .tg-tabbar-btn .tb-lbl { font-size: 10.5px; font-weight: 500; }
+            .tg-tabbar-btn.active { color: hsl(var(--foreground)); font-weight: 600; }
+
+            .tg-view-hidden { display: none !important; }
+
+            /* Responsive Breakpoints */
+            @media (max-width: 1180px) {
+              .tg-split-shell {
+                grid-template-columns: 1fr;
+              }
+              .tg-master-pane {
+                position: static;
+                height: auto;
+                border-right: none;
+                border-bottom: 1px solid hsl(var(--border));
+              }
+              .tg-master-body {
+                padding-bottom: 18px;
+              }
+              body.tg-compact-focused .tg-master-collapsible {
+                display: none !important;
+              }
+              .tg-bottom-tabbar {
+                display: grid;
+              }
+              #tgToastHost {
+                bottom: 72px;
+                right: 16px;
+                left: 16px;
+              }
+              .tg-toast-pill {
+                width: 100%;
+              }
+            }
+
+            @media (max-width: 860px) {
+              .tg-route-stages {
+                grid-template-columns: 1fr 1fr;
+              }
+              .tg-hop-strip {
+                grid-template-columns: 1fr 1fr;
+              }
+              .tg-us-grid {
+                grid-template-columns: repeat(2, 1fr);
+              }
+              .tg-us-cell {
+                border-bottom: 1px solid hsl(var(--border));
+              }
+              .tg-user-table-wrap tbody {
+                grid-template-columns: 1fr;
+              }
+            }
+
+            @media (max-width: 560px) {
+              .tg-detail-content { padding: 14px 12px; }
+              .tg-route-stages, .tg-hop-strip { grid-template-columns: 1fr; }
+              #relayMatrix { grid-template-columns: 1fr 1fr !important; padding: 10px; }
+            }
+
             @media (prefers-reduced-motion: reduce) {
-              * { animation: none !important; transition: none !important; }
-            }
-            .sr-only {
-              position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-              overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+              *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+              }
             }
           </style>
         </head>
         <body>
-          <div class="container">
-            
-            <!-- 顶栏控制台 Header -->
-            <div class="header-bar">
-              <div class="title-group">
-                <h1>NETWORK OPERATIONS CENTER · 跨境链路实时运营大屏</h1>
-                <div class="sub-line">
-                  <span>接入设备 <b id="hdrDevice" style="color:var(--md-sys-color-on-surface);">--</b></span>
-                  <span>接入网络 <b id="hdrWifi" style="color:var(--md-sys-color-on-surface);">--</b></span>
-                  <span>出口 节点所在地 · 手机住宅网络</span>
-                </div>
-              </div>
-              <div class="header-meta" style="display:flex;align-items:center;gap:10px;">
-                <span class="hd-long" style="color:var(--md-sys-color-outline);">CLOUDFLARE ANYCAST + ARGO SMART ROUTING</span>
-                <span style="color:var(--md-sys-color-outline-variant);">|</span>
-                <span id="syncStatusText" style="display:none;"></span>
-                <span id="syncClock" style="font-family:monospace;color:#888;">--:--:--</span>
-                <span style="color:#333;">|</span>
-                <span id="headerBuild" style="font-family:monospace;font-size:11px;color:#38bdf8;white-space:nowrap;">版本 加载中…</span>
-              </div>
-            </div>
 
-            <!-- ======================================================== -->
-            <!-- 0. 断线告警横幅 (手机超过阈值未上报时自动弹出) -->
-            <div id="offlineBanner" style="display:none; margin-bottom:14px; padding:12px 16px; border-radius:6px; font-size:13px; font-weight:600; line-height:1.7; border:1px solid #450a0a;"></div>
+          <!-- shadcn/ui Sonner Toast Notification -->
+          <div id="tgToastHost" role="status" aria-live="polite"><div class="tg-toast-pill" id="tgToastBody"></div></div>
 
-            <!-- 1. 跨境出口物理链路全景遥测与区域矩阵一体化测控大屏 -->
-            <!-- ======================================================== -->
-            <div class="top-topology-card">
-              <!-- 板块头部：全链路延迟标题 + 采集频率双模切换按钮 (默认一分钟) + 动态数据新鲜度 + 端到端实测时延 -->
-              <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
-                <div style="display:flex;align-items:center;gap:8px;">
-                  <span style="color:#22c55e;">●</span>
-                  <span style="font-weight:700;color:#fff;font-size:13px;">跨境出口物理链路全景遥测 (Physical Edge-to-Tunnel Telemetry)</span>
-                  <span style="font-size:10px;background:#151515;border:1px solid #2a2a2a;padding:2px 6px;border-radius:3px;color:#aaa;font-family:monospace;">native core</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-                  <!-- 采集频次双模切换按钮：默认 1 分钟一采集，仅手动切换到 2 秒才极速 -->
-                  <div style="display:flex;align-items:center;gap:2px;background:#101010;border:1px solid #242424;border-radius:6px;padding:2px 4px;">
-                    <button id="btnFreq2s" class="freq-btn" onclick="setPollingInterval(2000)">⚡ 10秒极速</button>
-                    <button id="btnFreq60s" class="freq-btn active" onclick="setPollingInterval(60000)">🍃 1分钟采集 (默认)</button>
+          <!-- ======================================================== -->
+          <!-- shadcn/ui SidebarProvider + SidebarInset Shell -->
+          <!-- ======================================================== -->
+          <div class="tg-split-shell">
+
+            <!-- ====================================================== -->
+            <!-- Left Sidebar (shadcn Sidebar Block) -->
+            <!-- ====================================================== -->
+            <aside class="tg-master-pane" id="tgMasterPane">
+
+              <header class="tg-master-navbar">
+                <div class="tg-brand-row">
+                  <div class="tg-brand-orb">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    <span class="tg-brand-dot-wrap"><span class="live-dot" id="liveDot"></span></span>
                   </div>
-                  <!-- 【2026-10-05】原挂在这张「时延分布」卡上。那张卡已按要求整体删除，
-                       但它是「让手机立刻全速扫描」的唯一入口，所以移到这里。 -->
-                  <button type="button" onclick="manualScan()" id="btnManualScan"
-                    title="命令手机立刻做一次全速扫描: 6 个锚点背靠背连续测(每区 15 次采样, 与周期扫描同口径), 去掉 10 秒间隔, 每测完一个立即上报。约 31 秒完成。"
-                    style="padding:5px 12px;background:#141414;color:#ddd;border:1px solid #2a2a2a;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">⚡ 手动刷新</button>
-                  <!-- 数据时效: 显示"数据本身"的真实年龄 (服务端 serverTime - 手机最近上报时刻) -->
-                  <div style="display:flex;align-items:center;gap:6px;background:#0d0d0d;border:1px solid #222;border-radius:6px;padding:3px 9px;">
-                    <div class="live-dot" id="liveDot"></div>
-                    <span id="dataFreshnessTag" style="font-family:monospace;font-size:11px;color:#555;font-weight:600;">等待数据</span>
-                  </div>
-                  <div style="font-family:monospace;font-size:11px;color:#888;" title="三段同口径(均为单次 1×RTT)真实测量值的最低3次中位数之和(低于10ms 的样本视为无效丢弃)；非单条端到端路径；边缘计算耗时不计入">
-                    三段真实单次 RTT 之和: <b id="totalE2E" style="color:#22c55e;">-- ms</b>
+                  <div class="tg-brand-titles">
+                    <span class="tg-brand-title">NOC Telemetry</span>
+                    <div class="tg-brand-sub">
+                      <span id="dataFreshnessTag" style="color:var(--tg-green);font-weight:600;">等待数据</span>
+                      <span>·</span>
+                      <span id="syncClock">--:--:--</span>
+                    </div>
                   </div>
                 </div>
-              </div>
+                <span class="tg-status-pill ok" id="pollModeBadge">1m 默认</span>
+              </header>
 
-              <!-- A. 全链路穿透流向拓扑流水线 (End-to-End Pipeline) 横向放置 -->
-              <div class="telemetry-pipeline-grid">
-                <div class="pipe-node" data-step="①">
-                  <div class="pipe-label">CLIENT ACCESS</div>
-                  <div class="pipe-title">客户端节点</div>
-                  <div class="pipe-desc">浏览器 / 代理客户端</div>
-                  <div class="pipe-tag online" id="pipeClientTag">样本 --</div>
-                </div>
-                <div class="pipe-arrow">
-                  <div class="hop-arrow">➔</div>
-                  <div class="hop-badge" id="pipeClientEdge" title="真实测量：浏览器请求 /api/rtt 的往返耗时（纯网络，不含任何服务端计算）">-- ms</div>
-                </div>
-                <div class="pipe-node" data-step="②">
-                  <div class="pipe-label">ANYCAST EDGE</div>
-                  <div class="pipe-title">Cloudflare 边缘</div>
-                  <div class="pipe-desc">${WORKER_HOST}</div>
-                  <div class="pipe-tag edge" id="pipeColoTag">实测落点 --</div>
-                </div>
-                <div class="pipe-arrow">
-                  <div class="hop-arrow">➔</div>
-                  <div class="hop-badge" id="pipeEdgeArgo" title="CF 边缘处理本次请求的耗时（非网络时延，不参与 RTT 求和）">-- ms</div>
-                </div>
-                <div class="pipe-node active-tunnel" data-step="③">
-                  <div class="pipe-label">ARGO TUNNEL</div>
-                  <div class="pipe-title">加密双向隧道</div>
-                  <div class="pipe-desc" id="pipeTunnelId" title="cloudflared 隧道 ID 前缀(取自手机 config.yml)">${TUNNEL_ID_PREFIX}…</div>
-                  <div class="pipe-tag tunnel" id="pipeProtoTag">HTTP/2 多路复用</div>
-                </div>
-                <div class="pipe-arrow">
-                  <div class="hop-arrow">➔</div>
-                  <div class="hop-badge" id="pipeArgoPhone" title="手机 curl 到 ${TUNNEL_HOST} 的 time_connect（TCP 1×RTT，与浏览器侧同口径）">-- ms</div>
-                </div>
-                <div class="pipe-node hardware-node" data-step="④">
-                  <div class="pipe-label">MOBILE HOST NODE</div>
-                  <div class="pipe-title" id="pipeDevice">${DEVICE_NAME}</div>
-                  <div class="pipe-desc" id="pipeSoc">${SOC} · arm64-v8a</div>
-                  <div class="pipe-tag host" id="pipeXrayState">状态 --</div>
-                </div>
-                <div class="pipe-arrow">
-                  <div class="hop-arrow">➔</div>
-                  <div class="hop-badge" id="pipePhoneEgress" title="真实测量：手机连接公网锚点(8.8.8.8 / 1.1.1.1)的 time_connect，即手机 → ISP 出口">-- ms</div>
-                </div>
-                <div class="pipe-node" data-step="⑤">
-                  <div class="pipe-label">EGRESS ISP</div>
-                  <div class="pipe-title">原生住宅出口</div>
-                  <div class="pipe-desc">5 个入站分流区(R2 行)</div>
-                  <div class="pipe-tag egress" id="pipeEgressTag">IPv4 出站</div>
-                </div>
-              </div>
+              <div class="tg-master-body">
 
-              <!-- 【2026-10-04 用户要求】手机 → 中转节点延迟 = 55 个节点的【蜂窝矩阵】:
-                     每个节点一张卡, 名字与订阅逐字一致, 显示真实时延与状态,
-                     刚刚被探测的那个节点带【测速中】徽标, 数值一更新就切到下一个。 -->
-                <div style="display:flex;align-items:center;gap:8px;margin:12px 0 6px;flex-wrap:wrap;">
-                  <span style="font-weight:700;color:#eee;font-size:12px;" title="口径: 手机对每个中转节点发一次真实 HTTPS 请求, 取 TCP 1×RTT。node_probe 每 10 秒探 1 个节点, 全量一轮约 9 分钟; 节点名与订阅下发内容逐字一致, 改名自动同步。">手机 → 中转节点延迟 (Phone → Relay Nodes)</span>
-                  <span class="tag" id="relayProgress">--</span>
-                  <span id="matrixStatusTag" style="color:#777;font-size:11px;">● 节点矩阵 · 手机端顺序探测</span>
-                  <button id="btnSpeedTest" onclick="runManualSpeedTest()" style="background:#141414;color:#fff;border:1px solid #333;border-radius:4px;padding:3px 10px;font-size:11px;font-family:monospace;cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:all 0.2s;">
-                    <span id="speedTestIcon">⚡</span>
-                    <span id="speedTestText">点击测速</span>
-                  </button>
-                </div>
-                <div class="node-matrix-grid" id="relayMatrix" style="margin-bottom:2px;">
-                  <!-- 由 renderRelayMatrix 动态渲染 55 个节点 -->
-                </div>
-
-              </div>
-
-              <!-- 【2026-10-04 用户要求】CF 接入机房(6 张锚点卡)整行已按用户要求移除;
-                   锚点仍是手机每 60 秒真实测量的对象, 数据保留给"本机接入质量评分"
-                   与"本轮采样覆盖"使用, 只是不再单独占一整行卡片。 -->
-              <!-- C.【2026-10-04 重构】原"手机物理硬件与无线射频态势"4 张卡已删除:
-                   电池/温度 与"设备与链路健康"卡重复, WiFi 与链路协商亦重复, Sockets 与
-                   "实时并发连接数"同源(都是 ACTIVE_CONNS)。现在每个指标只出现一次,
-                   全部并入下面这张"设备与链路健康"卡(见 grid-metrics 第 2 格)。 -->
-            </div>
-
-            <!-- ======================================================== -->
-            <!-- 1.5 本机 ↔ CF 边缘 时延分布 (原来与"六地区丢包明细"共用一个双栏容器,
-                 对侧那张卡已按用户要求删除, 这里改为整行单卡;
-                 "⚡ 手动刷新"按钮原挂在已删除的锚点行标题上, 现挪到本卡标题右侧)。 -->
-            <!-- ======================================================== -->
-            <!-- 【2026-10-05】原 1.5「本机 ↔ CF 边缘 时延分布」整个板块已按要求删除。
-                 数据层(edgeRtt / edgeRttHist)保留 —— 「流水线分段」仍在用它算第 3 段时延。 -->
-            <!-- ======================================================== -->
-            <!-- 2. 关键指标面板 -->
-            <!-- ======================================================== -->
-            <div class="grid-metrics">
-              <!-- 指标 1：实时上传带宽与负荷（量程严格 150 Mbps） -->
-              <div class="card">
-                <div class="card-title">实时总带宽负荷 (上行+下行 · Max 150M)</div>
-                <div class="gauge-wrap">
-                  <canvas id="gaugeChart" class="gauge-canvas"></canvas>
-                  <div class="gauge-num-overlay">
-                    <div class="gauge-val" id="gaugeVal">0.00 Mbps</div>
-                    <div class="gauge-limit">量程上限 150.0 Mbps（上行+下行合计）</div>
+                <!-- 1. Command Console Card -->
+                <div class="tg-console-card">
+                  <div class="tg-build-bar">
+                    <span style="color:var(--tg-text-secondary);">系统固件状态</span>
+                    <span id="headerBuild" style="color:var(--tg-accent-bright);font-weight:600;">版本 加载中…</span>
+                  </div>
+                  <div class="tg-quick-actions">
+                    <button type="button" id="btnFreq2s" class="tg-action-tile freq-btn" onclick="setPollingInterval(2000)">
+                      <span class="act-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
+                      <span class="act-lbl">10秒极速</span>
+                    </button>
+                    <button type="button" id="btnFreq60s" class="tg-action-tile freq-btn active" onclick="setPollingInterval(60000)">
+                      <span class="act-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+                      <span class="act-lbl">1分默认</span>
+                    </button>
+                    <button type="button" id="btnManualScan" class="tg-action-tile" onclick="manualScan()" title="命令手机立即做一次全速扫描">
+                      <span class="act-ico" id="manualScanIcon">📡</span>
+                      <span class="act-lbl" id="manualScanText">手动刷新</span>
+                    </button>
+                    <button type="button" id="btnPhoneSync" class="tg-action-tile" onclick="requestPhoneSync()" title="向手机下发用户库同步指令">
+                      <span class="act-ico" id="phoneSyncIcon">🔄</span>
+                      <span class="act-lbl" id="phoneSyncText">主库同步</span>
+                    </button>
                   </div>
                 </div>
-                <!-- 【2026-10-04】原来这张卡只有半圆仪表, 与同排更高的卡并排时下方一大片空白。
-                     补三个真实速率指标(与"总流量吞吐统计"的累计值不同: 这里全是瞬时速率)。 -->
-                <div class="health-strip" style="margin-top:12px;">
-                  <div class="health-item"><div class="health-k">总计上下行流量</div><div class="health-v" id="bwTotalBytes">--</div></div>
-                  <div class="health-item"><div class="health-k">15 分钟峰值</div><div class="health-v" id="bwPeak15m">--</div></div>
-                  <div class="health-item"><div class="health-k">一天峰值</div><div class="health-v" id="bwPeakDay">--</div></div>
-                </div>
-              </div>
 
-              <!-- 指标 2【2026-10-04 合并去重】"设备与链路健康" = 原硬件格(电池/WiFi/链路/在线时长)
-                   + 原健康卡(Xray/隧道错误/告警), 每个指标只保留一处。 -->
-              <div class="card">
-                <div class="card-title">设备与链路健康 <span class="tag" id="healthAlert">--</span></div>
-                <div class="health-hero">
-                  <div class="big" id="healthBattery">--%</div>
-                  <div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);line-height:1.7;">
-                    <div id="healthCharging">--</div>
-                    <div>机身温度 <b id="healthTemp" style="color:var(--md-sys-color-on-surface);">--</b></div>
+                <!-- 2. SidebarMenu Workspace Views -->
+                <div class="tg-section-group">
+                  <div class="tg-section-header">
+                    <span>WORKSPACE VIEWS · 视图导航</span>
+                  </div>
+                  <div class="tg-inset-list">
+                    <div class="tg-ios-row tg-nav-item active" data-tg-tab="all" onclick="switchTgTab('all')">
+                      <span class="tg-row-icon blue"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg></span>
+                      <div class="tg-row-body"><span class="tg-row-title">全景工作台 (Overview)</span><span class="tg-row-sub">同屏展示全部 5 大遥测模块</span></div>
+                      <span class="tg-row-val">全部 ›</span>
+                    </div>
+                    <div class="tg-ios-row tg-nav-item" data-tg-tab="overview" onclick="switchTgTab('overview')">
+                      <span class="tg-row-icon cyan"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>
+                      <div class="tg-row-body"><span class="tg-row-title">实时示波器与跨境路由</span><span class="tg-row-sub">15m 吞吐波形 · 五段穿透时延</span></div>
+                      <span class="tg-row-val" id="livePtsTag">--</span>
+                    </div>
+                    <div class="tg-ios-row tg-nav-item" data-tg-tab="users" onclick="switchTgTab('users')">
+                      <span class="tg-row-icon green"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+                      <div class="tg-row-body"><span class="tg-row-title">成员授权与活动会话</span><span class="tg-row-sub">一键复制订阅 · 在线状态监控</span></div>
+                      <span class="tg-row-val">管理 ›</span>
+                    </div>
+                    <div class="tg-ios-row tg-nav-item" data-tg-tab="proxies" onclick="switchTgTab('proxies')">
+                      <span class="tg-row-icon purple"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg></span>
+                      <div class="tg-row-body"><span class="tg-row-title">中转节点测速矩阵</span><span class="tg-row-sub">节点所在地 55 节点 + 美国直连/隧道</span></div>
+                      <span class="tg-row-val" id="relayProgress">--</span>
+                    </div>
+                    <div class="tg-ios-row tg-nav-item" data-tg-tab="domains" onclick="switchTgTab('domains')">
+                      <span class="tg-row-icon orange"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg></span>
+                      <div class="tg-row-body"><span class="tg-row-title">访问域名与网站统计</span><span class="tg-row-sub">全网成员高频访问排行</span></div>
+                      <span class="tg-row-val">排行 ›</span>
+                    </div>
                   </div>
                 </div>
-                <div class="health-strip" style="margin-top:12px;">
-                  <div class="health-item"><div class="health-k">WiFi SSID · 信号强度</div><div class="health-v" id="hwWifi">--</div></div>
-                  <div class="health-item"><div class="health-k">链路协商速率</div><div class="health-v" id="hwWifiSpeed">--</div></div>
-                  <div class="health-item"><div class="health-k">系统连续在线</div><div class="health-v" id="hwUptime">--</div></div>
-                  <div class="health-item"><div class="health-k">Xray 核心</div><div class="health-v" id="healthXray">--</div></div>
-                  <div class="health-item"><div class="health-k">隧道错误累计</div><div class="health-v" id="healthCfErr">--</div></div>
-                </div>
-              </div>
 
-              <!-- 指标 3：实时并发连接数水位计 -->
-              <div class="card">
-                <div class="card-title">实时并发连接数 (Sockets)</div>
-                <div class="water-level-wrap">
-                  <div class="water-tank">
-                    <div class="water-liquid" id="waterLevelBar"></div>
+                <!-- 3. Data & Bandwidth Card -->
+                <div class="tg-section-group tg-master-collapsible">
+                  <div class="tg-section-header">
+                    <span>DATA &amp; BANDWIDTH · 实时负荷与流量</span>
+                    <span style="font-family:var(--tg-font-mono);color:var(--tg-accent-bright);">MAX 150M</span>
                   </div>
-                  <div class="water-detail">
-                    <div class="metric-large" id="connCount">0</div>
-                    <div class="metric-sub">当前活跃代理会话</div>
-                    <div style="font-size:10px;color:#555;margin-top:6px;">警戒阈值: <b style="color:#888;">500</b> 会话（满刻度同值）</div>
-                    <div style="font-size:10px;color:#555;margin-top:2px;">近15分钟峰值: <b id="connPeak" style="color:#38bdf8;">--</b> 会话</div>
-                    <!-- 【2026-10-04】原"系统 fd 上限 32768"是写死常量, 全链路无对应数据源, 已删除。 -->
+                  <div class="tg-inset-list">
+                    <div class="tg-storage-ring-box">
+                      <div class="gauge-wrap">
+                        <canvas id="gaugeChart" class="gauge-canvas"></canvas>
+                        <div class="gauge-num-overlay">
+                          <div class="gauge-val" id="gaugeVal">0.00 Mbps</div>
+                          <div class="gauge-limit">实时上下行总负荷</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="tg-ios-row">
+                      <span class="tg-row-icon blue">∑</span>
+                      <div class="tg-row-body"><span class="tg-row-title">总流量吞吐统计</span><span class="tg-row-sub">从始至终累计</span></div>
+                      <span class="tg-row-val bright" id="totalBytes">--</span>
+                    </div>
+                    <div class="tg-ios-row">
+                      <span class="tg-row-icon cyan">↓</span>
+                      <div class="tg-row-body"><span class="tg-row-title">下行消耗累计</span></div>
+                      <span class="tg-row-val bright" id="downBytes" style="color:var(--tg-accent-bright);">--</span>
+                    </div>
+                    <div class="tg-ios-row">
+                      <span class="tg-row-icon green">↑</span>
+                      <div class="tg-row-body"><span class="tg-row-title">上行回传累计</span></div>
+                      <span class="tg-row-val bright" id="upBytes" style="color:var(--tg-green);">--</span>
+                    </div>
+                    <div class="tg-ios-row">
+                      <span class="tg-row-icon purple">⇄</span>
+                      <div class="tg-row-body"><span class="tg-row-title">双出口合计流量</span><span class="tg-row-sub">手机主出口 + 美国 VPS</span></div>
+                      <span class="tg-row-val" id="bwTotalBytes">--</span>
+                    </div>
+                    <div class="tg-ios-row">
+                      <span class="tg-row-icon orange"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
+                      <div class="tg-row-body"><span class="tg-row-title">15 分钟带宽峰值</span></div>
+                      <span class="tg-row-val" id="bwPeak15m">--</span>
+                    </div>
+                    <div class="tg-ios-row">
+                      <span class="tg-row-icon red"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></span>
+                      <div class="tg-row-body"><span class="tg-row-title">当日最高带宽峰值</span></div>
+                      <span class="tg-row-val" id="bwPeakDay">--</span>
+                    </div>
+                    <div class="tg-ios-row">
+                      <span class="tg-row-icon teal"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/></svg></span>
+                      <div class="tg-row-body">
+                        <span class="tg-row-title">并发 Sockets: <b id="connCount" style="color:#fff;font-family:var(--tg-font-mono);">0</b></span>
+                        <span class="tg-row-sub">15m 峰值 <b id="connPeak" style="color:var(--tg-cyan);">--</b> · 满刻度 500</span>
+                      </div>
+                      <div class="water-tank" title="并发连接水位计 (上限 500)">
+                        <div class="water-liquid" id="waterLevelBar"></div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <!-- 指标 4：总吞吐与上下行配比 -->
-              <div class="card">
-                <div class="card-title">总流量吞吐统计</div>
-                <div class="metric-large" id="totalBytes">--</div>
-                <div class="metric-sub" style="margin-bottom:8px;">下行消耗: <span id="downBytes" style="color:#fff;">--</span></div>
-                <div class="metric-sub">上行回传: <span id="upBytes" style="color:#fff;">--</span></div>
-              </div>
-            </div>
-
-
-            <!-- ======================================================== -->
-            <!-- 3. 核心双栏：真实用户排行榜 + 5地区真实已接入物理流量分布 -->
-            <!-- ======================================================== -->
-            <div class="grid-2">
-              
-              <!-- 图表 1：真实用户流量消耗排行榜 (从始至终累计 · 绝对单调不归零) -->
-              <!-- 【2026-10-04 用户要求】第三板块从界面移除: 加 block3-hidden 由 CSS 隐藏。
-                   保留 DOM 是因为 renderRankList() 仍在写入 #rankList。 -->
-              <div class="card block3-hidden">
-                <div class="card-title">
-                  <div style="display:flex;align-items:center;gap:6px;">
-                    <span style="font-weight:700;color:#fff;">用户全周期流量总消耗榜 (从始至终累计)</span>
+                <!-- 4. Host Telemetry Card -->
+                <div class="tg-section-group tg-master-collapsible">
+                  <div class="tg-section-header">
+                    <span>HOST TELEMETRY · 宿主机硬件与健康</span>
+                    <span id="healthAlert" style="font-family:var(--tg-font-mono);">--</span>
                   </div>
-                  <span style="font-size:10px;color:#22c55e;font-family:monospace;">● 纯真累计 · 永不归零</span>
+                  <div class="tg-inset-list">
+                    <div class="tg-ios-row">
+                      <span class="tg-row-icon gray"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg></span>
+                      <div class="tg-row-body"><span class="tg-row-title">接入设备</span><span class="tg-row-sub">节点所在地原生住宅出口</span></div>
+                      <span class="tg-row-val bright" id="hdrDevice">--</span>
+                    </div>
+                    <div class="tg-ios-row">
+                      <span class="tg-row-icon blue"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.859a10 10 0 0 1 14 0"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/></svg></span>
+                      <div class="tg-row-body"><span class="tg-row-title">接入网络</span><span class="tg-row-sub" id="hwWifi">--</span></div>
+                      <span class="tg-row-val" id="hdrWifi">--</span>
+                    </div>
+                    <div class="tg-ios-row">
+                      <span class="tg-row-icon cyan"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg></span>
+                      <div class="tg-row-body"><span class="tg-row-title">Wi-Fi 协商速率</span></div>
+                      <span class="tg-row-val" id="hwWifiSpeed">--</span>
+                    </div>
+                    <div class="tg-ios-row">
+                      <span class="tg-row-icon green"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="10" x="2" y="7" rx="2" ry="2"/><line x1="22" x2="22" y1="11" y2="13"/></svg></span>
+                      <div class="tg-row-body"><span class="tg-row-title">电池电量与状态</span><span class="tg-row-sub" id="healthCharging">--</span></div>
+                      <span class="tg-row-val bright" id="healthBattery">--%</span>
+                    </div>
+                    <div class="tg-ios-row">
+                      <span class="tg-row-icon orange"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg></span>
+                      <div class="tg-row-body"><span class="tg-row-title">机身电池温度</span></div>
+                      <span class="tg-row-val" id="healthTemp">--</span>
+                    </div>
+                    <div class="tg-ios-row">
+                      <span class="tg-row-icon purple"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+                      <div class="tg-row-body"><span class="tg-row-title">系统连续在线</span></div>
+                      <span class="tg-row-val" id="hwUptime">--</span>
+                    </div>
+                    <div class="tg-ios-row">
+                      <span class="tg-row-icon teal"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg></span>
+                      <div class="tg-row-body"><span class="tg-row-title">Xray 代理核心</span></div>
+                      <span class="tg-row-val bright" id="healthXray">--</span>
+                    </div>
+                    <div class="tg-ios-row">
+                      <span class="tg-row-icon red"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span>
+                      <div class="tg-row-body"><span class="tg-row-title">Argo 隧道错误累计</span></div>
+                      <span class="tg-row-val" id="healthCfErr">--</span>
+                    </div>
+                  </div>
                 </div>
-                <div id="rankList" style="min-height:160px;">
-                  <!-- 由真实数据库用户渲染 -->
-                </div>
-              </div>
 
-              <!-- 图表 2：5地区真实已接入流量分布图 (非节点数量，而是真实流通流量比例) -->
-              <!-- 【2026-10-04 用户要求】第三板块从界面移除: 同样只隐藏 DOM ——
-                   regionChart 是 Chart.js 实例, 删除元素会让 fetchMetrics 抛错并中断整页渲染。 -->
-              <div class="card block3-hidden">
-                <div class="card-title">
-                  <span>5 地区已接入流量分布 (Real Ingress)</span>
-                  <span style="font-size:10px;color:#666;" id="regionStatusTag">物理流量分流监控</span>
+              </div>
+            </aside>
+
+            <!-- ====================================================== -->
+            <!-- Right Detail Stage (shadcn SidebarInset) -->
+            <!-- ====================================================== -->
+            <main class="tg-detail-pane" id="tgDetailPane">
+
+              <header class="tg-detail-navbar">
+                <div class="tg-navbar-left">
+                  <span class="tg-navbar-title" id="tgDetailNavTitle">跨境链路与成员运营工作台</span>
+                  <div class="tg-seg-control" role="tablist">
+                    <div class="sh-tabs-pill"></div>
+                    <button type="button" class="tg-seg-btn active" data-tg-tab="all" onclick="switchTgTab('all')">全景</button>
+                    <button type="button" class="tg-seg-btn" data-tg-tab="overview" onclick="switchTgTab('overview')">链路</button>
+                    <button type="button" class="tg-seg-btn" data-tg-tab="users" onclick="switchTgTab('users')">成员</button>
+                    <button type="button" class="tg-seg-btn" data-tg-tab="proxies" onclick="switchTgTab('proxies')">节点</button>
+                    <button type="button" class="tg-seg-btn" data-tg-tab="domains" onclick="switchTgTab('domains')">域名</button>
+                  </div>
+                  <span id="syncStatusText" style="display:none;"></span>
                 </div>
-                <div style="height:170px;position:relative;">
+                <div class="tg-navbar-right">
+                  <div class="tg-capsule" title="三段单次 RTT 的最低3次中位数之和">
+                    <span>端到端三段 RTT:</span>
+                    <b id="totalE2E" style="color:var(--tg-green);">-- ms</b>
+                  </div>
+                  <div class="tg-capsule">
+                    <span id="phoneSyncBadge" style="color:var(--tg-text-secondary);">手机主库：检测中…</span>
+                  </div>
+                </div>
+              </header>
+
+              <div class="tg-detail-content">
+
+                <!-- 0. Offline Alert Banner -->
+                <div id="offlineBanner" style="display:none; padding:12px 16px; border-radius: var(--tg-radius-group); font-size:13px; font-weight:600; line-height:1.65; border:1px solid var(--tg-red-border);"></div>
+
+                <!-- ================================================== -->
+                <!-- Module 1: Network Oscilloscope & Route Topology -->
+                <!-- ================================================== -->
+                <section class="tg-section-group tg-view-section" data-tg-section="overview">
+                  <div class="tg-section-header">
+                    <span>NETWORK OSCILLOSCOPE &amp; ROUTE TOPOLOGY · 实时吞吐示波器与全链路五段路由</span>
+                    <span style="font-family:var(--tg-font-mono);color:var(--tg-accent-bright);">蓝线:下行 · 绿线:上行</span>
+                  </div>
+                  <div class="tg-inset-list top-topology-card">
+                    <div class="tg-oscilloscope-pad">
+                      <div class="live-chart-box">
+                        <canvas id="liveChart"></canvas>
+                      </div>
+                    </div>
+                    <div class="tg-route-stages telemetry-pipeline-grid">
+                      <div class="pipe-node">
+                        <div>
+                          <div class="pipe-label">STAGE 01 · CLIENT</div>
+                          <div class="pipe-title">客户端节点</div>
+                          <div class="pipe-desc">浏览器 / 代理终端</div>
+                        </div>
+                        <div class="pipe-tag online" id="pipeClientTag">样本 --</div>
+                      </div>
+                      <div class="pipe-node">
+                        <div>
+                          <div class="pipe-label">STAGE 02 · EDGE</div>
+                          <div class="pipe-title">Cloudflare 边缘</div>
+                          <div class="pipe-desc">env.WORKER_HOST</div>
+                        </div>
+                        <div class="pipe-tag edge" id="pipeColoTag">实测落点 --</div>
+                      </div>
+                      <div class="pipe-node active-tunnel">
+                        <div>
+                          <div class="pipe-label">STAGE 03 · ARGO</div>
+                          <div class="pipe-title">加密双向隧道</div>
+                          <div class="pipe-desc" id="pipeTunnelId">${TUNNEL_ID_PREFIX}…</div>
+                        </div>
+                        <div class="pipe-tag tunnel" id="pipeProtoTag">HTTP/2 多路复用</div>
+                      </div>
+                      <div class="pipe-node hardware-node">
+                        <div>
+                          <div class="pipe-label">STAGE 04 · HOST</div>
+                          <div class="pipe-title" id="pipeDevice">${DEVICE_NAME}</div>
+                          <div class="pipe-desc" id="pipeSoc">${SOC} · arm64-v8a</div>
+                        </div>
+                        <div class="pipe-tag host" id="pipeXrayState">状态 --</div>
+                      </div>
+                      <div class="pipe-node">
+                        <div>
+                          <div class="pipe-label">STAGE 05 · EGRESS</div>
+                          <div class="pipe-title">原生住宅出口</div>
+                          <div class="pipe-desc">5 个入站分流区</div>
+                        </div>
+                        <div class="pipe-tag egress" id="pipeEgressTag">IPv4 出站</div>
+                      </div>
+                    </div>
+                    <div class="tg-hop-strip">
+                      <div class="tg-hop-cell">
+                        <span class="tg-hop-lbl">① 浏览器 ↔ CF 边缘</span>
+                        <span class="hop-badge" id="pipeClientEdge">-- ms</span>
+                      </div>
+                      <div class="tg-hop-cell">
+                        <span class="tg-hop-lbl">② CF 边缘计算耗时</span>
+                        <span class="hop-badge" id="pipeEdgeArgo">-- ms</span>
+                      </div>
+                      <div class="tg-hop-cell">
+                        <span class="tg-hop-lbl">③ CF 边缘 ↔ 手机宿主</span>
+                        <span class="hop-badge" id="pipeArgoPhone">-- ms</span>
+                      </div>
+                      <div class="tg-hop-cell">
+                        <span class="tg-hop-lbl">④ 手机宿主 ↔ 公网出口</span>
+                        <span class="hop-badge" id="pipePhoneEgress">-- ms</span>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <!-- ================================================== -->
+                <!-- Module 2: US Los Angeles 1Gbps VPS Gateway (#usCard) -->
+                <!-- ================================================== -->
+                <section class="tg-section-group tg-view-section" data-tg-section="overview" id="usCard">
+                  <div class="tg-section-header">
+                    <span>US LOS ANGELES EGRESS · 美国 VPS 独立出口网关</span>
+                    <span class="tag" id="usStatus">未接入</span>
+                  </div>
+                  <div class="tg-inset-list">
+                    <div class="tg-us-hero">
+                      <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;">
+                        <span class="tg-us-rate" id="usRateNow">--</span>
+                        <span style="font-size:12.5px;color:var(--tg-text-secondary);">
+                          当前活跃 <b id="usActiveUsers" style="color:#fff;">--</b> 人 · 今日吞吐 <b id="usDayBytes" style="color:var(--tg-cyan);font-family:var(--tg-font-mono);">--</b>
+                        </span>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:10px;font-size:12px;">
+                        <b id="usChReality" style="color:var(--tg-green);">直连●</b>
+                        <span style="color:var(--tg-text-tertiary);">|</span>
+                        <b id="usChTunnel" style="color:var(--tg-cyan);">隧道●</b>
+                      </div>
+                    </div>
+                    <div class="tg-us-grid">
+                      <div class="tg-us-cell"><div class="tg-us-k">CPU · 负载</div><div class="tg-us-v" id="usCpuLoad">--</div></div>
+                      <div class="tg-us-cell"><div class="tg-us-k">内存 · 占用</div><div class="tg-us-v" id="usMemUsage">--</div></div>
+                      <div class="tg-us-cell"><div class="tg-us-k">系统连续在线</div><div class="tg-us-v" id="usUptime">--</div></div>
+                      <div class="tg-us-cell"><div class="tg-us-k">并发 TCP 会话</div><div class="tg-us-v" id="usTcpConn">--</div></div>
+                      <div class="tg-us-cell"><div class="tg-us-k">15m · 日峰值</div><div class="tg-us-v" id="usPeakSummary">--</div></div>
+                    </div>
+                  </div>
+                </section>
+
+                <!-- ================================================== -->
+                <!-- Module 3: Authorized Peers & Subscriptions (users) -->
+                <!-- ================================================== -->
+                <section class="tg-section-group tg-view-section" data-tg-section="users">
+                  <div class="tg-section-header">
+                    <span>AUTHORIZED PEERS &amp; SUBSCRIPTIONS · 成员授权与订阅卡片</span>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                      <button type="button" class="tg-pill-btn" onclick="refreshPeersNow()">刷新状态</button>
+                      <button type="button" id="btnToggleAdd" class="tg-pill-btn" onclick="toggleAddUserForm()">＋ 添加成员</button>
+                    </div>
+                  </div>
+                  <div class="tg-inset-list">
+                    <form method="POST" id="addUserForm" style="display:none; gap:10px; flex-wrap:wrap; align-items:center; padding:14px 16px; border-bottom:1px solid hsl(var(--border)); background:hsl(var(--muted) / 0.35);">
+                      <input type="hidden" name="action" value="add">
+                      <input type="text" id="newUserNameInput" name="name" placeholder="成员姓名（例如：小李）" required style="width:190px;">
+                      <input type="text" name="token" placeholder="专属 Token（留空自动生成）" style="width:220px;">
+                      <button type="submit" class="btn-action">立即生成专属订阅卡片</button>
+                      <span style="font-size:11.5px;color:var(--tg-text-secondary);">新增后手机约 6 秒内自动同步生效</span>
+                    </form>
+
+                    <div style="padding:12px 16px;border-bottom:1px solid hsl(var(--border));display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;background:hsl(var(--muted) / 0.2);">
+                      <div id="userConnSummary" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+                      <span style="font-size:11.5px;color:var(--tg-text-secondary);" id="userConnSrc"></span>
+                    </div>
+
+                    <div class="tg-user-table-wrap">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>用户</th><th>订阅地址</th><th>服务状态</th><th>实时连接</th>
+                            <th>同步次数</th><th>最后活跃</th><th>出口 IP</th><th>管理</th>
+                          </tr>
+                        </thead>
+                        <tbody id="userTableBody">${rows || '<tr><td colspan="8" style="padding:18px;text-align:center;color:#8e8e93;">暂无已配置用户</td></tr>'}</tbody>
+                      </table>
+                    </div>
+
+                    <div style="padding:14px 16px;border-top:1px solid hsl(var(--border));">
+                      <div style="font-size:11px;font-weight:600;color:var(--tg-text-secondary);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.05em;">Xray 权威在线会话明细 · ACTIVE SESSIONS</div>
+                      <div id="userConnList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;">
+                        <div style="color:var(--tg-text-secondary);font-size:12px;padding:4px;">等待数据…</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="tg-section-footer">
+                    点击任意订阅框或右侧「复制」按钮即可直接复制到剪贴板；新增、停用或删除成员后约 6 秒自动同步至手机 Xray 核心。
+                  </div>
+                </section>
+
+                <!-- ================================================== -->
+                <!-- Module 4: 68-Node Proxy Matrix (proxies) -->
+                <!-- ================================================== -->
+                <section class="tg-section-group tg-view-section" data-tg-section="proxies">
+                  <div class="tg-section-header">
+                    <div>
+                      <span>PROXY SERVER MATRIX · 手机 → 中转节点实测矩阵</span>
+                      <span id="matrixStatusTag" style="margin-left:8px;color:var(--tg-text-secondary);font-size:11px;">● 顺序探测</span>
+                    </div>
+                    <button type="button" id="btnSpeedTest" class="tg-pill-btn" onclick="runManualSpeedTest()">
+                      <span id="speedTestIcon">⚡</span>
+                      <span id="speedTestText">立即测速</span>
+                    </button>
+                  </div>
+                  <div class="tg-inset-list">
+                    <div class="node-matrix-grid" id="relayMatrix">
+                      <!-- 由 renderRelayMatrix 动态渲染 68 个节点 -->
+                    </div>
+                  </div>
+                </section>
+
+                <!-- ================================================== -->
+                <!-- Module 5: Realtime Domain Analytics (domains) -->
+                <!-- ================================================== -->
+                <section class="tg-section-group tg-view-section" data-tg-section="domains">
+                  <div class="tg-section-header">
+                    <span>REALTIME DOMAIN ANALYTICS · 全网成员访问域名排行</span>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                      <span style="font-size:11.5px;color:var(--tg-text-secondary);">筛选成员:</span>
+                      <select id="domainUserSelect" onchange="renderDomainStats()">
+                        <option value="ALL">全网成员汇总</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="tg-inset-list" style="padding:16px;">
+                    <div id="domainRankList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;">
+                      <!-- 由 renderDomainStats 动态渲染 -->
+                    </div>
+                  </div>
+                </section>
+
+                <!-- Hidden Compatibility Block -->
+                <div class="block3-hidden">
+                  <div id="rankList"></div>
+                  <span id="regionStatusTag"></span>
                   <canvas id="regionChart"></canvas>
+                  <span id="relCover"></span>
+                  <span id="qualityScore"></span>
+                  <span id="qualityGrade"></span>
+                  <span id="qualityBar"></span>
+                  <span id="qualityDetail"></span>
+                  <span id="relNote"></span>
+                  <span id="healthRssi"></span>
+                  <span id="healthWifiSpeed"></span>
+                  <span id="relReport"></span>
+                  <span id="relXray"></span>
+                  <span id="relCfErr"></span>
+                  <span id="relLag"></span>
                 </div>
-              </div>
 
-            <!-- ======================================================== -->
-            <!-- 3.5 全网成员访问域名/网站累计统计看板 (Realtime Domain Analytics) -->
-            <!-- ======================================================== -->
-            <div class="card domain-analytics-card" style="margin-bottom:14px;">
-              <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
-                <span>全网成员访问域名/网站排行榜 (Realtime Domain Analytics)</span>
-                <div style="display:flex;align-items:center;gap:8px;">
-                  <span style="font-size:10px;color:#777;">筛选成员:</span>
-                  <select id="domainUserSelect" onchange="renderDomainStats()" style="background:#000;color:#fff;border:1px solid #222;border-radius:4px;padding:3px 8px;font-size:11px;outline:none;font-family:sans-serif;">
-                    <option value="ALL">🌐 全网成员汇总</option>
-                  </select>
-                </div>
               </div>
-              <div id="domainRankList" class="node-matrix-grid" style="grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px;">
-                <!-- 由 renderDomainStats 动态渲染 -->
-              </div>
-            </div>
-            </div>
-
-            <!-- ======================================================== -->
-            <!-- 【2026-10-04 新增】用户连接状态（独立板块）                 -->
-            <!--   判据 = xray 权威活动连接列表(statsgetallonlineusers)      -->
-            <!--   手机每 5 秒刷一次、每次上报都带上 -> 6 秒级新鲜度          -->
-            <!--   老逻辑用"字节有没有增长"猜在线, 挂着不下载会被误判离线    -->
-            <!-- ======================================================== -->
-            <div class="card" style="margin-bottom:14px;">
-              <div class="card-title">
-                <span>用户连接状态</span>
-                <span style="font-size:10px;color:#666;" id="userConnSrc"></span>
-              </div>
-              <div id="userConnSummary" style="display:flex;flex-wrap:wrap;gap:11px;margin-bottom:12px;"></div>
-              <div id="userConnList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:9px;">
-                <div style="color:#444;font-size:12px;padding:6px;">等待数据…</div>
-              </div>
-              <div style="font-size:11px;color:#5a5a5a;margin-top:11px;line-height:1.7;border-top:1px solid #1a1a1a;padding-top:9px;">
-                <b style="color:#777;">怎么判定：</b>手机每 5 秒读一次连接核心的活动连接列表，随每次上报带上来。
-                <b style="color:#777;">「在线」= 此刻确实连着</b>，与有没有流量无关 —— 挂着不下载也算在线。
-              </div>
-            </div>
-
-            <!-- 【2026-10-04 修复真实结构 bug】上面这个 </div> 是补上的:
-                 原第 3 板块的 <div class="grid-2"> 一直没有闭合, 导致后面
-                 "示波器 / 节点阵列 / 用户管理" 三张卡全被当成它的网格子项 ——
-                 桌面下它们只占 1163px(右侧空 455px), 且被最高的卡拉伸到 2400px 高。
-                 现在正确闭合, 并把这三张卡放进专用 .grid-bottom(桌面固定 3 等分, 窄屏单列)。 -->
-            <div class="grid-bottom">
-
-            <!-- ======================================================== -->
-            <!-- 4. 吞吐带宽趋势示波器 (近 15 分钟连续全真波次 · 30秒采样) -->
-            <!-- ======================================================== -->
-            <div class="card" style="margin-bottom:14px;">
-              <div class="card-title">
-                <div style="display:flex;align-items:center;gap:6px;">
-                  <span>实时吞吐带宽示波器 <span class="tag">近 15 分钟 · 约 30 秒一点</span></span>
-                  <span class="tag" id="livePtsTag">--</span>
-                </div>
-                <span style="font-size:11px;color:#777;font-family:monospace;">实线(蓝): 上行吞吐 · 实线(青): 下行吞吐 · 空闲时段为真实的 0</span>
-              </div>
-              <div class="live-chart-box">
-                <canvas id="liveChart"></canvas>
-              </div>
-            </div>
-
-            <!-- 【2026-10-04 用户要求】底部的"节点健康状态蜂窝阵列"已与第一板块内的
-                 55 节点蜂窝矩阵合并(内容完全重复, 保留两处属于重复展示)。
-                 "点击测速"按钮与状态标签随矩阵一起挪到了第一板块。 -->
-            <!-- ======================================================== -->
-            <!-- 6. 用户管理 (D1: 合并为一张大卡 = 工具栏 + 可折叠添加表单 + 全宽表格) -->
-            <!-- ======================================================== -->
-            <div class="card">
-              <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;text-transform:none;letter-spacing:0;">
-                <span style="display:flex;align-items:center;gap:10px;">
-                  <span>用户管理 · 授权与订阅</span>
-                  <span style="font-size:11px;font-weight:400;color:#666;letter-spacing:0;">同步策略：新增/禁用/删除 立即生效 · 其余每 12 小时一次 · 或点右侧 ⟳ 强制同步</span>
-                  <button type="button" id="btnToggleAdd" onclick="toggleAddUserForm()"
-                    style="padding:5px 12px;background:#141414;color:#ddd;border:1px solid #2a2a2a;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">＋ 添加成员</button>
-                </span>
-                <span style="display:flex;align-items:center;gap:10px;">
-                  <span id="phoneSyncBadge" style="font-size:11px;font-weight:500;color:#666;">手机主库：检测中…</span>
-                  <button type="button" id="btnPhoneSync" onclick="requestPhoneSync()"
-                    title="向手机下发同步指令：手机将重新拉取用户库与配置并回报确认"
-                    style="padding:5px 12px;background:#141414;color:#ddd;border:1px solid #2a2a2a;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">⟳ 刷新</button>
-                </span>
-              </div>
-              <form method="POST" id="addUserForm" style="display:none; gap:10px; flex-wrap:wrap; align-items:center; background:#0a0a0a; border:1px solid #1a1a1a; border-radius:6px; padding:12px; margin-bottom:12px;">
-                <input type="hidden" name="action" value="add">
-                <input type="text" name="name" placeholder="成员姓名（例如：小李）" required style="width:200px;">
-                <input type="text" name="token" placeholder="专属 Token（留空自动生成）" style="width:220px;">
-                <button class="btn-action">生成专属订阅链接</button>
-                <span style="font-size:11px;color:#666;">新增后手机约 6 秒内自动生效；也可点右上角 ⟳ 刷新 下发强制同步</span>
-              </form>
-              <div style="overflow-x:auto;">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>用户</th>
-                      <th>订阅地址 (支持一键点击复制)</th>
-                      <th>服务状态</th>
-                      <th>同步次数</th>
-                      <th>出口 IP</th>
-                      <th>管理</th>
-                    </tr>
-                  </thead>
-                  <tbody id="userTableBody">${rows || '<tr><td colspan="6" style="padding:16px;text-align:center;color:#444;">暂无已配置用户</td></tr>'}</tbody>
-                </table>
-              </div>
-            </div>
-            </div><!-- /.grid-bottom -->
-
+            </main>
           </div>
 
+          <!-- Mobile Bottom Bar -->
+          <nav class="tg-bottom-tabbar">
+            <button type="button" class="tg-tabbar-btn active" data-tg-tab="all" onclick="switchTgTab('all')">
+              <span class="tb-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg></span>
+              <span class="tb-lbl">全景</span>
+            </button>
+            <button type="button" class="tg-tabbar-btn" data-tg-tab="overview" onclick="switchTgTab('overview')">
+              <span class="tb-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>
+              <span class="tb-lbl">链路</span>
+            </button>
+            <button type="button" class="tg-tabbar-btn" data-tg-tab="users" onclick="switchTgTab('users')">
+              <span class="tb-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+              <span class="tb-lbl">成员</span>
+            </button>
+            <button type="button" class="tg-tabbar-btn" data-tg-tab="proxies" onclick="switchTgTab('proxies')">
+              <span class="tb-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg></span>
+              <span class="tb-lbl">节点</span>
+            </button>
+            <button type="button" class="tg-tabbar-btn" data-tg-tab="domains" onclick="switchTgTab('domains')">
+              <span class="tb-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg></span>
+              <span class="tb-lbl">域名</span>
+            </button>
+          </nav>
+          <div id="renderErrProbe" style="display:none;"></div>
+
           <!-- ======================================================== -->
-          <!-- 前端动态渲染与 1 秒级轮询逻辑 -->
+          <!-- 前端动态渲染、全按钮即时响应与实时轮询逻辑 -->
           <!-- ======================================================== -->
           <script>
-            // 1. 真实数据库用户列表 (动态响应 /api/stats_data 轮询推送)
+            // shadcn/ui Sonner 浮动通知 + Motion 弹簧动效
+            var __tgToastTimer = null;
+            function showTgToast(icon, text) {
+              try {
+                var host = document.getElementById('tgToastHost');
+                var body = document.getElementById('tgToastBody');
+                if (!host || !body) return;
+                body.innerHTML = '<span style="font-size:14px;line-height:1;">' + icon + '</span><span>' + text + '</span>';
+                host.classList.add('show');
+                if (window.Motion && Motion.animate) {
+                  Motion.animate(body, { opacity: [0, 1], y: [14, 0], scale: [0.96, 1] }, { duration: 0.24, easing: [0.22, 1, 0.36, 1] });
+                }
+                if (__tgToastTimer) clearTimeout(__tgToastTimer);
+                __tgToastTimer = setTimeout(function () {
+                  host.classList.remove('show');
+                }, 2600);
+              } catch (e) {}
+            }
+
+            // 通用剪贴板复制函数 (带 Clipboard API + execCommand 双重保障)
+            function copyTextToClipboard(text, onDone) {
+              try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                  navigator.clipboard.writeText(text).then(function () {
+                    if (onDone) onDone(true);
+                  }).catch(function () {
+                    fallbackCopy(text, onDone);
+                  });
+                } else {
+                  fallbackCopy(text, onDone);
+                }
+              } catch (e) {
+                fallbackCopy(text, onDone);
+              }
+            }
+            function fallbackCopy(text, onDone) {
+              try {
+                var ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.left = '-9999px';
+                document.body.appendChild(ta);
+                ta.focus();
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                if (onDone) onDone(true);
+              } catch (e) {
+                if (onDone) onDone(false);
+              }
+            }
+
+            // 点击订阅输入框复制
+            function copySubInput(inputEl, label) {
+              if (!inputEl) return;
+              try { inputEl.select(); } catch (e) {}
+              copyTextToClipboard(inputEl.value, function () {
+                showTgToast('📋', '已复制 ' + (label || '订阅') + ' 链接到剪贴板');
+              });
+            }
+
+            // 点击「复制」按钮复制
+            function copySubBtn(btnEl, url, label) {
+              if (btnEl) {
+                var row = btnEl.parentElement;
+                var inp = row ? row.querySelector('input') : null;
+                if (inp) { try { inp.select(); } catch (e) {} }
+              }
+              copyTextToClipboard(url, function () {
+                if (btnEl) {
+                  var oldTxt = btnEl.innerText;
+                  btnEl.innerText = '✓已复制';
+                  btnEl.classList.add('copied');
+                  setTimeout(function () {
+                    btnEl.innerText = oldTxt || '复制';
+                    btnEl.classList.remove('copied');
+                  }, 1800);
+                }
+                showTgToast('📋', '已复制 ' + (label || '订阅') + ' 链接到剪贴板');
+              });
+            }
+
+            // 点击 68 节点卡片复制节点信息
+            function copyNodeInfo(idx) {
+              try {
+                var nodes = (window.latestNodeList && window.latestNodeList.length) ? window.latestNodeList : rawNodes;
+                var n = nodes[idx];
+                if (!n) return;
+                var info = (n.name || n.fullName || '节点') + ' (' + (n.ip || n.server || '') + ')';
+                copyTextToClipboard(n.ip || n.server || info, function () {
+                  showTgToast('🌐', '已复制节点地址: ' + info);
+                });
+              } catch (e) {}
+            }
+
+            // Motion Shared-Layout TabsList Pill Indicator
+            var __currentActiveTab = 'all';
+            function syncTgTabsPill(tab) {
+              try {
+                __currentActiveTab = tab || __currentActiveTab || 'all';
+                var pill = document.querySelector('.sh-tabs-pill');
+                var bar = document.querySelector('.tg-seg-bar');
+                if (!pill || !bar) return;
+                var activeBtn = bar.querySelector('.tg-seg-btn[data-tg-tab="' + __currentActiveTab + '"]');
+                if (!activeBtn) return;
+                var barRect = bar.getBoundingClientRect();
+                var btnRect = activeBtn.getBoundingClientRect();
+                var targetX = btnRect.left - barRect.left - 3;
+                var targetW = btnRect.width;
+                if (targetW <= 0) return;
+                if (window.Motion && Motion.animate) {
+                  var opts = Motion.spring ? { type: Motion.spring, stiffness: 420, damping: 32 } : { duration: 0.25, easing: [0.22, 1, 0.36, 1] };
+                  Motion.animate(pill, { x: targetX, width: targetW + 'px' }, opts);
+                } else {
+                  pill.style.width = targetW + 'px';
+                  pill.style.transform = 'translateX(' + targetX + 'px)';
+                }
+              } catch (e) {}
+            }
+
+            // shadcn/ui Sidebar + TabsList 视图切换器 + Motion Stagger 编排
+            function switchTgTab(tab) {
+              var titles = {
+                all: '跨境链路与成员运营工作台',
+                overview: '实时吞吐示波器与跨境路由',
+                users: '成员授权与活动会话管理',
+                proxies: '68 节点实测时延矩阵',
+                domains: '全网成员访问域名排行'
+              };
+              var navTitle = document.getElementById('tgDetailNavTitle');
+              if (navTitle && titles[tab]) navTitle.innerText = titles[tab];
+              document.querySelectorAll('[data-tg-tab]').forEach(function (el) {
+                el.classList.toggle('active', el.getAttribute('data-tg-tab') === tab);
+              });
+              syncTgTabsPill(tab);
+              var visibleSecs = [];
+              document.querySelectorAll('.tg-view-section').forEach(function (sec) {
+                var st = sec.getAttribute('data-tg-section');
+                if (tab === 'all' || st === tab) {
+                  sec.classList.remove('tg-view-hidden');
+                  visibleSecs.push(sec);
+                } else {
+                  sec.classList.add('tg-view-hidden');
+                }
+              });
+              if (window.Motion && Motion.animate && visibleSecs.length) {
+                try {
+                  Motion.animate(
+                    visibleSecs,
+                    { opacity: [0, 1], y: [10, 0] },
+                    { duration: 0.28, delay: Motion.stagger ? Motion.stagger(0.04) : 0, easing: [0.22, 1, 0.36, 1] }
+                  );
+                } catch (e) {}
+              }
+              if (tab === 'all') {
+                document.body.classList.remove('tg-compact-focused');
+              } else {
+                document.body.classList.add('tg-compact-focused');
+              }
+              try {
+                if (window.innerWidth <= 1180 && tab !== 'all') {
+                  var dp = document.getElementById('tgDetailPane');
+                  if (dp) dp.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+              } catch (e) {}
+              try {
+                if (liveChart) liveChart.resize();
+              } catch (e) {}
+              showTgToast('🧭', '已切换至「' + (titles[tab] || tab) + '」');
+            }
+
+            // 手动刷新成员状态按钮
+            async function refreshPeersNow() {
+              showTgToast('🔄', '正在刷新成员在线状态与实时吞吐…');
+              await fetchMetrics();
+            }
+
+            const AVATAR_GRADS = [
+              'linear-gradient(145deg, #27272a, #18181b)',
+              'linear-gradient(145deg, #1e293b, #0f172a)',
+              'linear-gradient(145deg, #064e3b, #022c22)',
+              'linear-gradient(145deg, #312e81, #1e1b4b)',
+              'linear-gradient(145deg, #3f3f46, #27272a)',
+              'linear-gradient(145deg, #164e63, #083344)'
+            ];
+
             let realUsers = ${realUsersJson};
 
-            // 【2026-10-05】页面侧显示转义: 用户名 / IP / token 等外来文字一律先转义再拼 HTML
             function escPage(s) {
               return String(s === undefined || s === null ? '' : s)
                 .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
             }
-            // 确认框文案用的"安全名字": 去掉引号/反斜杠/尖括号/换行, 只留可见字符(最多 16 个字)
             function safeName(s) {
               var t = String(s === undefined || s === null ? '' : s);
               var out = '';
@@ -3960,69 +5300,41 @@ rules:
               return out;
             }
 
-            // 2. 真实节点物理源
             const rawNodes = ${nodesJson};
-
-            // 【2026-10-04】旧矩阵已并入第一板块的 renderRelayMatrix(名字与订阅逐字一致),
-            //   这里不再预渲染。
-
-            // 真实物理网络探测函数 (发起真实 HTTPS 探测，浏览器测量完成 TCP 握手 + TLS 协商的往返耗时，杜绝任何模拟散列或随机数)
-            // 【2026-10-03 删除】原 pingNodeIp 用 <img src='https://IP/favicon.ico'> 探测:
-            //   ① SNI 是 IP 字面量而非 ${TUNNEL_HOST} => 测的不是「连你的节点」, 方法论错误
-            //      (浏览器无法指定 SNI, 这是硬限制)
-            //   ② img.onerror 会被当成「完成」并立刻结算 => 握手失败被记成「很快」,
-            //      导致【最差的节点显示成最快】
-            //   ③ 5 个并发互相抢带宽 => 结果被压平(598/596/595/594/593 就是这么来的)
-            // 现在改为展示手机端 node_probe.sh 的真实连通性探测结果。
 
             let isTestingSpeed = false;
             let latestRegionalPings = {};
 
-            // ==========================================================
-            // 【2026-10-04 重做】手机 → 中转节点延迟 = 55 节点蜂窝矩阵。
-            //   每个节点一张卡: 名字与订阅逐字一致(rawNodes.name 原样, 改名自动同步),
-            //   显示真实时延(rtt, 手机 node_probe 实测)与三档状态,
-            //   刚刚被测的节点带【测速中】徽标 —— 数值一更新徽标就切到下一个。
-            // ==========================================================
             function renderRelayMatrix(m) {
               try {
                 var box = document.getElementById('relayMatrix');
                 if (!box) return;
                 var nodes = (window.latestNodeList && window.latestNodeList.length) ? window.latestNodeList : rawNodes;
                 var st = {};
-                // 【2026-10-04】优先用实时推送里的 nodeStatus(秒级), 否则用 60 秒轮询的
                 var stList = (m && Array.isArray(m.nodeStatus) && m.nodeStatus.length)
                   ? m.nodeStatus : (window.latestNodeStatus || []);
-                stList.forEach(function (x) { if (x && x.ip) st[x.ip] = x; });
+                stList.forEach(function (x) {
+                  if (x && x.ip) {
+                    st[x.ip] = x;
+                    if (x.path) st[x.ip + '|' + x.path] = x;
+                  }
+                  if (x && x.server) {
+                    st[x.server] = x;
+                    if (x.path) st[x.server + '|' + x.path] = x;
+                  }
+                });
                 var srvNowMs = Date.now() + ((typeof window.srvTimeOffsetMs === 'number') ? window.srvTimeOffsetMs : 0);
                 var nowS = srvNowMs / 1000;
-                // 【2026-10-04 用户要求】测速中必须【按顺序】推进:
-                //   以手机 node_probe 的当前探测索引(nodeIdx, 按 nodes.txt 顺序)为准。
-                //   不能按时间戳 —— 打开大屏会触发 55 节点并发全量扫描, 完成顺序随机,
-                //   按时间戳高亮会"乱跳"(用户实测反馈)。
-                // 【2026-10-04 用户强制要求】"测速中"严格 = 手机上报的 nodeIdx,
-                //   不做时间推算、不按时间戳兜底、不因数据变旧而清除。
-                //   手机报哪个节点, 框就必定在哪个节点上, 直到它报来下一个。
                 var curIdx = -1;
                 if (m && typeof m.nodeIdx === 'number' && m.nodeIdx >= 0) {
                   curIdx = m.nodeIdx;
-                  window.latestNodeIdx = m.nodeIdx;          // 记住最后一次已知位置
+                  window.latestNodeIdx = m.nodeIdx;
                 } else if (typeof window.latestNodeIdx === 'number' && window.latestNodeIdx >= 0) {
-                  curIdx = window.latestNodeIdx;             // 无新数据时保持不动(无时间限制)
+                  curIdx = window.latestNodeIdx;
                 }
                 if (curIdx >= nodes.length) curIdx = -1;
-                // 【2026-10-04 用户要求】给每秒 ticker 存基准: 收到时的年龄 + 本地时刻。
-                //   年龄 = age0 + 本地已过去秒数 —— 不依赖浏览器与手机时钟一致。
                 var _ageBase = {};
-                // 【2026-10-04 修"测速中跳着走"】手机每 2 秒测一个节点却每 6 秒才上报,
-                //   直接用上报的 nodeIdx 会让高亮一次跳 3 格。这里记下"基准索引 + 收到时刻
-                //   + 当前节奏(秒/个)", 由每秒 ticker 本地插值平滑推进。
-                // 【2026-10-04】不再使用本地游标(__relayCursor): 见上方说明。
                 window.__relayBadge = {};
-                // 【2026-10-05 用户决策】节点状态改为【按轮次】判定, 不再用固定 600 秒:
-                //   一轮时长 = 相邻节点实测间隔的中位数 × 节点总数(动态), 夹在 300~3600 秒之间。
-                //   绿 = 本轮已测到 · 黄 = 上一轮的数据 · 灰 = 连续两轮以上没测到;
-                //   只有"手机真的探到失败/超时"(ok=false)才标红。
                 var _deltas = [];
                 for (var _di = 1; _di < stList.length; _di++) {
                   var _a1 = (stList[_di] && typeof stList[_di].at === 'number') ? stList[_di].at : 0;
@@ -4037,16 +5349,12 @@ rules:
                   : ((window.latestNodeStatus && window.latestNodeStatus.length) || nodes.length || 55);
                 var roundSec = Math.round(Math.min(3600, Math.max(300, _perNode * _nodeTotal)));
                 var html = nodes.map(function (n, idx) {
-                  var x = st[n.ip] || st[n.server];
+                  var k1 = (n.ip && n.path) ? (n.ip + '|' + n.path) : null;
+                  var k2 = (n.server && n.path) ? (n.server + '|' + n.path) : null;
+                  var x = (k1 && st[k1]) || (k2 && st[k2]) || st[n.ip] || st[n.server];
                   var name = (typeof n.name === 'string' && n.name) ? n.name : (n.fullName || (n.path + ' ' + n.ip));
-                  // 【2026-10-04 核查产出】显示【实测落点】: 与路径标签不一致时标黄,
-                  //   让"接入点3节点其实落接入点2"这种事实一眼可见。
                   var _colo = (x && typeof x.colo === 'string') ? x.colo : '';
-                  // 【2026-10-04 用户要求】路径前缀(/kl /hk /sg /tw /jp)全部去掉:
-                  //   卡片名已经是"节点所在地-<实测落点>-<序号>", 路径前缀既多余、又不代表真实出口。
-                  //   副行只保留 "IP · 实测落点"。
-                  var sub = n.ip
-                          + (_colo ? (' · <span class="rc-colo">' + _colo + '</span>') : '');
+                  var sub = n.ip + (_colo ? (' · <span class="rc-colo">' + _colo + '</span>') : '');
                   var age = null, rtt = null, ok = null;
                   if (x) {
                     age = Math.max(0, Math.round(nowS - (x.at || 0)));
@@ -4054,22 +5362,19 @@ rules:
                     ok = !!x.ok;
                   }
                   var dotC, stTxt, stCls;
-                  if (!x) { dotC = '#8e9099'; stTxt = '待探测'; stCls = 'na'; }
-                  else if (ok === false) { dotC = '#ffb4ab'; stTxt = '不通'; stCls = 'bad'; }
-                  else if (age > roundSec * 2) { dotC = '#8e9099'; stTxt = '未探测'; stCls = 'na'; }
-                  else if (age > roundSec) { dotC = '#f0c048'; stTxt = '数据陈旧'; stCls = 'warn'; }
-                  else { dotC = '#6dd58c'; stTxt = '连通'; stCls = 'ok'; }
+                  if (!x) { dotC = '#636366'; stTxt = '待探测'; stCls = 'na'; }
+                  else if (ok === false) { dotC = '#ff453a'; stTxt = '不通'; stCls = 'bad'; }
+                  else if (age > roundSec * 2) { dotC = '#636366'; stTxt = '未探测'; stCls = 'na'; }
+                  else if (age > roundSec) { dotC = '#ffd60a'; stTxt = '数据陈旧'; stCls = 'warn'; }
+                  else { dotC = '#30d158'; stTxt = '连通'; stCls = 'ok'; }
                   var rttTxt = (rtt !== null) ? (rtt + ' ms') : '-- ms';
-                  // 【2026-10-04 用户要求】年龄【一律按秒】显示(不再出现"2 分钟前"),
-                  //   并且每秒本地+1 —— 见下方 ticker, 不再静默一段再跳变。
                   var ageTxt = (age === null) ? '--' : (age + ' 秒前');
                   var testing = (idx === curIdx && x && ok !== false);
                   _ageBase[idx] = (age === null) ? null : { a0: age, t0: Date.now() };
-                  // 记下"非测速中"时的徽标(供高亮移走后还原)
                   window.__relayBadge[idx] = { cls: stCls, txt: stTxt };
-                  return '<div class="relay-chip' + (testing ? ' testing' : '') + '" id="rc_' + idx + '">'
-                       + '<div class="rc-top"><span class="node-status-dot" style="background:' + dotC + ';"></span>'
-                       + '<span class="rc-name" title="' + name + '">' + name + '</span>'
+                  return '<div class="relay-chip' + (testing ? ' testing' : '') + '" id="rc_' + idx + '" onclick="copyNodeInfo(' + idx + ')" title="点击复制节点地址">'
+                       + '<div class="rc-top"><span class="node-status-dot" style="background:' + dotC + ';box-shadow:0 0 6px ' + dotC + ';"></span>'
+                       + '<span class="rc-name">' + name + '</span>'
                        + '<span class="rc-badge ' + stCls + '">' + (testing ? '测速中' : stTxt) + '</span></div>'
                        + '<div class="rc-sub">' + sub + '</div>'
                        + '<div class="rc-ms"><span>' + rttTxt + '</span><span class="rc-age">' + ageTxt + '</span></div>'
@@ -4078,24 +5383,16 @@ rules:
                 box.innerHTML = html;
                 window.__relayAgeBase = _ageBase;
                 var pr = document.getElementById('relayProgress');
-                // 【2026-10-04】隐藏对照属性: 记录"框所在下标"与"手机上报的 nodeIdx",
-                //   便于严格自证(不显示给用户, 零 UI 影响)。
                 if (pr) {
                   pr.setAttribute('data-testing-idx', String(curIdx));
                   pr.setAttribute('data-srv-idx', String((m && typeof m.nodeIdx === 'number') ? m.nodeIdx : -1));
-                }
-                if (pr) {
                   var measured = 0;
                   nodes.forEach(function (n) { var x = st[n.ip] || st[n.server]; if (x && x.at) measured++; });
-                  pr.innerText = '共 ' + nodes.length + ' 个节点 · 已测 ' + measured;
+                  pr.innerText = measured + ' / ' + nodes.length;
                 }
               } catch (e) {}
             }
 
-            // 【2026-10-04 用户要求】节点卡年龄【每秒】刷新:
-            //   原来只有收到推送时才重算, 表现为"静默一段 -> 突然跳一下"。
-            //   现在每秒把每张卡的年龄 +1(本地时间差, 与手机时钟无关),
-            //   并且一律用【秒】(不再出现"2 分钟前")。
             setInterval(function () {
               try {
                 var base = window.__relayAgeBase;
@@ -4107,23 +5404,11 @@ rules:
                   var b = base[idx];
                   el.innerText = b ? (b.a0 + Math.floor((now - b.t0) / 1000)) + ' 秒前' : '--';
                 }
-                // 【2026-10-04 用户强制要求】这里【不再做任何本地推算/插值/追赶】。
-                //   原因: 手机真实节奏是"探测耗时(0.25~3 秒) + sleep", 与固定节奏不一致,
-                //   任何推算都会与真实索引打架(表现为"跳回上一格")。
-                //   现在"测速中"只由 renderRelayMatrix 按手机上报的 nodeIdx 严格设置,
-                //   ticker 只负责刷新年龄, 不碰高亮。
               } catch (e) {}
             }, 1000);
 
-
-            // ==========================================================
-            // 【2026-10-04 新增】流水线节点标签真值化
-            //   原来这里写死 "Xray Core 在线" / "全球 330+ 节点" / "双栈 IPv4/IPv6",
-            //   与同页真实状态会直接矛盾(Xray 离线时流水线还说在线)。现在全部绑定真实值。
-            // ==========================================================
             function renderPipelineTags(d) {
               var tm = d.telemetry || {};
-              // 【2026-10-04】机型/系统改为数据驱动(原来是写死的 "${DEVICE_NAME}" / "${SOC}")
               try {
                 var devEl = document.getElementById('pipeDevice');
                 if (devEl && tm.brand && tm.model && tm.brand !== 'unknown') {
@@ -4142,8 +5427,6 @@ rules:
               var t2 = document.getElementById('pipeColoTag');
               if (t2) {
                 var colos = d.colos || {}, real = {};
-                // 【2026-10-04】只接受真正的三字机房码, 并显式排除 ALI(阿里已从锚点里彻底移除;
-                // 万一旧缓存里还留着 ALI, 也不能再显示出来)。
                 for (var k in colos) {
                   if (/^[A-Z]{3}$/.test(colos[k]) && colos[k] !== 'ALI') real[colos[k]] = 1;
                 }
@@ -4153,33 +5436,32 @@ rules:
               var t3 = document.getElementById('pipeXrayState');
               if (t3) {
                 var xr = tm.xrayLive;
-                // 【2026-10-05 修复】手机上报的是数字 1/0(不是布尔 true/false), 这里与健康卡统一兼容
-                if (xr === true || xr === 1 || xr === '1') { t3.innerText = 'Xray 在线'; t3.style.color = '#a6f2bd'; t3.style.background = '#0f5223'; }
-                else if (xr === false || xr === 0 || xr === '0') { t3.innerText = 'Xray 离线'; t3.style.color = '#ffdad6'; t3.style.background = '#93000a'; }
-                else { t3.innerText = '状态未上报'; t3.style.color = '#c4c6d0'; t3.style.background = '#282a2f'; }
+                if (xr === true || xr === 1 || xr === '1') {
+                  t3.innerText = 'Xray 在线';
+                  t3.style.color = '#30d158';
+                  t3.style.background = 'rgba(48, 209, 88, 0.18)';
+                } else if (xr === false || xr === 0 || xr === '0') {
+                  t3.innerText = 'Xray 离线';
+                  t3.style.color = '#ff453a';
+                  t3.style.background = 'rgba(255, 69, 58, 0.18)';
+                } else {
+                  t3.innerText = '状态未上报';
+                  t3.style.color = '#8e8e93';
+                  t3.style.background = 'rgba(118, 118, 128, 0.22)';
+                }
               }
               var t5 = document.getElementById('livePtsTag');
               if (t5) {
                 var n = 0;
                 try { n = (liveChart && liveChart.data && liveChart.data.labels) ? liveChart.data.labels.length : 0; } catch (e) { n = 0; }
-                t5.innerText = n + ' 个采样点';
+                t5.innerText = n + ' 点';
               }
             }
 
-            // ==========================================================
-            // 【2026-10-04 新增】顶栏"接入设备 / 接入网络"真值
-            //   原来写死 "${DEVICE_NAME} · ${CARRIER} 5G"。真机确实是 ${DEVICE_NAME}
-            //   (getprop: brand=${DEVICE_BRAND} model=${DEVICE_MODEL} device=${DEVICE_CODENAME}), 但运营商并非 ${CARRIER}
-            //   (SIM 是 CelcomDigi / Maxis), 且页面实际走 WiFi。所以改为按上报值显示,
-            //   没有对应字段就显示 --, 不写死。
-            // ==========================================================
             function renderHeaderFacts(d) {
               var tm = d.telemetry || {}, wifi = tm.wifi || {};
               var hd = document.getElementById('hdrDevice');
               if (hd) {
-                // 【2026-10-04】优先用手机上报的真机信息(telemetry.brand/model/android),
-                // 没有就显示 --, 绝不回退到写死的机型。手机侧已上报:
-                // brand=${DEVICE_BRAND} model=${DEVICE_MODEL} abi=arm64-v8a android=${ANDROID_VER}
                 var dv = (tm.brand && tm.model && tm.brand !== 'unknown')
                   ? (tm.brand + ' ' + tm.model) : null;
                 if (dv && tm.android && tm.android !== 'unknown') dv += ' · Android ' + tm.android;
@@ -4193,78 +5475,218 @@ rules:
               }
             }
 
-
-            // 手动刷新: 命令手机做一次全速扫描(六大地区 + 节点)
+            // 手动全速扫描 + 68节点测速双按钮联动与实时倒计时反馈
             let manualScanBusy = false;
+            let manualScanRemain = 0;
+            let manualScanTickTimer = null;
+
+            function updateScanButtonsUI(state, remainSec) {
+              var b1 = document.getElementById('btnManualScan');
+              var i1 = document.getElementById('manualScanIcon');
+              var t1 = document.getElementById('manualScanText');
+              var b2 = document.getElementById('btnSpeedTest');
+              var i2 = document.getElementById('speedTestIcon');
+              var t2 = document.getElementById('speedTestText');
+              var mTag = document.getElementById('matrixStatusTag');
+
+              if (state === 'sending') {
+                if (b1) b1.classList.add('busy');
+                if (i1) i1.innerHTML = '<span class="tg-spin">↻</span>';
+                if (t1) t1.innerText = '下发中…';
+                if (b2) b2.classList.add('busy');
+                if (i2) i2.innerHTML = '<span class="tg-spin">↻</span>';
+                if (t2) t2.innerText = '下发指令…';
+                if (mTag) { mTag.style.color = '#ffd60a'; mTag.innerText = '● 正在下发全速探测指令…'; }
+              } else if (state === 'scanning') {
+                if (b1) b1.classList.add('busy');
+                if (i1) i1.innerHTML = '<span class="tg-spin">📡</span>';
+                if (t1) t1.innerText = '扫描 ' + remainSec + 's';
+                if (b2) b2.classList.add('busy');
+                if (i2) i2.innerHTML = '<span class="tg-spin">⚡</span>';
+                if (t2) t2.innerText = '探测中 ' + remainSec + 's';
+                if (mTag) { mTag.style.color = '#30d158'; mTag.innerText = '● 手机全速探测中 (' + remainSec + 's)'; }
+              } else {
+                if (b1) b1.classList.remove('busy');
+                if (i1) i1.innerText = '📡';
+                if (t1) t1.innerText = '手动刷新';
+                if (b2) b2.classList.remove('busy');
+                if (i2) i2.innerText = '⚡';
+                if (t2) t2.innerText = '立即测速';
+                if (mTag) { mTag.style.color = 'var(--tg-text-secondary)'; mTag.innerText = '● 顺序探测'; }
+              }
+            }
+
             async function manualScan() {
-              const btn = document.getElementById('btnManualScan');
-              if (manualScanBusy) return;
+              if (manualScanBusy) {
+                showTgToast('📡', '全速扫描进行中（剩余 ' + manualScanRemain + 's），已为您立即同步当前最新数据');
+                await fetchMetrics();
+                return;
+              }
               manualScanBusy = true;
-              if (btn) { btn.disabled = true; btn.innerText = '⚡ 已下发…'; }
+              manualScanRemain = 26;
+              updateScanButtonsUI('sending', 26);
+              showTgToast('📡', '正在向宿主机下发全速扫描与节点测速指令…');
               try {
-                const r = await fetch(window.location.origin + '/api/manual_scan?pwd=' + window.__CFG.ADMIN_PASSWORD, {
+                const r = await fetch(window.location.origin + '/api/manual_scan?pwd=' + (env.ADMIN_PASSWORD || "CHANGE_ME"), {
                   method: 'POST', cache: 'no-store'
                 });
                 const j = await r.json();
-                if (btn && j && j.status === 'ok') btn.innerText = '⚡ 手机扫描中…';
-              } catch (e) {}
-              // 手机约 6 秒收到指令, 全速扫描约 20 秒; 期间靠实时推送逐个点亮
-              setTimeout(function () {
-                manualScanBusy = false;
-                if (btn) { btn.disabled = false; btn.innerText = '⚡ 手动刷新'; }
-              }, 26000);
+                if (j && j.status === 'ok') {
+                  showTgToast('⚡', '全速扫描指令已送达！宿主机正在逐个探测 68 节点…');
+                }
+              } catch (e) {
+                showTgToast('⚠️', '扫描指令已发出，正在拉取最新遥测…');
+              }
+              await fetchMetrics();
+              updateScanButtonsUI('scanning', manualScanRemain);
+              if (manualScanTickTimer) clearInterval(manualScanTickTimer);
+              manualScanTickTimer = setInterval(function () {
+                manualScanRemain--;
+                if (manualScanRemain <= 0) {
+                  clearInterval(manualScanTickTimer);
+                  manualScanTickTimer = null;
+                  manualScanBusy = false;
+                  updateScanButtonsUI('idle', 0);
+                  fetchMetrics();
+                  showTgToast('✅', '全速扫描周期已完成，全部最新数据已同步');
+                } else {
+                  updateScanButtonsUI('scanning', manualScanRemain);
+                  if (manualScanRemain % 4 === 0) fetchMetrics();
+                }
+              }, 1000);
             }
 
             function runManualSpeedTest() {
-              // 节点卡片的按钮: 同样先下发全速扫描指令(会连带刷新节点探测), 再重渲染
               manualScan();
               renderRelayMatrix(null);
             }
 
-            // 【2026-10-04 修复 T8.2】这里原本在页面加载 500ms 后自动运行
-            //   runManualSpeedTest() —— 等于用户每次打开/刷新大屏, 手机都被迫
-            //   跑一轮 20 秒的全速扫描(耗电、与正常 60 秒调度打架)。
-            //   已移除: 扫描只由用户显式点按钮触发。
-
-            // 格式化辅助函数
             function formatBytes(bytes) {
               if (!bytes || bytes === 0) return '0.00 MB';
               const k = 1024, sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
               const i = Math.floor(Math.log(bytes) / Math.log(k));
               return (bytes / Math.pow(k, i)).toFixed(2) + ' ' + sizes[i];
             }
-            // ============================================================
-            // 【2026-10-05 新增】「实时总带宽负荷」面板的三个指标格
-            //   总计上下行流量 / 15 分钟峰值 / 一天峰值
-            //
-            // 口径来源（都是真实值，没有估算）:
-            //   · 总计上下行流量 = downBytes + upBytes
-            //     （xray 各入站累计字节，与"总流量吞吐统计"同源）
-            //   · 两个峰值 = payload.bwPeak，由【手机端】每 30 秒统计一次后上报
-            //     （15 分钟窗口 = history 最近 30 个采样点；当日峰值按
-            //       DAY_TZ 零点重置，与流量榜同口径）
-            //
-            // 为什么峰值不用浏览器自己算:
-            //   原来那个"近 15 分钟峰值"读的是 window._peakUpMbps，
-            //   只统计当前浏览器会话 —— 刷新页面就归零，并不是真的 15 分钟。
-            //   放手机端算，刷新/换浏览器/换台电脑看都不丢。
-            // ============================================================
+
+            function applyUsPanel(d) {
+              if (!d) d = window.__lastFullStats || null;
+              var us = (d && d.us) || (window.__lastFullStats && window.__lastFullStats.us) || null;
+              window.__lastUs = us || window.__lastUs || null;
+              var set = function (id, txt, color) {
+                var el = document.getElementById(id);
+                if (el) { el.innerText = txt; if (color) el.style.color = color; }
+              };
+              if (!us || !us.ts) {
+                set('usStatus', '未接入', '#8e8e93');
+                set('usChReality', '直连● 未接入', '#8e8e93');
+                set('usChTunnel', '隧道● 未接入', '#8e8e93');
+                set('usRateNow', '--');
+                set('usActiveUsers', '--');
+                set('usDayBytes', '--');
+                set('usCpuLoad', '--');
+                set('usMemUsage', '--');
+                set('usUptime', '--');
+                set('usTcpConn', '--');
+                set('usPeakSummary', '--');
+                return;
+              }
+              var users = us.users || {};
+              var tDown = 0, tUp = 0, dRate = 0, uRate = 0, active = 0;
+              for (var k in users) {
+                var v = users[k] || {};
+                var dr = Number(v.downRate) || 0, ur = Number(v.upRate) || 0;
+                tDown += Number(v.down) || 0;
+                tUp += Number(v.up) || 0;
+                dRate += dr; uRate += ur;
+                if (dr + ur > 1024) active++;
+              }
+              var rateUse = dRate + uRate;
+              set('usRateNow', rateUse > 0 ? formatRate(rateUse) : '0 B/s');
+              set('usActiveUsers', String(active));
+              var day = us.day || {};
+              set('usDayBytes', formatBytes(Number(day.down) || 0) + ' ↓ / ' + formatBytes(Number(day.up) || 0) + ' ↑');
+
+              var pk = us.peak || {};
+              var p15m = (Number(pk.rate15m) || 0) > 0 ? ((Number(pk.rate15m) * 8 / 1e6).toFixed(1) + 'M') : '--';
+              var pDay = (Number(pk.rateDay) || 0) > 0 ? ((Number(pk.rateDay) * 8 / 1e6).toFixed(1) + 'M') : '--';
+              var pkStr = (p15m !== '--' || pDay !== '--') ? (p15m + ' · ' + pDay) : '未测到';
+              set('usPeakSummary', pkStr);
+
+              var age = Math.max(0, Math.round((Date.now() - (Number(us.ts) || Number(us.receivedAt) || 0)) / 1000));
+              var ageTxt = age < 60 ? (age + ' 秒前') : (Math.floor(age / 60) + ' 分钟前');
+              var stTxt = age <= 40 ? '● 实时' : (age <= 100 ? '● 更新中' : ('● 离线 ' + ageTxt));
+              var stColor = age <= 40 ? '#30d158' : (age <= 100 ? '#ffd60a' : '#ff453a');
+
+              var sys = us.sys || {};
+              if (sys.f2bBanned !== undefined && Number(sys.f2bBanned) > 0) {
+                stTxt += ' · ' + sys.f2bBanned + '拦截';
+              }
+              if ((Number(us.unmapped) || 0) > 0) {
+                stTxt += ' · ' + us.unmapped + ' 人未计入';
+                if (stColor === '#30d158') stColor = '#ffd60a';
+              }
+              set('usStatus', stTxt, stColor);
+
+              var svcs = sys.services || {};
+              var xrayOk = svcs.xray !== undefined ? svcs.xray : true;
+              var cfOk = svcs.cloudflared !== undefined ? svcs.cloudflared : true;
+              set('usChReality', xrayOk ? '直连● 正常' : '直连● 异常', xrayOk ? '#30d158' : '#ff453a');
+              set('usChTunnel', cfOk ? '隧道● 正常' : '隧道● 异常', cfOk ? '#64d2ff' : '#ff453a');
+
+              if (Array.isArray(sys.load) && sys.load.length) {
+                var l1 = (sys.load[0] !== undefined) ? sys.load[0] : '--';
+                set('usCpuLoad', l1 + ' · ' + (sys.cpuCount || 1) + '核');
+              } else {
+                set('usCpuLoad', '--');
+              }
+
+              if (sys.memTotalMB) {
+                var memStr = Math.round(sys.memUsedMB) + 'M (' + Math.round(sys.memPct) + '%)';
+                set('usMemUsage', memStr);
+              } else {
+                set('usMemUsage', '--');
+              }
+
+              if (sys.uptimeS) {
+                var upD = Math.floor(sys.uptimeS / 86400);
+                var upH = Math.floor((sys.uptimeS % 86400) / 3600);
+                var upM = Math.floor((sys.uptimeS % 3600) / 60);
+                var upStr = upD > 0 ? (upD + '天 ' + upH + '小时') : (upH + '小时 ' + upM + '分');
+                set('usUptime', upStr);
+              } else {
+                set('usUptime', '--');
+              }
+
+              if (sys.tcpConn !== undefined) {
+                set('usTcpConn', String(sys.tcpConn) + ' 会话');
+              } else {
+                set('usTcpConn', '--');
+              }
+            }
+
             function applyBwPanel(d) {
-              // 不传参时用最近一次完整 stats 的缓存 —— /api/live 推的是精简快照，
-              // 里面没有 downBytes/upBytes/bwPeak，只能靠缓存补齐。
               if (!d) d = window.__lastFullStats || null;
               if (!d) return;
-              // ① 总计上下行流量
               var tbEl = document.getElementById('bwTotalBytes');
               if (tbEl) {
-                // 【2026-10-06 修复 · Bug5】精简快照可能只带了部分字段：
-                //   缺哪一项就退回最近一次完整 stats 的同名字段（仍然缺才当 0），
-                //   避免"总计流量"在推送与轮询之间来回跳成 0。
                 var _dFull = window.__lastFullStats || null;
                 var downVal = (typeof d.downBytes === 'number') ? d.downBytes
                             : (_dFull ? _dFull.downBytes : 0);
                 var upVal = (typeof d.upBytes === 'number') ? d.upBytes
                           : (_dFull ? _dFull.upBytes : 0);
+                try {
+                  var _usN = (d && d.us) || (window.__lastFullStats && window.__lastFullStats.us) || null;
+                  var _usT = (_usN && (Number(_usN.ts) || Number(_usN.receivedAt))) || 0;
+                  if (_usN && _usN.users && _usT > 0 && (Date.now() - _usT) < 120000) {
+                    var _ud = 0, _uu = 0;
+                    for (var _uk in _usN.users) {
+                      _ud += Number(_usN.users[_uk].down) || 0;
+                      _uu += Number(_usN.users[_uk].up) || 0;
+                    }
+                    downVal = (Number(downVal) || 0) + _ud;
+                    upVal = (Number(upVal) || 0) + _uu;
+                  }
+                } catch (e) {}
                 var tot = (Number(downVal) || 0) + (Number(upVal) || 0);
                 tbEl.innerText = (tot > 0) ? formatBytes(tot) : '未测到';
                 var tEl = document.getElementById('totalBytes');
@@ -4274,7 +5696,6 @@ rules:
                 if (dEl && downVal > 0) dEl.innerText = formatBytes(downVal);
                 if (uEl && upVal > 0) uEl.innerText = formatBytes(upVal);
               }
-              // ② 两个峰值（手机端统计）
               var bp = d.bwPeak || null;
               var p15 = document.getElementById('bwPeak15m');
               var pdy = document.getElementById('bwPeakDay');
@@ -4285,10 +5706,10 @@ rules:
               if (pdy) {
                 var txt = (bp && typeof bp.day === 'number')
                   ? bp.day.toFixed(2) + ' Mbps' : '未测到';
-                // 标注统计日（跨零点时能一眼看出是新的一天）
                 if (bp && bp.dayKey) txt += ' · ' + bp.dayKey.slice(5);
                 pdy.innerText = txt;
               }
+              try { applyUsPanel(d); } catch (e) {}
             }
             function formatRate(bytesPerSec) {
               if (bytesPerSec < 1024) return bytesPerSec.toFixed(0) + ' B/s';
@@ -4305,7 +5726,6 @@ rules:
               return Math.floor(diff / 86400) + '天前';
             }
 
-            // 初始化 150 Mbps 半圆仪表盘
             const gaugeCtx = document.getElementById('gaugeChart').getContext('2d');
             const gaugeChart = new Chart(gaugeCtx, {
               type: 'doughnut',
@@ -4313,8 +5733,9 @@ rules:
                 labels: ['已用带宽', '剩余量程'],
                 datasets: [{
                   data: [0, 150],
-                  backgroundColor: ['#ffffff', '#181818'],
+                  backgroundColor: ['#38bdf8', '#27272a'],
                   borderWidth: 0,
+                  borderRadius: 6,
                   circumference: 180,
                   rotation: 270
                 }]
@@ -4327,7 +5748,6 @@ rules:
               }
             });
 
-            // 初始化 5 地区节点真实物理流量分布图 (非数量，而是真实接入的流量大小)
             const regionCtx = document.getElementById('regionChart').getContext('2d');
             const regionChart = new Chart(regionCtx, {
               type: 'doughnut',
@@ -4335,24 +5755,18 @@ rules:
                 labels: ['Region-1', 'Region-3', 'Region-2', 'Region-5', 'Region-4'],
                 datasets: [{
                   data: [0, 0, 0, 0, 0],
-                  backgroundColor: ['#ffffff', '#aaaaaa', '#777777', '#444444', '#222222'],
+                  backgroundColor: ['#38bdf8', '#10b981', '#818cf8', '#a855f7', '#f59e0b'],
                   borderWidth: 0
                 }]
               },
               options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                  legend: {
-                    position: 'right',
-                    labels: { color: '#888', font: { size: 10, family: 'monospace' }, boxWidth: 10 }
-                  }
-                },
+                plugins: { legend: { display: false } },
                 cutout: '68%'
               }
             });
 
-            // 辅助生成近 30 分钟时间戳刻度 (HH:mm)
             function getMinuteLabels() {
               const labels = [];
               const now = Date.now();
@@ -4365,7 +5779,6 @@ rules:
               return labels;
             }
 
-            // 初始化近 15 分钟示波器 (30采样点全真波次)
             const liveCtx = document.getElementById('liveChart').getContext('2d');
             const liveChart = new Chart(liveCtx, {
               type: 'line',
@@ -4375,25 +5788,25 @@ rules:
                   {
                     label: '下行吞吐 (Downlink)',
                     data: [],
-                    borderColor: '#ffffff',
-                    backgroundColor: 'rgba(255,255,255,0.50)',
-                    borderWidth: 1.6,
+                    borderColor: '#38bdf8',
+                    backgroundColor: 'rgba(56, 189, 248, 0.16)',
+                    borderWidth: 1.8,
                     tension: 0.35,
                     pointRadius: 0,
                     pointHoverRadius: 4,
-                    pointBackgroundColor: '#ffffff',
+                    pointBackgroundColor: '#38bdf8',
                     fill: true
                   },
                   {
                     label: '上行吞吐 (Uplink)',
                     data: [],
-                    borderColor: '#38bdf8',
-                    backgroundColor: 'rgba(56,189,248,0.50)',
-                    borderWidth: 1.2,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.14)',
+                    borderWidth: 1.5,
                     tension: 0.35,
                     pointRadius: 0,
                     pointHoverRadius: 4,
-                    pointBackgroundColor: '#38bdf8',
+                    pointBackgroundColor: '#10b981',
                     fill: true
                   }
                 ]
@@ -4401,12 +5814,15 @@ rules:
               options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                animation: { duration: 250 },
+                animation: { duration: 260 },
                 plugins: {
                   legend: { display: false },
                   tooltip: {
                     mode: 'index',
                     intersect: false,
+                    backgroundColor: 'rgba(9, 9, 11, 0.95)',
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    borderWidth: 1,
                     callbacks: {
                       label: function(ctx) { return ctx.dataset.label + ': ' + Number(ctx.parsed.y).toFixed(2) + ' Mbps'; }
                     }
@@ -4415,102 +5831,37 @@ rules:
                 scales: {
                   x: {
                     display: true,
-                    grid: { color: '#141414' },
-                    ticks: {
-                      color: '#555',
-                      font: { size: 9, family: 'monospace' },
-                      maxTicksLimit: 10
-                    }
+                    grid: { color: 'rgba(39, 39, 42, 0.65)' },
+                    ticks: { color: '#71717a', font: { size: 9, family: 'monospace' }, maxTicksLimit: 10 }
                   },
                   y: {
-                    grid: { color: '#141414' },
-                    ticks: { color: '#555', font: { size: 9, family: 'monospace' }, callback: v => v + ' M' },
+                    grid: { color: 'rgba(39, 39, 42, 0.65)' },
+                    ticks: { color: '#71717a', font: { size: 9, family: 'monospace' }, callback: v => v + ' M' },
                     beginAtZero: true
                   }
                 }
               }
             });
 
-            // 真实用户排行榜渲染逻辑 (从始至终累计绝对流量，绝对单调不归零)
             let liveUserTraffics = {};
 
             function renderRankList() {
               const listEl = document.getElementById('rankList');
               if (!listEl) return;
               if (realUsers.length === 0) {
-                listEl.innerHTML = '<div style="padding:24px;text-align:center;color:#444;">暂无已配置用户，请在下方添加</div>';
+                listEl.innerHTML = '';
                 return;
               }
-
-              const nowSec = Math.floor(Date.now() / 1000);
               const userStats = realUsers.map(function(u) {
-                const stat = liveUserTraffics[u.token] || { total: 0, up: 0, down: 0, online: 0, rateDown: 0, rateUp: 0, lastActive: 0 };
-                return {
-                  name: u.name,
-                  token: u.token,
-                  enabled: u.enabled,
-                  total: stat.total || 0,
-                  up: stat.up || 0,
-                  down: stat.down || 0,
-                  online: relay-node.invalid || 0,
-                  rateDown: stat.rateDown || 0,
-                  rateUp: stat.rateUp || 0,
-                  lastActive: stat.lastActive || 0
-                };
+                const stat = liveUserTraffics[u.token] || { total: 0, up: 0, down: 0 };
+                return { name: u.name, total: stat.total || 0, up: stat.up || 0, down: stat.down || 0 };
               });
-
-              // 按从始至终累计总流量严格降序排列
               userStats.sort(function(a, b) { return b.total - a.total; });
-              const maxVal = userStats[0] ? userStats[0].total : 0;
-              const grandTotal = userStats.reduce(function(sum, u) { return sum + u.total; }, 0);
-
-              const medals = ['🥇', '🥈', '🥉'];
-              listEl.innerHTML = userStats.map(function(u, i) {
-                const pct = maxVal > 0 ? Math.min(100, Math.round((u.total / maxVal) * 100)) : 0;
-                const grandPct = grandTotal > 0 ? ((u.total / grandTotal) * 100).toFixed(1) : '0.0';
-                const rankBadge = i < 3 ? medals[i] : ('<span style="font-family:monospace;color:#666;font-size:10px;">#' + (i + 1) + '</span>');
-
-                let liveConnBadge = '';
-                const isOnline = (u.online || 0) > 0;
-                const liveRate = (u.rateDown || 0) + (u.rateUp || 0);
-                const activeDiff = (u.lastActive && u.lastActive > 0) ? (nowSec - u.lastActive) : 9999999;
-                if (!u.enabled) {
-                  liveConnBadge = '<span style="font-size:9px;color:#ef4444;background:#1f0505;border:1px solid #7f1d1d;padding:1px 4px;border-radius:3px;">已停用</span>';
-                } else if (isOnline && liveRate > 1024) {
-                  liveConnBadge = '<span style="font-size:9px;color:#22c55e;background:#052e16;border:1px solid #166534;padding:1px 4px;border-radius:3px;">🟢 ' + u.online + '会话 · ⚡ ' + formatRate(liveRate) + '</span>';
-                } else if (isOnline) {
-                  liveConnBadge = '<span style="font-size:9px;color:#22c55e;background:#052e16;border:1px solid #166534;padding:1px 4px;border-radius:3px;">🟢 ' + u.online + '会话</span>';
-                } else if (activeDiff < 300) {
-                  liveConnBadge = '<span style="font-size:9px;color:#eab308;background:#2e1f05;border:1px solid #854d0e;padding:1px 4px;border-radius:3px;">🟡 待机(' + formatTimeAgo(u.lastActive) + ')</span>';
-                } else if (u.total > 0) {
-                  liveConnBadge = '<span style="font-size:9px;color:#94a3b8;background:#141414;border:1px solid #262626;padding:1px 4px;border-radius:3px;">⚪ 离线</span>';
-                } else {
-                  liveConnBadge = '<span style="font-size:9px;color:#ef4444;background:#1f0505;border:1px solid #7f1d1d;padding:1px 4px;border-radius:3px;">🔴 未连接</span>';
-                }
-                
-                return '<div class="rank-item" style="padding:8px 10px;border-bottom:1px solid #141414;display:flex;flex-direction:column;gap:4px;">' +
-                  '<div style="display:flex;justify-content:space-between;align-items:center;">' +
-                    '<div style="display:flex;align-items:center;gap:6px;">' +
-                      '<span style="font-size:12px;width:18px;text-align:center;">' + rankBadge + '</span>' +
-                      '<b style="color:#fff;font-size:12px;">' + escPage(u.name) + '</b>' +
-                      liveConnBadge +
-                    '</div>' +
-                    '<div style="text-align:right;">' +
-                      '<span style="font-family:monospace;color:#fff;font-weight:700;font-size:12px;">' + formatBytes(u.total) + '</span>' +
-                      '<span style="font-size:9px;color:#888;font-family:monospace;margin-left:4px;">(' + grandPct + '%)</span>' +
-                    '</div>' +
-                  '</div>' +
-                  '<div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;color:#666;font-family:monospace;">' +
-                    '<span>下行: <b style="color:#bbb;">' + formatBytes(u.down) + '</b> · 上行: <b style="color:#bbb;">' + formatBytes(u.up) + '</b></span>' +
-                    '<div style="width:100px;background:#1a1a1a;height:4px;border-radius:2px;overflow:hidden;margin-left:8px;">' +
-                      '<div style="width:' + pct + '%;background:#3b82f6;height:100%;border-radius:2px;"></div>' +
-                    '</div>' +
-                  '</div>' +
-                '</div>';
+              listEl.innerHTML = userStats.map(function(u) {
+                return '<div class="rank-item">' + escPage(u.name) + ' ' + formatBytes(u.total) + '</div>';
               }).join('');
             }
 
-            // 域名/网站访问统计渲染逻辑
             let liveUserDomains = {};
 
             function populateDomainUserSelect() {
@@ -4546,30 +5897,25 @@ rules:
               }).sort(function(a, b) { return b.count - a.count; });
 
               if (domainList.length === 0) {
-                el.innerHTML = '<div style="padding:16px;color:#555;font-size:11px;">暂无该用户的访问域名记录</div>';
+                el.innerHTML = '<div style="padding:10px;color:#a1a1aa;font-size:12px;">暂无该用户的访问域名记录</div>';
                 return;
               }
 
               const maxCount = domainList[0].count;
               el.innerHTML = domainList.slice(0, 12).map(function(item, idx) {
                 const pct = maxCount > 0 ? Math.min(100, Math.round((item.count / maxCount) * 100)) : 0;
-                return '<div style="background:#0a0a0a;border:1px solid #1a1a1a;border-radius:4px;padding:6px 10px;display:flex;flex-direction:column;justify-content:center;">' +
-                  '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">' +
-                    '<span style="font-family:monospace;color:#fff;font-weight:600;font-size:11px;">' + (idx + 1) + '. ' + escPage(item.domain) + '</span>' +
-                    '<span style="font-family:monospace;color:#22c55e;font-size:11px;font-weight:700;">' + item.count + ' 次</span>' +
+                return '<div class="tg-domain-cell">' +
+                  '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:6px;">' +
+                    '<span style="font-family:var(--tg-font-mono);color:#fafafa;font-weight:600;font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (idx + 1) + '. ' + escPage(item.domain) + '</span>' +
+                    '<span style="font-family:var(--tg-font-mono);color:#10b981;font-size:11px;font-weight:600;flex-shrink:0;">' + item.count + ' 次</span>' +
                   '</div>' +
-                  '<div style="width:100%;height:4px;background:#181818;border-radius:2px;overflow:hidden;">' +
-                    '<div style="height:100%;background:#fff;width:' + pct + '%;"></div>' +
+                  '<div style="width:100%;height:4px;background:#27272a;border-radius:999px;overflow:hidden;">' +
+                    '<div style="height:100%;background:#fafafa;border-radius:999px;width:' + pct + '%;transition:width 0.45s cubic-bezier(0.22,1,0.36,1);"></div>' +
                   '</div>' +
                 '</div>';
               }).join('');
             }
-            // ==========================================================
-            // 【2026-10-04 修复】新用户"从未连接"的根因: userTraffics 是 12 小时重载荷,
-            //   新接入的用户不在里面 -> 前端误显示"🔴 从未连接 (0 B)"。
-            //   现在每次收到数据时从 xray 原始计数(stat)提取 per-user 字节,
-            //   与上一轮对比: 字节在增长 = 真的在线, 不依赖重载荷。
-            // ==========================================================
+
             function updateStatUserBytes(list) {
               if (!Array.isArray(list)) return;
               var bytes = {};
@@ -4582,153 +5928,147 @@ rules:
               window.__statUserAt = Date.now();
             }
 
-            // 动态用户表格实时渲染函数 (A3 实时推送无感同步 · B1 待绑定高亮)
-        
-    // ================================================================
-    // 【2026-10-04 新增】用户连接状态板块
-    //   数据源：后端 payload.users[].connState / connAt / connFromXray
-    //   口径纪律：connAt=0 且累计流量=0 才显示"从未连接"；
-    //             没拿到名单时不猜，明确显示"名单未更新"。
-    // ================================================================
-    var _CONN_META = {
-      online: { icon: '\u25cf', label: '\u5728\u7ebf',        color: '#22c55e' },
-      recent: { icon: '\u25cb', label: '\u521a\u65ad\u5f00',  color: '#eab308' },
-      idle:   { icon: '\u25d0', label: '\u8fd1\u671f\u6d3b\u8dc3', color: '#8b94a7' },
-      long:   { icon: '\u2715', label: '\u957f\u671f\u79bb\u7ebf', color: '#ef4444' },
-      never:  { icon: '\u2014', label: '\u4ece\u672a\u8fde\u63a5', color: '#4b5563' }
-    };
+            var _CONN_META = {
+              online: { icon: '\u25cf', label: '\u5728\u7ebf',        color: '#30d158' },
+              recent: { icon: '\u25cb', label: '\u521a\u65ad\u5f00',  color: '#ffd60a' },
+              idle:   { icon: '\u25d0', label: '\u8fd1\u671f\u6d3b\u8dc3', color: '#8e8e93' },
+              long:   { icon: '\u2715', label: '\u957f\u671f\u79bb\u7ebf', color: '#ff453a' },
+              never:  { icon: '\u2014', label: '\u4ece\u672a\u8fde\u63a5', color: '#636366' }
+            };
 
-    function _fmtAgo(sec) {
-      if (!sec || sec <= 0) return '';
-      var d = Math.floor(Date.now() / 1000) - sec;
-      if (d < 0) d = 0;
-      if (d < 60) return d + ' \u79d2\u524d';
-      var m = Math.floor(d / 60);
-      if (m < 60) return m + ' \u5206\u949f\u524d';
-      var h = Math.floor(m / 60);
-      if (h < 24) return h + ' \u5c0f\u65f6\u524d';
-      return Math.floor(h / 24) + ' \u5929\u524d';
-    }
+            function _fmtAgo(sec) {
+              if (!sec || sec <= 0) return '';
+              var d = Math.floor(Date.now() / 1000) - sec;
+              if (d < 0) d = 0;
+              if (d < 60) return d + ' \u79d2\u524d';
+              var m = Math.floor(d / 60);
+              if (m < 60) return m + ' \u5206\u949f\u524d';
+              var h = Math.floor(m / 60);
+              if (h < 24) return h + ' \u5c0f\u65f6\u524d';
+              return Math.floor(h / 24) + ' \u5929\u524d';
+            }
 
-    function _fmtClock(sec) {
-      if (!sec || sec <= 0) return '';
-      var d = new Date(sec * 1000);
-      var p = function (n) { return (n < 10 ? '0' : '') + n; };
-      return p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
-    }
+            function _fmtClock(sec) {
+              if (!sec || sec <= 0) return '';
+              var d = new Date(sec * 1000);
+              var p = function (n) { return (n < 10 ? '0' : '') + n; };
+              return p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+            }
 
-    function _fmtBytes(b) {
-      b = Number(b) || 0;
-      if (b < 1024) return b + ' B';
-      if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
-      if (b < 1073741824) return (b / 1048576).toFixed(1) + ' MB';
-      return (b / 1073741824).toFixed(2) + ' GB';
-    }
+            function _fmtBytes(b) {
+              b = Number(b) || 0;
+              if (b < 1024) return b + ' B';
+              if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+              if (b < 1073741824) return (b / 1048576).toFixed(1) + ' MB';
+              return (b / 1073741824).toFixed(2) + ' GB';
+            }
 
-    var _lastConnUsers = null;
+            var _lastConnUsers = null;
 
-    function renderUserConn(users) {
-      var list = document.getElementById('userConnList');
-      var sumEl = document.getElementById('userConnSummary');
-      var srcEl = document.getElementById('userConnSrc');
-      if (!list) return;
-      if (!Array.isArray(users)) return;
-      _lastConnUsers = users;
+            function renderUserConn(users) {
+              var list = document.getElementById('userConnList');
+              var sumEl = document.getElementById('userConnSummary');
+              var srcEl = document.getElementById('userConnSrc');
+              if (!list) return;
+              if (!Array.isArray(users)) return;
+              _lastConnUsers = users;
 
-      var counts = { online: 0, recent: 0, idle: 0, long: 0, never: 0 };
-      var freshCnt = 0;
+              var counts = { online: 0, recent: 0, idle: 0, long: 0, never: 0 };
+              var freshCnt = 0;
 
-      var cards = users.map(function (u) {
-        var st = u.connState || 'never';
-        if (!_CONN_META[st]) st = 'never';
-        counts[st]++;
-        if (u.onlineListFresh) freshCnt++;
+              var cards = users.map(function (u) {
+                var st = u.connState || 'never';
+                if (!_CONN_META[st]) st = 'never';
+                counts[st]++;
+                if (u.onlineListFresh) freshCnt++;
 
-        var meta = _CONN_META[st];
-        var ago = (st === 'online') ? '\u6b64\u523b' : _fmtAgo(u.connAt);
-        var dim = (u.enabled === false);
-        var name = String(u.name || u.token).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                var meta = _CONN_META[st];
+                var ago = (st === 'online') ? '\u6b64\u523b' : _fmtAgo(u.connAt);
+                var dim = (u.enabled === false);
+                var name = String(u.name || u.token).replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-        var sub;
-        if (st === 'online') {
-          // 【2026-10-05】区分两种"在线": 名单新鲜 = 此刻确实连着;
-          //   名单不新鲜(跨机房同步延迟) = 手机端最后一次确认在线。
-          //   不把后者说成"此刻" —— 那是在替数据打包票。
-          var _onTxt = u.connFromXray ? '\u6b64\u523b\u6709\u8fde\u63a5' : '\u624b\u673a\u7aef\u786e\u8ba4\u5728\u7ebf';
-          sub = _onTxt + ((u.rateDown > 0) ? ' \u00b7 \u2193' + _fmtBytes(u.rateDown) + '/s' : ' \u00b7 \u65e0\u6d41\u91cf');
-        } else if (st === 'never') {
-          sub = '\u4ece\u672a\u89c2\u6d4b\u5230\u8fde\u63a5';
-        } else {
-          sub = ago ? (ago + '\u5728\u7ebf') : '\u2014';
-        }
+                var sub;
+                if (st === 'online') {
+                  var _onTxt = u.connFromXray ? '\u6b64\u523b\u6709\u8fde\u63a5' : '\u624b\u673a\u7aef\u786e\u8ba4\u5728\u7ebf';
+                  sub = _onTxt + ((u.rateDown > 0) ? ' \u00b7 \u2193' + _fmtBytes(u.rateDown) + '/s' : ' \u00b7 \u65e0\u6d41\u91cf');
+                } else if (st === 'never') {
+                  sub = '\u4ece\u672a\u89c2\u6d4b\u5230\u8fde\u63a5';
+                } else {
+                  sub = ago ? (ago + '\u5728\u7ebf') : '\u2014';
+                }
 
-        return '<div style="background:#0a0a0a;border:1px solid ' + (st === 'online' ? '#1d3a24' : '#171717')
-          + ';border-radius:6px;padding:9px 11px;' + (dim ? 'opacity:.5;' : '') + '">'
-          + '<div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:5px;">'
-          + '<span style="font-weight:600;font-size:13px;color:#ddd;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'
-          + name + (dim ? ' <span style="font-size:10px;color:#666;">(\u5df2\u505c\u7528)</span>' : '') + '</span>'
-          + '<span style="font-size:12px;font-weight:600;color:' + meta.color + ';white-space:nowrap;">'
-          + meta.icon + ' ' + meta.label + '</span>'
-          + '</div>'
-          + '<div style="font-size:11px;color:#777;margin-bottom:4px;">' + sub + '</div>'
-          + '<div style="display:flex;justify-content:space-between;font-size:10px;color:#555;">'
-          + '<span>\u7d2f\u8ba1 ' + _fmtBytes(u.totalTraffic) + '</span>'
-          // 【2026-10-04 修正】这里原来显示"名单无此人 / 名单未更新 / xray权威"——
-          //   那是给开发看的技术依据, 对使用者是纯粹的噪音(每个人不在线时都挂着
-          //   一句"名单无此人", 看起来像报错)。改为显示最后一次在线的具体时刻,
-          //   与中间那行的"多久之前"互为补充; 查不到就留空, 不编造。
-          + '<span>' + (_fmtClock(u.lastActive) || '\u2014') + '</span>'
-          + '</div></div>';
-      });
+                return '<div class="tg-peer-cell' + (st === 'online' ? ' online' : '') + '" style="' + (dim ? 'opacity:.5;' : '') + '">'
+                  + '<div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:4px;">'
+                  + '<span style="font-weight:600;font-size:13px;color:#ffffff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'
+                  + name + (dim ? ' <span style="font-size:10px;color:#8e8e93;">(\u5df2\u505c\u7528)</span>' : '') + '</span>'
+                  + '<span style="font-size:11px;font-weight:600;color:' + meta.color + ';white-space:nowrap;">'
+                  + meta.icon + ' ' + meta.label + '</span>'
+                  + '</div>'
+                  + '<div style="font-size:11px;color:#8e8e93;margin-bottom:4px;">' + sub + '</div>'
+                  + '<div style="display:flex;justify-content:space-between;font-size:10px;color:#636366;font-family:var(--tg-font-mono);">'
+                  + '<span>\u7d2f\u8ba1 ' + _fmtBytes(u.totalTraffic) + '</span>'
+                  + '<span>' + (_fmtClock(u.lastActive) || '\u2014') + '</span>'
+                  + '</div></div>';
+              });
 
-      list.innerHTML = cards.length ? cards.join('') :
-        '<div style="color:#444;font-size:12px;padding:6px;">\u5c1a\u672a\u6dfb\u52a0\u7528\u6237</div>';
+              list.innerHTML = cards.length ? cards.join('') :
+                '<div style="color:#8e8e93;font-size:12px;padding:6px;">\u5c1a\u672a\u6dfb\u52a0\u7528\u6237</div>';
 
-      if (sumEl) {
-        var order = ['online', 'recent', 'idle', 'long', 'never'];
-        sumEl.innerHTML = order.map(function (k) {
-          var m = _CONN_META[k];
-          return '<span style="font-size:12px;color:' + m.color + ';font-weight:600;">'
-            + m.icon + ' ' + m.label + ' <b style="font-size:15px;">' + counts[k] + '</b></span>';
-        }).join('') + '<span style="font-size:12px;color:#555;">\u5171 ' + users.length + ' \u4eba</span>';
-      }
+              if (sumEl) {
+                var order = ['online', 'recent', 'idle', 'long', 'never'];
+                sumEl.innerHTML = order.map(function (k) {
+                  var m = _CONN_META[k];
+                  return '<span class="tg-capsule" style="color:' + m.color + ';font-weight:600;">'
+                    + m.icon + ' ' + m.label + ' <b style="font-size:12.5px;">' + counts[k] + '</b></span>';
+                }).join('') + '<span class="tg-capsule" style="color:#8e8e93;">\u5171 ' + users.length + ' \u4eba</span>';
+              }
 
-      if (srcEl) {
-        var total = users.length;
-        if (!total) {
-          srcEl.innerText = '';
-        } else if (freshCnt === 0) {
-          // 名单没在更新 -> 必须说出来, 否则用户会把"全部离线"当成真的
-          srcEl.innerText = '\u26a0 \u8fde\u63a5\u6570\u636e\u672a\u66f4\u65b0\uff0c\u72b6\u6001\u53ef\u80fd\u4e0d\u51c6';
-          srcEl.style.color = '#eab308';
-        } else {
-          srcEl.innerText = '\u5b9e\u65f6\u5224\u5b9a \u00b7 ' + freshCnt + '/' + total + ' \u4eba\u6570\u636e\u65b0\u9c9c';
-          srcEl.style.color = '#666';
-        }
-      }
-    }
+              if (srcEl) {
+                var total = users.length;
+                if (!total) {
+                  srcEl.innerText = '';
+                } else if (freshCnt === 0) {
+                  srcEl.innerText = '\u26a0 \u8fde\u63a5\u6570\u636e\u672a\u66f4\u65b0\uff0c\u72b6\u6001\u53ef\u80fd\u4e0d\u51c6';
+                  srcEl.style.color = '#ffd60a';
+                } else {
+                  srcEl.innerText = '\u5b9e\u65f6\u5224\u5b9a \u00b7 ' + freshCnt + '/' + total + ' \u4eba\u6570\u636e\u65b0\u9c9c';
+                  srcEl.style.color = '#8e8e93';
+                }
+              }
+            }
 
-    function renderUserTable(users) {
+            function _usLineForUser(tok) {
+              try {
+                var us = window.__lastUs;
+                var v = (us && us.users) ? us.users[tok] : null;
+                if (!v) return '';
+                var rate = (Number(v.downRate) || 0) + (Number(v.upRate) || 0);
+                return '<div style="font-size:10.5px;color:#64d2ff;font-family:var(--tg-font-mono);" title="美国节点 累计/实时"> VPS ↓'
+                  + formatBytes(Number(v.down) || 0) + ' ↑' + formatBytes(Number(v.up) || 0)
+                  + (rate > 1024 ? ' · ⚡' + formatRate(rate) : '')
+                  + '</div>';
+              } catch (e) { return ''; }
+            }
+
+            function renderUserTable(users) {
               const tbody = document.getElementById('userTableBody');
               if (!tbody || !Array.isArray(users)) return;
               if (users.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="padding:16px;text-align:center;color:#444;">暂无已配置用户</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="padding:18px;text-align:center;color:#8e8e93;">暂无已配置用户</td></tr>';
                 return;
               }
               const nowSec = Math.floor(Date.now() / 1000);
-              tbody.innerHTML = users.map(u => {
+              tbody.innerHTML = users.map((u, idx) => {
                 const isRecovered = Boolean(u.isAutoRecovered || (u.name && u.name.indexOf('恢复用户_') !== -1));
-                const nameDisplay = isRecovered
-                  ? '<span style="color:#eab308;font-weight:700;">⚠ ' + escPage(u.name) + '</span>'
-                  : escPage(u.name);
+                const initial = escPage(String(u.name || u.token || '?').trim().charAt(0).toUpperCase());
+                const grad = AVATAR_GRADS[idx % AVATAR_GRADS.length];
+                const nameDisplay = '<div class="tg-peer-head"><span class="tg-peer-avatar" style="background:' + grad + ';">' + initial + '</span><div class="tg-peer-meta"><span class="tg-peer-title">' + (isRecovered ? '<span style="color:#ffd60a;">⚠ ' + escPage(u.name) + '</span>' : escPage(u.name)) + '</span><span class="tg-peer-token">ID: ' + escPage(u.token) + '</span></div></div>';
                 const statusDisplay = isRecovered
-                  ? '<span style="color:#eab308;font-size:11px;font-weight:600;">⚠ 待绑定UUID</span>'
+                  ? '<span class="tg-status-pill warn">⚠ 待绑定UUID</span>'
                   : (u.enabled
-                      ? '<span style="color:#22c55e;font-size:12px;font-weight:600;">● 运行中</span>'
-                      : '<span style="color:#ef4444;font-size:12px;font-weight:600;">● 已停用</span>');
+                      ? '<span class="tg-status-pill ok">● 运行中</span>'
+                      : '<span class="tg-status-pill bad">● 已停用</span>');
 
-                // 【2026-10-04 兜底】优先用 userTraffics(重载荷), 缺失时看 stat 实时字节:
-                //   最近 2 分钟内字节有增长 => 判定在线; 字节 > 0 => 判定"曾连接"。
                 const _sb = window.__statUserBytes || {};
                 const _sp = window.__statUserPrev || {};
                 const _sa = window.__statUserAt || 0;
@@ -4736,14 +6076,6 @@ rules:
                 const _statPrev = _sp[u.token] || 0;
                 const _statGrowing = (_sa > 0 && (Date.now() - _sa) < 120000 && _statBytes > _statPrev);
                 const _statHas = _statBytes > 0;
-                // 【2026-10-05 修复 · 表格与"用户连接状态"口径统一】
-                //   旧实现只看 (u.online 或 字节增长)。但大屏每次轮询可能落到不同
-                //   机房, 而"字节是否增长"是【各机房自己算】的 —— 同一用户在不同
-                //   机房的两个数值只要有 1 字节差异就触发"正在增长" => 离线用户也
-                //   被判成"🟢 在线待命"。实测: 用户C/测试/用户F/9 明明长期离线
-                //   (旁边"用户连接状态"板块就写着长期离线), 表格里却全绿, 自相矛盾。
-                //   现在优先用服务端下发的权威状态 u.connState(与那个板块同源),
-                //   只有 connState 缺失时(旧载荷)才退回原来的启发式判断。
                 const _st = u.connState || '';
                 const isOnline = _st ? (_st === 'online')
                                      : ((u.online || 0) > 0 || _statGrowing);
@@ -4754,130 +6086,119 @@ rules:
 
                 let connBadge = '';
                 if (isOnline && rate > 1024) {
-                  // 【2026-10-04】不再写"会话数"(服务端给的是严格在线判定 0/1, 写"N会话"是编造);
-                  //   速率只给合计, 不做上/下行拆分。
-                  connBadge = '<div style="display:flex;flex-direction:column;gap:2px;">' +
-                    '<span style="color:#22c55e;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:4px;">' +
-                      '🟢 在线传输中' +
-                    '</span>' +
-                    '<span style="font-size:10px;color:#38bdf8;font-family:monospace;">⚡ ' + formatRate(rate) + '</span>' +
+                  connBadge = '<div class="tg-conn-inline">' +
+                    '<span class="tg-status-pill ok">🟢 在线传输中</span>' +
+                    '<span class="tg-conn-rate">⚡ ' + formatRate(rate) + '</span>' +
                   '</div>';
                 } else if (isOnline) {
-                  connBadge = '<div style="display:flex;flex-direction:column;gap:2px;">' +
-                    '<span style="color:#22c55e;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:4px;">' +
-                      '🟢 在线待命' +
-                    '</span>' +
-                    '<span style="font-size:10px;color:#666;font-family:monospace;">⚡ 0 B/s 心跳保持</span>' +
+                  connBadge = '<div class="tg-conn-inline">' +
+                    '<span class="tg-status-pill ok">🟢 在线待命</span>' +
+                    '<span class="tg-conn-idle">⚡ 0 B/s 心跳保持</span>' +
                   '</div>';
                 } else if (_st === 'recent' || (!_st && activeDiff < 300)) {
-                  connBadge = '<span style="color:#eab308;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:4px;">' +
-                    '🟡 待机挂起 (' + formatTimeAgo(lastActive) + '活跃)' +
-                  '</span>';
+                  connBadge = '<span class="tg-status-pill warn">🟡 待机挂起 (' + formatTimeAgo(lastActive) + '活跃)</span>';
                 } else if (_st === 'never' || (!_st && !hasTraffic)) {
-                  connBadge = '<span style="color:#ef4444;font-size:11px;display:inline-flex;align-items:center;gap:4px;">' +
-                    '🔴 从未连接 (0 B)' +
-                  '</span>';
+                  connBadge = '<span class="tg-status-pill bad">🔴 从未连接 (0 B)</span>';
                 } else if (hasTraffic || lastActive > 0) {
-                  connBadge = '<span style="color:#94a3b8;font-size:11px;display:inline-flex;align-items:center;gap:4px;">' +
-                    '⚪ 离线断开 (' + (lastActive > 0 ? formatTimeAgo(lastActive) : '曾使用') + ')' +
-                  '</span>';
+                  connBadge = '<span class="tg-status-pill na">⚪ 离线断开 (' + (lastActive > 0 ? formatTimeAgo(lastActive) : '曾使用') + ')</span>';
                 } else {
-                  connBadge = '<span style="color:#ef4444;font-size:11px;display:inline-flex;align-items:center;gap:4px;">' +
-                    '🔴 从未连接 (0 B)' +
-                  '</span>';
+                  connBadge = '<span class="tg-status-pill bad">🔴 从未连接 (0 B)</span>';
                 }
 
                 const clashUrl = window.location.origin + '/sub?token=' + u.token + '&type=clash';
                 const v2rayUrl = window.location.origin + '/sub?token=' + u.token + '&type=v2ray';
 
-                return '<tr style="border-bottom:1px solid #141414;">' +
-                  '<td style="padding:10px 12px;font-weight:600;">' + nameDisplay + '</td>' +
-                  '<td style="padding:10px 12px;">' +
-                    '<div style="display:flex;gap:6px;align-items:center;margin-bottom:4px;">' +
-                      '<span style="font-size:10px;color:#777;width:35px;">Clash</span>' +
-                      '<input value="' + escPage(clashUrl) + '" readonly style="width:230px;padding:3px 6px;font-size:11px;background:#050505;color:#ddd;border:1px solid #222;border-radius:3px;" onclick="this.select()">' +
+                return '<tr class="tg-table-row">' +
+                  '<td class="td-user" data-label="用户">' + nameDisplay + '</td>' +
+                  '<td class="td-subs" data-label="订阅地址">' +
+                    '<div class="tg-sub-row">' +
+                      '<span class="tg-sub-tag">Clash</span>' +
+                      '<input class="tg-sub-input" value="' + escPage(clashUrl) + '" readonly onclick="copySubInput(this, &quot;Clash&quot;)">' +
+                      '<button type="button" class="tg-copy-btn" onclick="copySubBtn(this, &quot;' + escPage(clashUrl) + '&quot;, &quot;Clash&quot;)">复制</button>' +
                     '</div>' +
-                    '<div style="display:flex;gap:6px;align-items:center;">' +
-                      '<span style="font-size:10px;color:#777;width:35px;">V2Ray</span>' +
-                      '<input value="' + escPage(v2rayUrl) + '" readonly style="width:230px;padding:3px 6px;font-size:11px;background:#050505;color:#ddd;border:1px solid #222;border-radius:3px;" onclick="this.select()">' +
+                    '<div class="tg-sub-row">' +
+                      '<span class="tg-sub-tag v2">V2Ray</span>' +
+                      '<input class="tg-sub-input" value="' + escPage(v2rayUrl) + '" readonly onclick="copySubInput(this, &quot;V2Ray&quot;)">' +
+                      '<button type="button" class="tg-copy-btn" onclick="copySubBtn(this, &quot;' + escPage(v2rayUrl) + '&quot;, &quot;V2Ray&quot;)">复制</button>' +
                     '</div>' +
                   '</td>' +
-                  '<td style="padding:10px 12px;">' + statusDisplay + '</td>' +
-                  '<td style="padding:10px 12px;">' + connBadge + '</td>' +
-                  '<td style="padding:10px 12px;color:#888;font-size:12px;">' + escPage(u.pullCount || 0) + '</td>' +
-                  // 【2026-10-04 T1.5(B)】种子里的假"刚刚"不显示, 无真实记录时显示 --
-                  // 【2026-10-04】与连接状态同源: 真实活跃时刻(不再用"最后拉订阅时间")
-                  '<td style="padding:10px 12px;font-size:11px;color:#777;">' +
-                    (lastActive > 0 ? formatTimeAgo(lastActive) : '--') + '</td>' +
-                  '<td style="padding:10px 12px;font-size:11px;color:#777;">' + ((u.lastIp && u.lastIp !== '-') ? escPage(u.lastIp) : '--') + '</td>' +
-                  '<td style="padding:10px 12px;">' +
-                    '<form method="POST" style="display:inline;">' +
-                      '<input type="hidden" name="token" value="' + escPage(u.token) + '">' +
-                      '<input type="hidden" name="action" value="toggle">' +
-                      '<button style="padding:4px 8px;background:#141414;color:#ccc;border:1px solid #282828;border-radius:3px;cursor:pointer;font-size:11px;">' + (u.enabled ? '停用' : '启用') + '</button>' +
-                    '</form>' +
-                    '<form method="POST" style="display:inline;margin-left:4px;" onsubmit="return confirm(&quot;确定要删除 ' + safeName(u.name || u.token) + ' 吗？删除后其订阅立即失效。&quot;);">' +
-                      '<input type="hidden" name="token" value="' + escPage(u.token) + '">' +
-                      '<input type="hidden" name="action" value="delete">' +
-                      '<button style="padding:4px 8px;background:#ef4444;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:11px;">删除</button>' +
-                    '</form>' +
+                  '<td class="td-status" data-label="服务状态">' + statusDisplay + '</td>' +
+                  '<td class="td-conn" data-label="实时连接">' + connBadge + _usLineForUser(u.token) + '</td>' +
+                  '<td class="td-pulls" data-label="拉取次数">' + escPage(u.pullCount || 0) + '</td>' +
+                  '<td class="td-active" data-label="最后活跃">' + (lastActive > 0 ? formatTimeAgo(lastActive) : '--') + '</td>' +
+                  '<td class="td-ip" data-label="出口 IP">' + ((u.lastIp && u.lastIp !== '-') ? escPage(u.lastIp) : '--') + '</td>' +
+                  '<td class="td-actions" data-label="管理">' +
+                    '<div class="tg-card-actions">' +
+                      '<form method="POST" style="margin:0;flex:1;display:flex;">' +
+                        '<input type="hidden" name="token" value="' + escPage(u.token) + '">' +
+                        '<input type="hidden" name="action" value="toggle">' +
+                        '<button type="submit" class="tg-btn-cell">' + (u.enabled ? '⏸ 停用账号' : '▶ 启用账号') + '</button>' +
+                      '</form>' +
+                      '<form method="POST" style="margin:0;flex:1;display:flex;" onsubmit="return confirm(&quot;确定要删除 ' + safeName(u.name || u.token) + ' 吗？删除后其订阅立即失效。&quot;);">' +
+                        '<input type="hidden" name="token" value="' + escPage(u.token) + '">' +
+                        '<input type="hidden" name="action" value="delete">' +
+                        '<button type="submit" class="tg-btn-cell destructive">🗑 删除账号</button>' +
+                      '</form>' +
+                    '</div>' +
                   '</td>' +
                 '</tr>';
               }).join('');
             }
 
-            // 5 秒级实时轮询核心循环 (D3 优化 · 节约移动端资源与配额)
             let lastDown = 0, lastUp = 0, lastTs = 0;
 
-            // ==========================================================
-            // 手机主库同步（手动刷新）
-            //   点击 -> POST /api/phone_sync 下发指令（全项目唯一按点击写 KV 的地方）
-            //   -> 手机约 6 秒内重新拉取并回报确认 -> 这里每 2 秒轮询直到确认
-            // ==========================================================
             let phoneSyncTimer = null;
             let phoneSyncRequestId = null;
             let phoneSyncDeadline = 0;
-            let phoneSyncIgnored = null;   // 已被手机取走、正在处理中的指令
+            let phoneSyncIgnored = null;
 
             function renderPhoneBadge(master, pending) {
               const el = document.getElementById('phoneSyncBadge');
+              const btn = document.getElementById('btnPhoneSync');
+              const ico = document.getElementById('phoneSyncIcon');
+              const txt = document.getElementById('phoneSyncText');
               if (!el) return;
               const now = Date.now();
               if (pending && pending.id) {
                 const secs = Math.max(0, Math.round((now - pending.at) / 1000));
-                el.style.color = '#eab308';
-                el.innerText = '手机主库：已下发指令 · 等待手机取走（' + secs + ' 秒前）…';
+                el.style.color = '#ffd60a';
+                el.innerText = '手机主库：等待手机取走（' + secs + 's）…';
+                if (btn) btn.classList.add('busy');
+                if (ico) ico.innerHTML = '<span class="tg-spin">🔄</span>';
+                if (txt) txt.innerText = '等待 ' + secs + 's';
                 return;
               }
               if (phoneSyncRequestId) {
-                const secs = Math.round((now - phoneSyncDeadline + 30000) / 1000);
-                el.style.color = '#eab308';
-                el.innerText = '手机主库：正在重新拉取并确认…（' + secs + ' 秒）';
+                const secs = Math.max(0, Math.round((now - phoneSyncDeadline + 30000) / 1000));
+                el.style.color = '#ffd60a';
+                el.innerText = '手机主库：正在拉取确认（' + secs + 's）';
+                if (btn) btn.classList.add('busy');
+                if (ico) ico.innerHTML = '<span class="tg-spin">🔄</span>';
+                if (txt) txt.innerText = '确认 ' + secs + 's';
                 return;
               }
+              if (btn) btn.classList.remove('busy');
+              if (ico) ico.innerText = '🔄';
+              if (txt) txt.innerText = '主库同步';
               if (!master || !master.version) {
-                el.style.color = '#666';
-                el.innerText = '手机主库：等待手机上报…';
+                el.style.color = '#8e8e93';
+                el.innerText = '手机主库：等待上报…';
                 return;
               }
-              // 【2026-10-03 修复】原来这里用 master.reportedAt 算时间, 而 reportedAt 是
-              // 手机每 6 秒一次的【遥测上报】时刻 => 必然显示"刚刚", 让人误以为
-              // 用户库也是秒级同步的。现在改为显示用户库版本【真正变化】的时刻。
               const chgAt = master.storeChangedAt || 0;
               const chgAgo = chgAt ? Math.round((now - chgAt) / 1000) : null;
               let chgTxt;
-              if (chgAgo === null) chgTxt = '本次部署后无变更';
+              if (chgAgo === null) chgTxt = '无变更';
               else if (chgAgo < 60) chgTxt = '刚刚';
-              else if (chgAgo < 3600) chgTxt = Math.round(chgAgo / 60) + ' 分钟前';
-              else if (chgAgo < 86400) chgTxt = (chgAgo / 3600).toFixed(1) + ' 小时前';
-              else chgTxt = Math.round(chgAgo / 86400) + ' 天前';
+              else if (chgAgo < 3600) chgTxt = Math.round(chgAgo / 60) + 'm前';
+              else if (chgAgo < 86400) chgTxt = (chgAgo / 3600).toFixed(1) + 'h前';
+              else chgTxt = Math.round(chgAgo / 86400) + 'd前';
               if (master.inSync === false) {
-                el.style.color = '#eab308';
-                el.innerText = '手机主库：待同步 · 用户库最后变更 ' + chgTxt;
+                el.style.color = '#ffd60a';
+                el.innerText = '手机主库：待同步 · 变更 ' + chgTxt;
               } else {
-                el.style.color = '#22c55e';
-                const ackTxt = master.ackedAt ? (' · ⟳确认于 ' + new Date(master.ackedAt).toLocaleTimeString('zh-CN')) : '';
-                el.innerText = '手机主库：已同步 ✓ ' + master.version + ' · 用户库最后变更 ' + chgTxt + ackTxt;
+                el.style.color = '#30d158';
+                el.innerText = '手机主库：已同步 ✓ ' + master.version + ' (' + chgTxt + ')';
               }
             }
 
@@ -4887,68 +6208,78 @@ rules:
               if (!f) return;
               const show = (f.style.display === 'none' || !f.style.display);
               f.style.display = show ? 'flex' : 'none';
-              if (b) b.innerText = show ? '✕ 收起' : '＋ 添加成员';
+              if (b) b.innerText = show ? '✕ 收起表单' : '＋ 添加成员';
+              if (show) {
+                if (window.Motion && Motion.animate) {
+                  try {
+                    Motion.animate(f, { opacity: [0, 1], y: [-6, 0] }, { duration: 0.22, easing: [0.22, 1, 0.36, 1] });
+                  } catch (e) {}
+                }
+                var inp = document.getElementById('newUserNameInput');
+                if (inp) setTimeout(function () { inp.focus(); }, 60);
+                showTgToast('👤', '已展开新增成员表单，填写姓名即可生成订阅卡片');
+              }
             }
 
             async function requestPhoneSync() {
               const btn = document.getElementById('btnPhoneSync');
+              const ico = document.getElementById('phoneSyncIcon');
+              const txt = document.getElementById('phoneSyncText');
               const badge = document.getElementById('phoneSyncBadge');
-              if (btn) { btn.disabled = true; btn.innerText = '⟳ 下发中…'; }
+              if (btn) btn.classList.add('busy');
+              if (ico) ico.innerHTML = '<span class="tg-spin">🔄</span>';
+              if (txt) txt.innerText = '下发中…';
+              showTgToast('🔄', '正在向宿主机下发主库强制同步指令…');
               try {
-                const r = await fetch(window.location.origin + '/api/phone_sync?pwd=' + window.__CFG.ADMIN_PASSWORD, {
+                const r = await fetch(window.location.origin + '/api/phone_sync?pwd=' + (env.ADMIN_PASSWORD || "CHANGE_ME"), {
                   method: 'POST', cache: 'no-store'
                 });
                 const j = await r.json();
                 if (j && j.requestId) {
                   phoneSyncRequestId = j.requestId;
                   phoneSyncDeadline = Date.now() + 30000;
-                  if (badge) { badge.style.color = '#eab308'; badge.innerText = '手机主库：已下发同步指令，等待手机响应…'; }
+                  if (badge) { badge.style.color = '#ffd60a'; badge.innerText = '手机主库：已下发同步指令…'; }
+                  if (txt) txt.innerText = '同步中…';
+                  showTgToast('✅', '同步指令已下发！等待手机拉取确认（约 6 秒）');
                   await fetchMetrics();
                   if (phoneSyncTimer) clearInterval(phoneSyncTimer);
                   phoneSyncTimer = setInterval(async function () {
                     await fetchMetrics();
-                    if (!phoneSyncRequestId) { clearInterval(phoneSyncTimer); phoneSyncTimer = null; return; }
+                    if (!phoneSyncRequestId) {
+                      clearInterval(phoneSyncTimer); phoneSyncTimer = null;
+                      if (btn) btn.classList.remove('busy');
+                      if (ico) ico.innerText = '🔄';
+                      if (txt) txt.innerText = '主库同步';
+                      showTgToast('✅', '手机主库已完成同步确认！');
+                      return;
+                    }
                     if (Date.now() > phoneSyncDeadline) {
                       clearInterval(phoneSyncTimer); phoneSyncTimer = null;
                       phoneSyncRequestId = null;
-                      if (badge) { badge.style.color = '#eab308'; badge.innerText = '手机主库：等待确认超时，可再点一次刷新'; }
+                      if (btn) btn.classList.remove('busy');
+                      if (ico) ico.innerText = '🔄';
+                      if (txt) txt.innerText = '主库同步';
+                      if (badge) { badge.style.color = '#ffd60a'; badge.innerText = '手机主库：确认超时，可重试'; }
                     }
                   }, 2000);
                 } else {
-                  if (badge) { badge.style.color = '#ef4444'; badge.innerText = '手机主库：指令下发失败'; }
+                  if (btn) btn.classList.remove('busy');
+                  if (ico) ico.innerText = '🔄';
+                  if (txt) txt.innerText = '主库同步';
+                  if (badge) { badge.style.color = '#ff453a'; badge.innerText = '手机主库：下发失败'; }
+                  showTgToast('⚠️', '主库同步指令下发失败，请稍后重试');
                 }
               } catch (e) {
-                if (badge) { badge.style.color = '#ef4444'; badge.innerText = '手机主库：指令下发异常'; }
-              } finally {
-                if (btn) { btn.disabled = false; btn.innerText = '⟳ 刷新'; }
+                if (btn) btn.classList.remove('busy');
+                if (ico) ico.innerText = '🔄';
+                if (txt) txt.innerText = '主库同步';
+                if (badge) { badge.style.color = '#ff453a'; badge.innerText = '手机主库：下发异常'; }
+                showTgToast('⚠️', '网络请求异常，请稍后重试');
               }
             }
 
             window.__pageBuild = '${BUILD_ID}';
-    // 【导出修复】页面侧运行时配置：密码不再从服务端 env 取，
-    //   而是在渲染页面时注入（浏览器里没有 env 对象）。
-    window.__CFG = { ADMIN_PASSWORD: '${ADMIN_PASSWORD}' };
 
-            // ==========================================================
-            // A2 · 秒级实时推送 (Server-Sent Events)
-            //   只保持 1 个长连接, 服务端每秒推一次; 连接到期自动重连。
-            //   相比"每秒轮询"(86400 次/天), 这是几乎零配额的方案。
-            //   注意: 底层数据仍是手机每约 6 秒上报一次 —— 推送是真实的,
-            //         不插值、不造数; 面板上的"数据延迟"就是它的真实年龄。
-            // ==========================================================
-            // ==========================================================
-            // 自动更新: 页面版本与服务器不一致就重载。
-            // 【关键】必须覆盖"页面里根本没有 __pageBuild"这种旧页面 ——
-            // 之前写成 if (m.buildId && window.__pageBuild && ...),
-            // 旧页面里 __pageBuild 是 undefined, 条件恒假, 自动重载从不触发。
-            // 用 sessionStorage 记录已尝试过的版本, 防止重载后仍是旧页面而死循环。
-            // ==========================================================
-            // ============================================================
-            // 【2026-10-04 诊断】页面级错误捕获: 任何未捕获异常(含异步 Promise 拒绝)
-            //   都写进隐藏元素 #renderErrProbe。headless dump 即可看到确切错误与行号。
-            //   加它的原因: 健康卡片/评分/新鲜度一直是 "--", 但各渲染器自身无异常
-            //   => 说明是它们【上游】(fetchMetrics 轮询路径) 挂了。
-            // ============================================================
             (function () {
               function _probe(msg) {
                 try {
@@ -4977,18 +6308,18 @@ rules:
               if (buildId === window.__pageBuild) return false;
               let tried = '';
               try { tried = sessionStorage.getItem('__buildTried') || ''; } catch (e) {}
-              if (tried === buildId) return false;   // 这个版本已经重载过了, 不再重试
+              if (tried === buildId) return false;
               try { sessionStorage.setItem('__buildTried', buildId); } catch (e) {}
               const tag = document.getElementById('headerBuild');
-              if (tag) { tag.style.color = '#eab308'; tag.innerText = '检测到新版本, 正在自动刷新…'; }
+              if (tag) { tag.style.color = '#ffd60a'; tag.innerText = '发现新版本，自动刷新…'; }
               setTimeout(function () { location.reload(); }, 400);
               return true;
             }
 
             function applyLiveSnapshot(m) {
               if (!m) return;
-              checkPageBuild(m.buildId);   // 【2026-10-04 修复】不再跳过本次渲染
-              // 自动更新已由上面的 checkPageBuild 统一处理
+              try { window.__lastUs = m.us || window.__lastUs; } catch (e) {}
+              checkPageBuild(m.buildId);
               if (typeof m.conns === 'number') {
                 var cc = document.getElementById('connCount');
                 if (cc) cc.innerText = m.conns;
@@ -4996,12 +6327,14 @@ rules:
                 if (wb) {
                   var pct = Math.min(100, Math.round((m.conns / 500) * 100));
                   wb.style.height = (m.conns > 0 ? Math.max(3, pct) : 0) + '%';
-                  wb.style.background = m.conns >= 500 ? '#ef4444' : (m.conns >= 300 ? '#eab308' : '#38bdf8');
+                  wb.style.background = m.conns >= 500
+                    ? 'linear-gradient(180deg, #ff6961 0%, #ff453a 100%)'
+                    : (m.conns >= 300
+                        ? 'linear-gradient(180deg, #ffd60a 0%, #ff9f0a 100%)'
+                        : 'linear-gradient(180deg, #64d2ff 0%, #007aff 100%)');
                 }
               }
               if (typeof m.up === 'number' && m.up !== null) {
-                // 【2026-10-05 用户要求】口径改为【上行+下行合计】总带宽。
-                //   原来这里只取 m.up（上行），卡片却叫"带宽负荷"，名不副实。
                 var _bwDown = (typeof m.down === 'number' && m.down !== null) ? Number(m.down) : 0;
                 var _bwTotal = Number(m.up) + _bwDown;
                 var gv = document.getElementById('gaugeVal');
@@ -5009,29 +6342,16 @@ rules:
                 try {
                   var v = Math.min(150, _bwTotal);
                   gaugeChart.data.datasets[0].data = [v, Math.max(0, 150 - v)];
-                  if (v > 120) gaugeChart.data.datasets[0].backgroundColor[0] = '#ef4444';
-                  else if (v > 80) gaugeChart.data.datasets[0].backgroundColor[0] = '#22c55e';
-                  else gaugeChart.data.datasets[0].backgroundColor[0] = '#ffffff';
+                  if (v > 120) gaugeChart.data.datasets[0].backgroundColor[0] = '#ff453a';
+                  else if (v > 80) gaugeChart.data.datasets[0].backgroundColor[0] = '#30d158';
+                  else gaugeChart.data.datasets[0].backgroundColor[0] = '#2ea6ff';
                   gaugeChart.update('none');
                 } catch (e) {}
-          // 总计流量 / 两个峰值：峰值来自手机端真实统计（不用浏览器会话的临时值）
-          // 【2026-10-06 修复 · Bug5】原来这里不传参，等于让 applyBwPanel 去读
-          //   "最近一次完整 stats"的缓存 —— 那是 60 秒轮询才更新的，于是半圆仪表
-          //   在跳、下面三项卡住 60 秒。现在服务端已把
-          //   downBytes/upBytes/bwPeak 放进精简快照，这里直接把它传下去即可秒级刷新。
-          try {
-            applyBwPanel(m);
-          } catch (e) {}
+                try { applyBwPanel(m); } catch (e) {}
               }
-              // 【2026-10-03 关键修复】这里必须同时刷新 6 个区域的延迟数字与抖动。
-              // 上一轮只让"年龄"走了实时推送, 而更新数字的 setGw 仍只在 60 秒轮询里调用,
-              // 结果年龄每 6 秒在动、数字每 60 秒才动一次, 看起来就是"延迟不变了"。
-              if (m.pings) {
-                window.latestPingsLive = m.pings;
-                // 【2026-10-04 用户要求】锚点卡片整行已删除, 原来这里的"蓝框跟随"
-                //   高亮推进与 setGw 写卡片的代码随之删除; pings/jitters 仍用于
-                //   链路质量评分与节点矩阵。
-                window.latestPingsLive = m.pings;
+              if (m.nodeStatus) window.latestNodeStatus = m.nodeStatus;
+              if (m.pings || m.nodeStatus) {
+                if (m.pings) window.latestPingsLive = m.pings;
                 renderRelayMatrix(m);
                 if (m.stat) updateStatUserBytes(m.stat);
               }
@@ -5040,48 +6360,32 @@ rules:
               updateLiveTag();
             }
 
-            // 遥测推送状态 + 页面版本, 统一显示在【顶部标题栏】(时钟右侧)。
-            // 【2026-10-03】原来这个标签挂在「用户管理」卡片上, 会让人误以为
-            // 用户列表也是秒级同步 —— 实际用户库是变更触发 / 12 小时一次。
-            // 遥测与用户库是两条独立的链路, 状态也必须分开显示。
             function updateLiveTag() {
               const hb = document.getElementById('headerBuild');
               if (!hb) return;
               const ver = window.__pageBuild || '旧版';
               const hasPush = (typeof window.liveLastAt === 'number');
               const ago = hasPush ? Math.round((Date.now() - window.liveLastAt) / 1000) : -1;
-              const ageTxt = (typeof window.liveAgeS === 'number') ? ('数据 ' + window.liveAgeS + ' 秒前') : '';
+              const ageTxt = (typeof window.liveAgeS === 'number') ? ('数据 ' + window.liveAgeS + 's前') : '';
 
               if (hasPush && ago <= 40) {
-                // 健康 40 秒内: 绿色
-                hb.innerText = '⚡ 遥测推送 ' + (ago <= 1 ? '刚刚' : ago + ' 秒前')
-                  + (ageTxt ? ' · ' + ageTxt : '') + ' · 版本 ' + ver;
-                hb.style.color = '#22c55e';
+                hb.innerText = '⚡ 推送 ' + (ago <= 1 ? '刚刚' : ago + 's前')
+                  + (ageTxt ? ' · ' + ageTxt : '') + ' · ' + ver;
+                hb.style.color = '#30d158';
               } else if (hasPush && ago <= 70) {
-                // 41 - 70 秒: 蓝色
-                hb.innerText = '⚡ 遥测推送 ' + ago + ' 秒前'
-                  + (ageTxt ? ' · ' + ageTxt : '') + ' · 版本 ' + ver;
-                hb.style.color = '#38bdf8';
+                hb.innerText = '⚡ 推送 ' + ago + 's前'
+                  + (ageTxt ? ' · ' + ageTxt : '') + ' · ' + ver;
+                hb.style.color = '#64d2ff';
               } else if (hasPush && ago <= 99) {
-                // 71 - 99 秒: 黄色
-                hb.innerText = '⏱ 遥测更新中 · ' + ago + ' 秒前'
-                  + (ageTxt ? ' · ' + ageTxt : '') + ' · 版本 ' + ver;
-                hb.style.color = '#eab308';
+                hb.innerText = '⏱ 更新中 · ' + ago + 's前 · ' + ver;
+                hb.style.color = '#ffd60a';
               } else {
-                // 100 及 100 以上: 红色
-                hb.innerText = '⚠ 遥测推送中断' + (hasPush ? ' ' + ago + ' 秒' : '') + ' · 版本 ' + ver;
-                hb.style.color = '#ef4444';
+                hb.innerText = '⚠ 推送中断' + (hasPush ? ' ' + ago + 's' : '') + ' · ' + ver;
+                hb.style.color = '#ff453a';
               }
             }
             setInterval(updateLiveTag, 1000);
 
-            // ==========================================================
-            // 断线告警: 手机超过阈值未上报时在页面顶部弹出醒目横幅
-            //   90 秒 -> 黄色(数据延迟偏高)
-            //   300 秒 -> 红色(服务中断)
-            // 数据来源: 实时推送带回来的 ageS + 距上次推送的本地耗时,
-            //           因此精度是秒级的, 不依赖整页 60 秒轮询。
-            // ==========================================================
             function checkOffline() {
               const banner = document.getElementById('offlineBanner');
               if (!banner) return;
@@ -5089,7 +6393,6 @@ rules:
               if (typeof window.liveAgeS === 'number' && typeof window.liveLastAt === 'number') {
                 ageS = window.liveAgeS + (Date.now() - window.liveLastAt) / 1000;
               } else if (typeof window.lastFetchAgeS === 'number' && typeof window.lastFetchAt === 'number') {
-                // 实时推送未连通时的兜底: 用整页轮询的数据年龄
                 ageS = window.lastFetchAgeS + (Date.now() - window.lastFetchAt) / 1000;
               }
               if (ageS === null || isNaN(ageS)) return;
@@ -5098,47 +6401,37 @@ rules:
               if (ageS >= 1800) {
                 const mm = Math.floor(ageS / 60), ss = ageS % 60;
                 banner.style.display = 'block';
-                banner.style.background = 'linear-gradient(90deg,#7f1d1d,#450a0a)';
-                banner.style.color = '#fecaca';
-                banner.innerHTML = '🔴 服务中断 · 手机已 <b style="color:#fff;">' + mm + ' 分 ' + ss + ' 秒</b> 未上报数据'
-                  + '<div style="font-weight:400;color:#fca5a5;margin-top:5px;font-size:12px;">'
-                  + '正常应约 6 秒上报一次。请检查：① 手机是否在线/有网 ② 手机是否重启过'
-                  + '（重启后看门狗不会自启，需手动运行 <code style="background:#000;padding:1px 5px;border-radius:3px;">sh /data/local/tmp/run_daemon.sh</code>）'
-                  + ' ③ Xray 与 cloudflared 是否在运行</div>';
+                banner.style.background = 'rgba(255, 69, 58, 0.18)';
+                banner.style.borderColor = 'rgba(255, 69, 58, 0.45)';
+                banner.style.color = '#ffdad6';
+                banner.innerHTML = '🔴 服务中断 · 手机已 <b style="color:#fff;">' + mm + ' 分 ' + ss + ' 秒</b> 未上报数据';
               } else if (ageS >= 600) {
                 banner.style.display = 'block';
-                banner.style.background = 'linear-gradient(90deg,#78350f,#451a03)';
+                banner.style.background = 'rgba(255, 159, 10, 0.18)';
+                banner.style.borderColor = 'rgba(255, 214, 10, 0.45)';
                 banner.style.color = '#fde68a';
-                banner.innerHTML = '🟡 数据已超过 10 分钟未更新 · 手机已 <b style="color:#fff;">' + ageS + ' 秒</b> 未上报'
-                  + '<span style="font-weight:400;color:#fcd34d;">（正常约 6 秒一次，可能是手机网络短暂波动）</span>';
+                banner.innerHTML = '🟡 数据已超过 10 分钟未更新 · 手机已 <b style="color:#fff;">' + ageS + ' 秒</b> 未上报';
               } else {
                 banner.style.display = 'none';
               }
             }
             setInterval(checkOffline, 1000);
 
-
-            // 长轮询: 服务端一有新数据立刻返回, 收到后马上再挂起。
-            // 相比 EventSource, 不需要任何兼容性 flag, 对线上零风险。
             let liveOn = false;
             let liveTimer = null;
             let liveStamp = '';
-            // 【2026-10-04 修复 T8.3】失败重试从固定 200ms 改为指数退避:
-            //   1s → 2s → 4s → ... 封顶 30s, 成功即复位。
-            //   原实现固定 200ms 重试, 手机断网/Worker 500 时单标签页可达
-            //   43 万请求/天, 会打爆 Workers 免费请求额度。
             let liveRetryDelay = 1000;
             const LIVE_RETRY_MAX = 30000;
 
             async function liveLoop() {
               if (!liveOn) return;
               try {
-                const r = await fetch(window.location.origin + '/api/live?pwd=' + window.__CFG.ADMIN_PASSWORD
+                const r = await fetch(window.location.origin + '/api/live?pwd=' + (env.ADMIN_PASSWORD || "CHANGE_ME")
                     + '&since=' + encodeURIComponent(liveStamp), { cache: 'no-store' });
                 if (r.ok) {
                   const m = await r.json();
                   if (m && m.stamp) { liveStamp = m.stamp; applyLiveSnapshot(m); }
-                  liveRetryDelay = 1000;   // 成功复位
+                  liveRetryDelay = 1000;
                 } else {
                   liveRetryDelay = Math.min(LIVE_RETRY_MAX, liveRetryDelay * 2);
                 }
@@ -5160,38 +6453,27 @@ rules:
             async function fetchMetrics() {
               if (window.__probeError) window.__probeError('FM-START');
               const fetchStart = performance.now();
-              await probeClientRtt();   // 真实测量 客户端↔CF边缘 RTT (15 秒节流)
+              await probeClientRtt();
               try {
-                const res = await fetch(window.location.origin + '/api/stats_data?pwd=' + window.__CFG.ADMIN_PASSWORD + '&_t=' + Date.now() + (phoneSyncRequestId ? '&sync=1' : ''), {
+                const res = await fetch(window.location.origin + '/api/stats_data?pwd=` + (env.ADMIN_PASSWORD || "CHANGE_ME") + `&_t=' + Date.now() + (phoneSyncRequestId ? '&sync=1' : ''), {
                   cache: 'no-store'
                 });
                 const fetchElapsed = Math.max(1, Math.round(performance.now() - fetchStart));
                 if (res.ok) {
                   const d = await res.json();
-                  // 【2026-10-05】缓存最近一次完整 stats：/api/live 的 6 秒推送里
-                  //   没有 downBytes/upBytes/bwPeak，applyBwPanel 要从这里取。
                   window.__lastFullStats = d;
                   lastSuccessTimestamp = Date.now();
-                  noteDataAge(d.serverTime, d.timestamp);   // 记录真实数据年龄
+                  noteDataAge(d.serverTime, d.timestamp);
                   updateFreshnessTicker();
-                  // 【顺序修复 · 2026-10-03】必须先清除等待状态, 再渲染。
-                  // 原来顺序反了: 先渲染(此时 phoneSyncRequestId 还没清, 徽标仍显示
-                  // "正在重新拉取并确认…"), 然后才清除它并【停掉 2 秒轮询定时器】
-                  // => 之后再也���有渲染机会, 只能等下一次 60 秒整页轮询 =>
-                  // 徽标卡住最长 60 秒, 而手动刷新网页会立刻显示正确状态。
                   if (phoneSyncRequestId && d.phoneMaster && d.phoneMaster.ackedId === phoneSyncRequestId) {
                     phoneSyncRequestId = null;
                     if (phoneSyncTimer) { clearInterval(phoneSyncTimer); phoneSyncTimer = null; }
                   }
                   renderPhoneBadge(d.phoneMaster, d.syncRequest);
-                  // 捕获手机端节点探测结果(供节点矩阵卡片渲染真实状态)
                   window.latestNodeStatus = d.nodeStatus || window.latestNodeStatus || [];
                   if (d.stat) updateStatUserBytes(d.stat);
                   if (typeof d.nodeIdx === 'number') window.latestNodeIdx = d.nodeIdx;
                   if (typeof d.nodeFast === 'number') window.latestNodeFast = d.nodeFast;
-                  // 【时钟校正】手机上报的时刻是"手机时钟", 浏览器算年龄用的是"浏览器时钟"。
-                  // 两个设备时钟只要有偏差, 年龄就会整体偏掉。这里记录
-                  // (服务端时间 - 浏览器时间) 的偏移, 算年龄时补回去。
                   if (d.serverTime) {
                     window.srvTimeOffsetMs = d.serverTime - Date.now();
                     window.srvTimeOffsetAt = Date.now();
@@ -5199,29 +6481,8 @@ rules:
                   window.latestNodeList = d.nodeList || window.latestNodeList || [];
                   renderRelayMatrix(null);
 
-                  // ==========================================================
-                  // 全链路遥测 · 三段真实单次 RTT (2026-10-04 算法修复 · 方案 A+C)
-                  // ----------------------------------------------------------
-                  // 第 1 段 浏览器↔CF边缘 : /api/rtt 真实往返, 取滚动中位数(抗单次抖动)
-                  // 第 2 段 CF边缘处理耗时 : 服务端实测 d.serverMs —— 【非网络时延, 不参与求和】
-                  // 第 3 段 手机↔CF边缘   : 手机实测 TCP time_connect (1×RTT, 与第 1 段同口径)
-                  // 第 4 段 手机↔公网出口 : 手机实测 TCP time_connect (1×RTT)
-                  // ----------------------------------------------------------
-                  // 【为什么这样改】旧实现把上面 4 个数字直接相加, 于是总和在 200~900ms 乱跳:
-                  //   · serverMs(25~165ms, 冷读 KV 可达 400ms) 是 Worker 自己跑代码的耗时,
-                  //     量纲根本不是网络时延, 却占了旧总和的最高 60%+ —— 这是抖动主因;
-                  //   · 手机侧旧值用 time_appconnect(≈2×RTT), 浏览器侧是 1×RTT, 口径不同却相加;
-                  //   · 四段来自三个设备、三个时刻, 物理上不存在"一条端到端路径之和"。
-                  // 现在: 总和 = 第1段中位 + 第3段中位 + 第4段中位(三段同口径 1×RTT)。
-                  // 样本不足 3 个时如实显示 "--", 绝不编造。
-                  // ==========================================================
                   pushSample(rttSamples.server, (typeof d.serverMs === 'number' ? d.serverMs : null), 10);
 
-                  // 【RTT 提速 2026-10-04 · 方案 C】第 3/4 段优先采用服务端下发的
-                  // 【真实测量历史】: 手机每 15 秒测一次并在服务端按"数值变化"去重累积,
-                  // 因此首次轮询就能拿到最多 10 个各自独立的真实测量 ——
-                  // 预热从"约 2 分钟"降到 0 秒。服务端没有历史时(旧 Worker / 冷启动)
-                  // 退回"每轮累积当前值"的老办法, 行为不变。
                   const _numList = function (arr) {
                     return Array.isArray(arr)
                       ? arr.filter(function (v) { return typeof v === 'number' && isFinite(v) && v > 0; })
@@ -5240,10 +6501,7 @@ rules:
                     pushSample(rttSamples.egress, d.pings.egress, 10);
                   }
 
-                  const MIN_SAMPLES = RTT_MIN_SAMPLES;   // 少于 3 个样本不称"中位"
-                  // 【统一口径 2026-10-04 用户决策】所有时延链路一律:
-                  //   丢弃 <10ms 的样本(无效数据) -> 取【最低 3 个有效样本的中位数】
-                  //   (升序排序后第 2 个) -> 有效样本不足 3 个返回 null, 界面如实显示 --。
+                  const MIN_SAMPLES = RTT_MIN_SAMPLES;
                   const RTT_INVALID_BELOW_MS = 10;
                   const lowest3Median = function (arr) {
                     const v = (arr || []).filter(function (x) {
@@ -5254,19 +6512,10 @@ rules:
 
                   const clientEdgeVal = lowest3Median(rttSamples.client);
                   const serverMedian = lowest3Median(rttSamples.server);
-                  // 【第 2 段特例 · 2026-10-04】serverMs 是 Worker 处理"本次请求"本身的耗时,
-                  // 只能随响应一个一个带回来; 服务端环形历史里没有它(它是在响应生成那一刻
-                  // 才算出来的) => 默认 60 秒采集下要 2 分钟才凑够 3 个样本。
-                  // 它是被明确标注为"非网络时延、不参与求和"的展示项, 所以样本不足时
-                  // 如实显示"这一次的真实测量值"并在 title 写明口径 —— 不插值、不估算、
-                  // 不复制; 攒够 3 个样本自动升级为中位数。
-                  // 注意: 其余三段仍严格执行"不足 3 个如实显示 --"。
                   const serverProcVal = (serverMedian !== null)
                         ? serverMedian
                         : ((typeof d.serverMs === 'number' && d.serverMs > 0) ? d.serverMs : null);
                   const edgeMedian = lowest3Median(rttSamples.edge);
-                  // 第 3 段: 优先用新探针(edgeRtt, TCP 1×RTT); 只有"完全没有 edgeRtt 数据"
-                  // (旧版手机脚本)时才回退到旧口径 pings.kl, 并在 title 标注口径差异。
                   const argoPhoneVal = (edgeMedian !== null)
                         ? edgeMedian
                         : ((rttSamples.edge.length === 0 && d.pings && typeof d.pings.kl === 'number' && d.pings.kl > 0) ? d.pings.kl : null);
@@ -5275,15 +6524,9 @@ rules:
                         : ((argoPhoneVal !== null) ? 'TLS time_appconnect(≈2×RTT, 回退值)' : '样本不足');
                   const phoneEgressVal = lowest3Median(rttSamples.egress);
 
-                  // 【2026-10-04 修复 T8.9】0 值语义统一: RTT 为 0/缺 => '-- ms'
-                  // (0 表示"测了但不可达"或"未测到", 都不该显示成 "0 ms")
                   const fmtMs = function (v) {
                     return (v === null || v === undefined || isNaN(v) || v <= 0) ? '-- ms' : (Math.round(v) + ' ms');
                   };
-                  // 【方案 C】每段显示中位数; 悬停 title 给出波动区间与样本数; 样本不足如实显示 --
-                  // opt.grey         : 灰字(第2段 非网络时延)
-                  // opt.allowSingle  : 仅第2段 —— 样本不足时如实显示"这一次的真实单值"并标注口径,
-                  //                    而不是显示 --(其余三段不传, 保持严格门限)
                   const setHop = function (id, val, samples, note, opt) {
                     const el = document.getElementById(id);
                     if (!el) return;
@@ -5297,8 +6540,7 @@ rules:
                     if (n >= MIN_SAMPLES) {
                       stat = '最低3次中位 ' + fmtMs(val) + '，波动 ' + r.min + '~' + r.max + ' ms（' + n + ' 个样本）';
                     } else if (allowSingle && val !== null) {
-                      stat = '单次真实采样（' + n + '/' + MIN_SAMPLES + '，满 3 次后转为最低3次中位）'
-                           + '，非网络时延，不参与求和';
+                      stat = '单次真实采样（' + n + '/' + MIN_SAMPLES + '，满 3 次后转为最低3次中位），非网络时延，不参与求和';
                     } else {
                       stat = '样本不足 ' + n + '/' + MIN_SAMPLES + '，如实显示 --';
                     }
@@ -5322,22 +6564,21 @@ rules:
 
                   document.getElementById('syncClock').innerText = d.updatedAt;
 
-                  // 宿主机在线状态检测 (由服务端统一切片计算，杜绝客户端时钟偏差误报)
                   const liveDot = document.getElementById('liveDot');
                   const liveText = document.getElementById('syncStatusText');
 
                   if (d.isOnline === false) {
                     if (liveDot) {
-                      liveDot.style.background = '#ef4444';
-                      liveDot.style.boxShadow = '0 0 8px #ef4444';
+                      liveDot.style.background = '#ff453a';
+                      liveDot.style.boxShadow = '0 0 8px #ff453a';
                     }
                     if (liveText) {
-                      liveText.innerHTML = '<span style="color:#ef4444;font-weight:700;">⚠ 宿主机上报中断</span>';
+                      liveText.innerHTML = '<span style="color:#ff453a;font-weight:600;">⚠ 宿主机上报中断</span>';
                     }
                   } else {
                     if (liveDot) {
-                      liveDot.style.background = '#22c55e';
-                      liveDot.style.boxShadow = '0 0 8px #22c55e';
+                      liveDot.style.background = '#30d158';
+                      liveDot.style.boxShadow = '0 0 8px #30d158';
                     }
                     if (liveText) {
                       liveText.innerText = '5s REALTIME SYNC';
@@ -5361,7 +6602,6 @@ rules:
                   document.getElementById('downBytes').innerText = formatBytes(grandDown);
                   document.getElementById('upBytes').innerText = formatBytes(grandUp);
 
-                  // 1. 真实更新五大地区实际已接入物理流量比例
                   if (d.regions) {
                     const r = d.regions;
                     const rTotal = (r.kl || 0) + (r.hk || 0) + (r.sg || 0) + (r.tw || 0) + (r.jp || 0);
@@ -5375,7 +6615,6 @@ rules:
                     regionChart.update('none');
                   }
 
-                  // 2. 真实更新用户排行数据与已授权表格 (A3 优化 · 无刷新实时同步)
                   if (d.userTraffics) {
                     liveUserTraffics = d.userTraffics;
                     renderRankList();
@@ -5389,18 +6628,13 @@ rules:
                     realUsers = d.users;
                     renderRankList();
                     renderUserTable(d.users);
-                    // 【2026-10-04 新增】连接状态板块（独立渲染器, 失败不影响别处）
                     _safeRender('用户连接状态', function () { renderUserConn(d.users); });
                   }
 
-                  // 3. 记录物理区域基准测速
                   if (d.pings) {
                     latestRegionalPings = d.pings;
                   }
 
-                  // 4. 真实物理层遥测数据更新 (手机硬件、Wi-Fi 6、内核在线时间)
-                  // 【2026-10-04 修复 T8.1】缺值统一走 valOrDash: 原来缺字段会渲染
-                  //   "undefined% · undefined°C" / "undefined · undefined dBm"。
                   function valOrDash(v, suffix) {
                     const miss = (v === undefined || v === null || v === '' || v === 0);
                     return miss ? '--' : (v + (suffix || ''));
@@ -5415,7 +6649,6 @@ rules:
                       if (wfEl) wfEl.innerText = (ssidOk ? wf.ssid : '--') + ' · ' + (rssiOk ? valOrDash(wf.rssi, ' dBm') : '--');
                       if (wfSpEl) {
                         const spOk = (typeof wf.speed === 'string' && wf.speed !== '');
-                        // 【2026-10-04 去重】标签已由卡片写成"链路协商速率", 这里不再重复前缀
                         wfSpEl.innerText = spOk ? wf.speed : '--';
                       }
                     }
@@ -5425,15 +6658,12 @@ rules:
                     }
                   }
 
-                  // 5. 6大出口物理握手时延与抖动矩阵更新 (方案 C 10秒整点槽位对齐)
                   if (window.__probeError) window.__probeError('FM-GOT:' + (d.pings ? 'pings' : 'nopings'));
                   if (d.pings) {
                     if (window.__probeError) window.__probeError('P1-INBLOCK');
                     const p = d.pings;
                     const j = d.jitters || { kl: 4, gz: 4, sg: 4, hk: 4, jp: 4, tw: 4 };
                     window.latestPingTimes = d.pingTimes || window.latestPingTimes || {};
-                    // 【G1 修复】手机只在【测量成功】时才更新时间戳, 所以这里算出的
-                    // 年龄是可信的。以服务端 serverTime 为基准, 免疫本机与手机时钟偏差。
                     (function () {
                       var srvSec = Math.floor((d.serverTime || Date.now()) / 1000);
                       var pt = d.pingTimes || {};
@@ -5443,62 +6673,36 @@ rules:
                       window.latestPingAgesAt = Date.now();
                       window.latestLosses = d.losses || window.latestLosses || {};
                     })();
-                    // 记录本次轮询的数据年龄, 作为实时推送断开时的告警兜底
-                    // 【自动更新·双保险】轮询也走同一个判断
-                    checkPageBuild(d.buildId);   // 【2026-10-04 修复】不再跳过本次渲染
+                    checkPageBuild(d.buildId);
                     if (window.__probeError) window.__probeError('P2-AFTER-BUILDCHK');
                     window.lastFetchAgeS = Math.max(0, ((d.serverTime || Date.now()) - (d.timestamp || Date.now())) / 1000);
                     window.lastFetchAt = Date.now();
-                    // 【2026-10-03】兼容"无数据"状态: 缺值显示 --, 不再编造。
-                    // (原判断是 !== undefined, 传 null 会显示成 "null ms")
-                    // 【关键修复 2026-10-03】原来这里是 const setGw = ... (局部于 fetchMetrics),
-                    // 导致 applyLiveSnapshot 里访问不到 => 实时推送拿到的延迟数字永远写不到页面上,
-                    // 数字只在 60 秒整页轮询时才更新一次, 看起来就是"延迟不变"。
-                    // 改成 window.setGw, 成为全局函数, 两处都能调用。
                     if (window.__probeError) window.__probeError('P3-BEFORE-SETGW');
                     window.setGw = function(rttId, jitId, rttVal, jitVal) {
                       const rEl = document.getElementById(rttId);
                       const jEl = document.getElementById(jitId);
                       const rMiss = (rttVal === undefined || rttVal === null || rttVal === '' || rttVal === 0);
                       const jMiss = (jitVal === undefined || jitVal === null || jitVal === '' || jitVal === 0);
-                      if (rEl) { rEl.innerText = rMiss ? '-- ms' : rttVal + ' ms'; rEl.style.color = rMiss ? 'var(--md-sys-color-outline)' : 'var(--md-sys-color-on-surface)'; }
-                      if (jEl) { jEl.innerText = jMiss ? '--' : '±' + jitVal + 'ms'; jEl.style.color = jMiss ? 'var(--md-sys-color-outline)' : 'var(--md-sys-color-on-surface-variant)'; }
+                      if (rEl) { rEl.innerText = rMiss ? '-- ms' : rttVal + ' ms'; rEl.style.color = rMiss ? 'var(--tg-text-tertiary)' : 'var(--tg-text-primary)'; }
+                      if (jEl) { jEl.innerText = jMiss ? '--' : '±' + jitVal + 'ms'; jEl.style.color = jMiss ? 'var(--tg-text-tertiary)' : 'var(--tg-text-secondary)'; }
                     };
-                    // 【2026-10-04 用户要求】锚点卡片整行已删除, 这里不再写卡片;
-                    //   六区时延/抖动仍由 d.pings / d.jitters 提供给链路质量评分与节点矩阵。
                     tickSlotAlignedRefresh();
                   }
 
-                  // 【2026-10-04 用户要求】CF 接入机房锚点整行已删除;
-                  //   国际出口那一行与 D 板块(各地区客户端接入质量)此前也已移除。
                   if (window.__probeError) window.__probeError('P4-AT-RENDER');
-                  // ============================================================
-                  // 【2026-10-04 渲染隔离】每个渲染器各自 try/catch。
-                  //   教训: 一个残留的 renderRelayRow(已删除) 调用抛 ReferenceError,
-                  //   把它【后面所有】渲染一起带走 —— 新鲜度/丢包/健康卡片/评分/示波器
-                  //   全变成 "--"(用户实测反馈)。现在任何一个坏掉都只影响它自己;
-                  //   错误写进隐藏元素 #renderErrProbe, 便于事后自查。
-                  // ============================================================
                   function _safeRender(name, fn) {
                     try { fn(); } catch (e) {
                       window.__renderErrors = window.__renderErrors || {};
                       window.__renderErrors[name] = String(e);
                       try {
                         var probe = document.getElementById('renderErrProbe');
-                        if (!probe) {
-                          probe = document.createElement('div');
-                          probe.id = 'renderErrProbe';
-                          probe.style.display = 'none';
-                          document.body.appendChild(probe);
-                        }
-                        probe.innerText = JSON.stringify(window.__renderErrors);
+                        if (probe) probe.innerText = JSON.stringify(window.__renderErrors);
                       } catch (e2) {}
                     }
                   }
                   _safeRender('流水线标签', function () { renderPipelineTags(d); });
                   _safeRender('顶栏真值', function () { renderHeaderFacts(d); });
 
-                  // ============ B1 手机健康与告警 ============
                   (function () {
                     var tm = d.telemetry || {};
                     var bat = tm.battery || {}, wifi = tm.wifi || {};
@@ -5510,18 +6714,12 @@ rules:
                     setT('healthWifiSpeed', wifi.speed || '--');
                     var xr = tm.xrayLive;
                     var xrEl = document.getElementById('healthXray');
-                    // 【2026-10-04】无遥测时显示 --(原来 undefined 会显示成"离线", 误报)
                     if (xrEl) {
-                      // 【2026-10-04 修复】手机上报的 xrayLive 是【数字 1】(不是布尔 true),
-                      //   原来只认 true/false -> 永远走 else -> 显示 "--"。这里兼容 1/0/'1'/'0'。
-                      if (xr === true || xr === 1 || xr === '1') { xrEl.innerText = '在线'; xrEl.style.color = '#22c55e'; }
-                      else if (xr === false || xr === 0 || xr === '0') { xrEl.innerText = '离线'; xrEl.style.color = '#ef4444'; }
-                      else { xrEl.innerText = '--'; xrEl.style.color = '#555'; }
+                      if (xr === true || xr === 1 || xr === '1') { xrEl.innerText = '在线'; xrEl.style.color = '#30d158'; }
+                      else if (xr === false || xr === 0 || xr === '0') { xrEl.innerText = '离线'; xrEl.style.color = '#ff453a'; }
+                      else { xrEl.innerText = '--'; xrEl.style.color = '#8e8e93'; }
                     }
                     setT('healthCfErr', (tm.cfErrors !== undefined ? tm.cfErrors : '--'));
-                    // 【2026-10-04 修复】"本轮采样覆盖"原来在 HTML 里有元素、JS 里从没写过,
-                    //   所以永远是 "--"(用户实测反馈)。现在如实计算:
-                    //   六区矩阵里【数据新鲜(≤120 秒)】的区域数 / 区域总数。
                     try {
                       var _pt = d.pingTimes || {};
                       var _nowS = Math.floor((d.serverTime || Date.now()) / 1000);
@@ -5530,29 +6728,24 @@ rules:
                       var _covEl = document.getElementById('relCover');
                       if (_covEl) {
                         _covEl.innerText = _covTot ? (_cov + ' / ' + _covTot) : '--';
-                        _covEl.style.color = (_covTot > 0 && _cov === _covTot) ? '#6dd58c' : (_cov > 0 ? '#f0c048' : '#ffb4ab');
+                        _covEl.style.color = (_covTot > 0 && _cov === _covTot) ? '#30d158' : (_cov > 0 ? '#ffd60a' : '#ff453a');
                       }
                     } catch (e) {}
                     var alerts = [];
                     if (bat.level !== undefined && bat.level <= 20) alerts.push('电量偏低');
                     if (bat.temp !== undefined && parseFloat(bat.temp) >= 42) alerts.push('温度偏高');
-                    if (xr === false) alerts.push('Xray 离线');   // 只有明确上报离线才告警
+                    if (xr === false) alerts.push('Xray 离线');
                     if (wifi.rssi !== undefined && wifi.rssi <= -75) alerts.push('WiFi 信号弱');
                     var alEl = document.getElementById('healthAlert');
                     if (alEl) {
                       if (bat.level === undefined && xr === undefined) {
-                        // 完全没有遥测数据时不要宣称"全部正常"
-                        alEl.style.color = '#555';
-                        alEl.innerText = '-- 等待手机遥测';
-                      } else if (alerts.length === 0) { alEl.style.color = '#22c55e'; alEl.innerText = '● 全部正常'; }
-                      else { alEl.style.color = '#eab308'; alEl.innerText = '⚠ ' + alerts.join(' · '); }
+                        alEl.style.color = '#8e8e93';
+                        alEl.innerText = '-- 等待遥测';
+                      } else if (alerts.length === 0) { alEl.style.color = '#30d158'; alEl.innerText = '● 正常'; }
+                      else { alEl.style.color = '#ffd60a'; alEl.innerText = '⚠ ' + alerts.join('·'); }
                     }
                   })();
 
-                  // ============ B2 链路质量评分 (时延50% + 抖动25% + 丢包25%) ============
-                  // 【2026-10-04 修复 T8.5】缺失维度不再按 0 计满分: 只有真实采到
-                  //   样本的维度才参与评分, 权重按可用维度归一(否则抖动/丢包缺失时
-                  //   那 25%+25% 虚高, 手机没数据反而显示高分)。
                   (function () {
                     var keys = ['kl', 'gz', 'sg', 'hk', 'jp', 'tw'], lat = [], jit = [], los = [];
                     keys.forEach(function (k) {
@@ -5563,8 +6756,6 @@ rules:
                     if (lat.length === 0) return;
                     var avg = function (a) { return a.length ? a.reduce(function (x, y) { return x + y; }, 0) / a.length : 0; };
                     var aL = avg(lat), aJ = avg(jit), aLo = avg(los);
-                    // 【已决策·放宽】时延基准 200ms(每超 10ms 扣 2 分)、抖动基准 30ms(每超 5ms 扣 4 分)。
-                    // 原为 120ms/20ms, 对跨境链路过于严苛。
                     var sL = Math.max(0, 100 - Math.max(0, aL - 200) / 10 * 2);
                     var sJ = Math.max(0, 100 - Math.max(0, aJ - 30) / 5 * 4);
                     var sLo = Math.max(0, 100 - aLo * 10);
@@ -5572,7 +6763,7 @@ rules:
                     if (jit.length) { raw += sJ * 0.25; wSum += 0.25; }
                     if (los.length) { raw += sLo * 0.25; wSum += 0.25; }
                     var score = Math.round(raw / wSum);
-                    var color = score >= 85 ? '#22c55e' : (score >= 60 ? '#eab308' : '#ef4444');
+                    var color = score >= 85 ? '#30d158' : (score >= 60 ? '#ffd60a' : '#ff453a');
                     var grade = score >= 85 ? '优秀' : (score >= 60 ? '可用' : '较差');
                     var e1 = document.getElementById('qualityScore');
                     if (e1) { e1.innerText = score; e1.style.color = color; }
@@ -5584,36 +6775,32 @@ rules:
                     if (e4) e4.innerText = '平均时延 ' + Math.round(aL) + ' ms · 抖动 ' + Math.round(aJ) + ' ms · 丢包 ' + aLo.toFixed(0) + '%';
                   })();
 
-                  // ============ B4 服务可靠性 ============
                   (function () {
                     var lagS = Math.round(((d.serverTime || Date.now()) - (d.timestamp || Date.now())) / 1000);
                     var tm = d.telemetry || {};
                     var rate = lagS <= 10 ? 100 : Math.max(0, Math.round(100 - (lagS - 10) * 2));
                     var setT = function (id, v, c) { var e = document.getElementById(id); if (e) { e.innerText = v; if (c) e.style.color = c; } };
-                    setT('relReport', rate + '%', rate >= 90 ? '#22c55e' : (rate >= 60 ? '#eab308' : '#ef4444'));
-                    // 未知(未上报)时显示 --, 不再武断地说"离线"
-                    if (tm.xrayLive === undefined || tm.xrayLive === null) setT('relXray', '--', '#555');
-                    else setT('relXray', tm.xrayLive ? '在线' : '离线', tm.xrayLive ? '#22c55e' : '#ef4444');
-                    setT('relCfErr', (tm.cfErrors === undefined ? '--' : tm.cfErrors), (tm.cfErrors > 50 ? '#eab308' : '#ffffff'));
-                    // 【2026-10-04 T8.4】颜色统一: <=599 绿 / >=600 黄, 红只给连不上
-                    setT('relLag', lagS + ' 秒', lagS <= 599 ? '#22c55e' : '#eab308');
+                    setT('relReport', rate + '%', rate >= 90 ? '#30d158' : (rate >= 60 ? '#ffd60a' : '#ff453a'));
+                    if (tm.xrayLive === undefined || tm.xrayLive === null) setT('relXray', '--', '#8e8e93');
+                    else setT('relXray', tm.xrayLive ? '在线' : '离线', tm.xrayLive ? '#30d158' : '#ff453a');
+                    setT('relCfErr', (tm.cfErrors === undefined ? '--' : tm.cfErrors), (tm.cfErrors > 50 ? '#ffd60a' : '#ffffff'));
+                    setT('relLag', lagS + ' 秒', lagS <= 599 ? '#30d158' : '#ffd60a');
                     var nEl = document.getElementById('relNote');
-                    if (nEl) nEl.innerText = '手机约每 6 秒上报一次 · 当前数据延迟 ' + lagS + ' 秒' + (rate < 100 ? '（节奏偏慢）' : '');
+                    if (nEl) nEl.innerText = '手机约每 6 秒上报一次 · 当前数据延迟 ' + lagS + ' 秒';
                   })();
 
-                  // 6. 真实并发连接数与水位计 (读取实际活跃 Socket)
                   const realConns = d.conns !== undefined ? d.conns : (d.telemetry ? d.telemetry.sockets : 0);
                   const connCountEl = document.getElementById('connCount');
                   if (connCountEl) connCountEl.innerText = realConns;
                   const waterBarEl = document.getElementById('waterLevelBar');
                   if (waterBarEl) {
-                    // 【统一警戒值】满刻度 = 警戒值 = 500 会话。
-                    // 依据: 本机 fd 上限 32768(硬限制碰不到), 按 7 个用户每人
-                    // 重度浏览约 70 条并发估算峰值 ≈ 490, 故 500 是合理的预警线。
                     const waterPct = Math.min(100, Math.round((realConns / 500) * 100));
                     waterBarEl.style.height = (realConns > 0 ? Math.max(3, waterPct) : 0) + '%';
-                    waterBarEl.style.background = realConns >= 500 ? '#ef4444' : (realConns >= 300 ? '#eab308' : '#38bdf8');
-                    // 近 15 分钟峰值 (直接从示波器采样点里取, 无需后端改动)
+                    waterBarEl.style.background = realConns >= 500
+                      ? 'linear-gradient(180deg, #ff6961 0%, #ff453a 100%)'
+                      : (realConns >= 300
+                          ? 'linear-gradient(180deg, #ffd60a 0%, #ff9f0a 100%)'
+                          : 'linear-gradient(180deg, #64d2ff 0%, #007aff 100%)');
                     const peakEl = document.getElementById('connPeak');
                     if (peakEl && d.history15m && d.history15m.length) {
                       let pk = 0;
@@ -5622,13 +6809,11 @@ rules:
                     }
                   }
 
-                  // 7. 近 15 分钟示波器全真连续波次更新 (直读手机端 30 个采样点，绝无全 0)
                   if (d.history15m && d.history15m.length > 0) {
                     const lastPt = d.history15m[d.history15m.length - 1];
                     const isNewSample = (window._lastOscilloscopeTime !== lastPt.time);
                     window._lastOscilloscopeTime = lastPt.time;
 
-                    // 【C2】堆叠面积图: 总吞吐 = 下行 + 上行, 一眼看出带宽占用
                     try {
                       for (var _sk in liveChart.options.scales) { liveChart.options.scales[_sk].stacked = true; }
                     } catch (e) {}
@@ -5640,17 +6825,11 @@ rules:
                     } else {
                       liveChart.update('none');
                     }
-                    // 【2026-10-05 修复】标签在图表数据写好后同步刷新, 避免首屏停留在"0 个采样点"
                     try {
                       var _ptsEl = document.getElementById('livePtsTag');
-                      if (_ptsEl) _ptsEl.innerText = liveChart.data.labels.length + ' 个采样点';
+                      if (_ptsEl) _ptsEl.innerText = liveChart.data.labels.length + ' 点';
                     } catch (e) {}
 
-                    // 【2026-10-05 用户要求】口径改为【上行+下行合计】总带宽。
-                    //   原来这里只显示上行（标题却叫"带宽负荷"），名不副实。
-                    //   【2026-10-04 修复 T8.7】仍统一优先 liveRate（两次上报间的
-                    //   真实字节差），只有它缺失时才退回 history15m 的采样点，
-                    //   避免两条数据源交替覆盖导致仪表盘数值跳变。
                     const lr = d.liveRate;
                     const rateUp = (lr && typeof lr.up === 'number' && lr.up !== null)
                       ? Number(lr.up) : (Number(lastPt.up) || 0);
@@ -5659,15 +6838,14 @@ rules:
                     const activeMbps = rateUp + rateDown;
                     const gValEl = document.getElementById('gaugeVal');
                     if (gValEl) gValEl.innerText = activeMbps.toFixed(2) + ' Mbps';
-                    // 总计流量与两个峰值（峰值取自手机端真实统计，见 applyBwPanel）
                     try { applyBwPanel(d); } catch (e) {}
                     gaugeChart.data.datasets[0].data = [activeMbps, Math.max(0, 150 - activeMbps)];
                     if (activeMbps > 120) {
-                      gaugeChart.data.datasets[0].backgroundColor[0] = '#ef4444';
+                      gaugeChart.data.datasets[0].backgroundColor[0] = '#ff453a';
                     } else if (activeMbps > 80) {
-                      gaugeChart.data.datasets[0].backgroundColor[0] = '#22c55e';
+                      gaugeChart.data.datasets[0].backgroundColor[0] = '#30d158';
                     } else {
-                      gaugeChart.data.datasets[0].backgroundColor[0] = '#ffffff';
+                      gaugeChart.data.datasets[0].backgroundColor[0] = '#2ea6ff';
                     }
                     gaugeChart.update('none');
                   }
@@ -5677,23 +6855,14 @@ rules:
               }
             }
 
-            // 【2026-10-04 用户要求】锚点卡片整行与"数据新鲜度自检"卡已删除,
-            //   原 updateRegionalSlotAges(每秒写 6 张卡的年龄/徽标/蓝框)随之删除。
-            //   这里保留其中【只与请求节奏有关】的那部分: 「⚡10秒极速」模式下的
-            //   10 秒槽位对齐抓取 —— 这是既有的请求量控制算法, 行为与节奏完全不变。
             let lastAutoSlotFetched = -1;
 
             function tickSlotAlignedRefresh() {
               const nowSec = Math.floor(Date.now() / 1000);
               const secInMin = nowSec % 60;
-              const currentSlot = Math.floor(secInMin / 10); // 0..5
-              const secInSlot = secInMin % 10; // 0..9
+              const currentSlot = Math.floor(secInMin / 10);
+              const secInSlot = secInMin % 10;
 
-              // 【2026-10-05】槽位对齐抓取只在「⚡10秒极速」模式下启用, 并且是极速模式【唯一】的驱动
-              //   (2 秒轮询已取消: 它和这里的双采重复, 白耗额度)。普通模式仍是 60 秒一采。
-              // 旧实现无条件下每 10 秒强抓 2 次, 把「1分钟采集」彻底架空 ——
-              // 实测 12 次/分钟 = 17280 次/天/标签页, 是宣称 1440 次的 12 倍,
-              // 白耗 Workers 免费请求额度。默认模式现在真正是 60 秒一采。
               const fastMode = currentPollInterval <= 5000;
               if (fastMode && (secInSlot === 0 || secInSlot === 1) && lastAutoSlotFetched !== currentSlot) {
                 lastAutoSlotFetched = currentSlot;
@@ -5703,39 +6872,38 @@ rules:
             }
             setInterval(tickSlotAlignedRefresh, 1000);
 
-            // 智能后台采集频率控制 (默认 1 分钟一采; 极速模式 = 每 10 秒槽位对齐双采)
             let metricsTimer = null;
-            let currentPollInterval = 60000; // 默认 60 秒 (1分钟)
+            let currentPollInterval = 60000;
             let lastSuccessTimestamp = Date.now();
 
             function setPollingInterval(ms) {
               currentPollInterval = ms;
               const b2 = document.getElementById('btnFreq2s');
               const b60 = document.getElementById('btnFreq60s');
+              const badge = document.getElementById('pollModeBadge');
               if (b2) b2.classList.toggle('active', ms === 2000);
               if (b60) b60.classList.toggle('active', ms === 60000);
+              if (badge) {
+                if (ms === 2000) {
+                  badge.innerText = '⚡ 10s 极速';
+                  badge.className = 'tg-status-pill warn';
+                } else {
+                  badge.innerText = '1m 默认';
+                  badge.className = 'tg-status-pill ok';
+                }
+              }
               startMetricsPolling();
+              if (ms === 2000) {
+                showTgToast('⚡', '已切换至 10 秒极速轮询模式，正在立即拉取最新数据…');
+              } else {
+                showTgToast('🍃', '已切换至 1 分钟省电轮询模式');
+              }
             }
 
-
-            // 【2026-10-04 用户决策】D 板块已移除, 原 renderClientRttByColo() 一并删除。
-            //   服务端 /api/client_rtt 与聚合逻辑保留(未被调用不产生任何流量),
-            //   需要恢复时按本仓库 git 历史还原即可。
-
-            // 【2026-10-04 用户要求】CF 接入机房(6 张锚点卡)整行已从大屏删除,
-            //   原 renderAccessGroups()(按实测机房码合并/改名同机房锚点)与
-            //   "每秒把【测速中】徽标补到代表卡"的 interval 一并删除。
-            //   这里保留一个空实现的同名函数, 防止将来遗漏的调用点抛 ReferenceError;
-            //   实测机房码 colos 仍由手机每 5 分钟采集(顶栏落点标签在用)。
             function renderAccessGroups(pings, colos) {
               return;
             }
 
-            // ==========================================================
-            // 【RTT 修复 · 方案 C】统计化工具: 最近 N 个样本的中位数与极值。
-            //   纯内存维护, 零额外网络请求 —— 硬约束要求"不得新增高频请求",
-            //   所以抗抖只能靠对已有采样做滚动统计, 不能靠连发多次探测。
-            // ==========================================================
             function pushSample(arr, v, maxLen) {
               if (typeof v !== 'number' || !isFinite(v) || v <= 0) return arr;
               arr.push(v);
@@ -5753,27 +6921,17 @@ rules:
               var s = arr.slice().sort(function (a, b) { return a - b; });
               return { min: s[0], max: s[s.length - 1], n: s.length };
             }
-            // 【RTT 提速】"多少个样本才称得上中位"的唯一门限: 显示端与加载补测共用同一常量,
-            // 避免两处各写一个字面量、日后改一处漏一处。
             var RTT_MIN_SAMPLES = 3;
-            // 四段各自的样本桶(浏览器↔边缘 / 边缘计算 / 手机↔边缘 / 手机↔公网)
             var rttSamples = { client: [], server: [], edge: [], egress: [] };
 
-            // 客户端 ↔ Cloudflare 边缘 的真实 RTT 实测
-            //   /api/rtt 是纯探针(不做任何计算), 这里的耗时就是纯网络往返。
-            //   节流到 15 秒一次, 避免极速模式下请求量翻倍。
             let lastClientRttMs = null;
             let lastRttProbeAt = 0;
-            // 【RTT 提速 · 方案 3】force=true 时绕过 15 秒节流 —— 只给"页面加载瞬间补测"用。
-            // 稳态路径(fetchMetrics 轮询 与 15 秒定时器)一律不传 force, 节流保持原样。
             async function probeClientRtt(force) {
               const _now = Date.now();
               if (!force && _now - lastRttProbeAt < 15000) return;
-              lastRttProbeAt = _now;   // force 也刷新时间戳, 避免紧随其后的定时器再打一次
+              lastRttProbeAt = _now;
               try {
                 const t0 = performance.now();
-                // 【2026-10-04 修复 T8.10】加 3 秒超时: 原实现无超时, 网络异常时会
-                //   阻塞整轮 fetchMetrics(在 await 上卡死)。
                 const ctrl = new AbortController();
                 const to = setTimeout(() => ctrl.abort(), 3000);
                 await fetch(window.location.origin + '/api/rtt?_t=' + Date.now(), { cache: 'no-store', signal: ctrl.signal });
@@ -5781,11 +6939,7 @@ rules:
                 const ms = performance.now() - t0;
                 if (ms > 0 && ms < 60000) {
                   lastClientRttMs = Math.round(ms);
-                  // 【RTT 修复 · 方案 C】把样本收进滚动窗口(不改节流: 仍是 15 秒一次)
                   pushSample(rttSamples.client, lastClientRttMs, 10);
-                  // 【D 2026-10-04】把这一次【真实测量】回传给服务端, 按接入机房聚合。
-                  // 这是"各地区客户端接入质量"的唯一正确数据源 —— 手机侧测不到别人的网络。
-                  // 不新增频率(与探针同频), 载荷约 20 字节; fire-and-forget, 失败绝不影响卡片。
                   try {
                     fetch(window.location.origin + '/api/client_rtt', {
                       method: 'POST',
@@ -5798,42 +6952,24 @@ rules:
               } catch (e) {}
             }
 
-            // ==========================================================
-            // 【RTT 提速 2026-10-04 · 方案 B】让 /api/rtt 独立按 15 秒采样
-            // ----------------------------------------------------------
-            // 原来这个探针只在 fetchMetrics 里被调用, 而 fetchMetrics 默认 60 秒
-            // 才跑一次 => 第 1 段三分钟才攒够 3 个样本(即"页面上四段显示 --")。
-            // 节流阈值本来就是 15 秒(见 probeClientRtt 第一行), 这里只是把它用起来。
-            // 于是第 1 段 30 秒就有 3 个真实样本、2.5 分钟满 10 个。
-            // 代价: 稳态每分钟 4 个请求(每个约 619 字节, 204 空响应, 不读任何存储),
-            //       相对手机每天 14400 次上报 < 0.1%; 与 2 秒极速模式的节流互不干扰。
-            // 注: 不在页面隐藏时暂停 —— 否则切回标签页时中位数会基于过期样本。
             if (!window.__rttSampleTimer) {
               window.__rttSampleTimer = setInterval(function () { probeClientRtt(); }, 15000);
-              // 【RTT 提速 · 方案 3】页面加载瞬间补测 —— 但【只在还没拿到足够的正常测速数据时】才补:
-              //   need = RTT_MIN_SAMPLES - 已有样本数, 补够即止(已有 >=3 个样本时一次都不补)。
-              //   于是第 1 段从"30 秒"压到"打开即 0 秒"; 代价每次加载最多 +2 个请求。
-              //   为什么间隔 250ms 而不是连发: 三次落在不同的往返上, 避免"同一瞬间的同一拥塞
-              //   状态"被当成三个独立样本(那会让中位数虚稳)。
-              //   真实性: 每一次都是真实的 /api/rtt 实测耗时, 不插值、不复制、不估算。
               (async function () {
-                await probeClientRtt();                        // 常规首次采样(走节流)
-                if (window.__rttWarmupDone) return;            // 每次页面加载只补一轮
+                await probeClientRtt();
+                if (window.__rttWarmupDone) return;
                 const need = RTT_MIN_SAMPLES - rttSamples.client.length;
-                if (need <= 0) return;                         // 已经有正常测速数据 => 不补
+                if (need <= 0) return;
                 window.__rttWarmupDone = true;
                 for (let i = 0; i < need; i++) {
-                  await probeClientRtt(true);                  // force: 仅此处绕过 15 秒节流
+                  await probeClientRtt(true);
                   if (i < need - 1) await new Promise(function (r) { setTimeout(r, 250); });
                 }
               })();
             }
 
-            // 真实数据年龄 (修 BUG: 旧实现测的是"浏览器上次轮询距今多久",
-            // 且被每 10 秒的槽位抓取不断重置, 所以永远在 1~7 秒循环, 与数据新旧无关)
             let dataAgeBaseSec = 0;
             let dataAgeBaseAt = Date.now();
-            let dataNoSignal = true;   // 【2026-10-04 T1.4】timestamp<=0 时视为"未测到"
+            let dataNoSignal = true;
             function noteDataAge(serverTime, dataTimestamp) {
               if (typeof serverTime === 'number' && typeof dataTimestamp === 'number' && dataTimestamp > 0 && serverTime >= dataTimestamp) {
                 dataAgeBaseSec = (serverTime - dataTimestamp) / 1000;
@@ -5848,39 +6984,31 @@ rules:
               dataAgeBaseAt = Date.now();
             }
 
-            // 右上角数据时效: 显示"数据本身"有多旧, 并随时间自然增长(不受轮询重置影响)
-            // 【2026-10-04 修复 T8.4】颜色规则统一: <=599 秒绿、>=600 秒黄;
-            //   红色只保留给"未测到"(原来 >45 秒就变红, 违反"红只给连不上")。
             function updateFreshnessTicker() {
               const el = document.getElementById('dataFreshnessTag');
               if (!el) return;
-              // 【2026-10-05 修复】优先用实时推送带回的真实数据年龄(liveAgeS + 距上次推送的本地耗时),
-              //   避免"1 分钟采集"模式下把数据年龄虚增到 60 秒、与顶栏"数据 X 秒前"自相矛盾。
               if (typeof window.liveAgeS === 'number' && typeof window.liveLastAt === 'number') {
                 const liveSec = Math.max(0, Math.round(window.liveAgeS + (Date.now() - window.liveLastAt) / 1000));
                 el.innerText = (liveSec <= 1 ? '刚刚' : liveSec + '秒前') + '数据';
-                el.style.color = (liveSec <= 599) ? '#22c55e' : '#eab308';
+                el.style.color = (liveSec <= 599) ? '#30d158' : '#ffd60a';
                 return;
               }
               if (dataNoSignal) {
                 el.innerText = '未测到';
-                el.style.color = '#ef4444';
+                el.style.color = '#ff453a';
                 return;
               }
               const extraSec = (Date.now() - dataAgeBaseAt) / 1000;
               const ageSec = Math.max(0, Math.round(dataAgeBaseSec + extraSec));
               el.innerText = (ageSec <= 1 ? '刚刚' : ageSec + '秒前') + '数据';
-              el.style.color = (ageSec <= 599) ? '#22c55e' : '#eab308';
+              el.style.color = (ageSec <= 599) ? '#30d158' : '#ffd60a';
             }
             setInterval(updateFreshnessTicker, 1000);
 
             function startMetricsPolling() {
               if (metricsTimer) clearInterval(metricsTimer);
               fetchMetrics();
-              // 【2026-10-05 用户决策】极速模式不再用 2 秒轮询, 改由 10 秒槽位对齐双采驱动
-              //   (见 tickSlotAlignedRefresh); 普通模式仍是 60 秒一采。
-              //   同时移除"打开页面自动下发全速扫描"(每开一次页面就写一次 KV 且手机要跑 5.5 分钟)。
-              const _pollIv = (currentPollInterval <= 5000) ? 60000 : currentPollInterval;
+              const _pollIv = (currentPollInterval <= 5000) ? 10000 : currentPollInterval;
               metricsTimer = setInterval(fetchMetrics, _pollIv);
             }
 
@@ -5901,15 +7029,46 @@ rules:
               }
             });
 
+            // Motion (motiondivision/motion) 页面首屏编排与触感交互
+            (function initMotionChoreography() {
+              try {
+                setTimeout(function () { syncTgTabsPill(__currentActiveTab || 'all'); }, 40);
+                window.addEventListener('resize', function () { syncTgTabsPill(__currentActiveTab || 'all'); });
+                if (!window.Motion) return;
+                if (Motion.animate) {
+                  Motion.animate(
+                    '.tg-master-pane .tg-section-group, .tg-detail-pane .tg-view-section',
+                    { opacity: [0, 1], y: [12, 0] },
+                    { duration: 0.36, delay: Motion.stagger ? Motion.stagger(0.045) : 0, easing: [0.22, 1, 0.36, 1] }
+                  );
+                }
+                if (Motion.press) {
+                  Motion.press('.tg-action-btn, .tg-seg-btn, .tg-tab-item, .tg-list-cell', function (el) {
+                    Motion.animate(el, { scale: 0.97 }, { duration: 0.1 });
+                    return function () {
+                      Motion.animate(el, { scale: 1 }, { type: Motion.spring || undefined, stiffness: 500, damping: 28, duration: 0.18 });
+                    };
+                  });
+                }
+                if (Motion.hover) {
+                  Motion.hover('.tg-bento-card', function (el) {
+                    Motion.animate(el, { y: -1 }, { duration: 0.18, easing: 'ease-out' });
+                    return function () {
+                      Motion.animate(el, { y: 0 }, { duration: 0.2, easing: 'ease-out' });
+                    };
+                  });
+                }
+              } catch (e) {}
+            })();
+
             startMetricsPolling();
             startLiveStream();
           </script>
-        <!-- 【2026-10-04 T7.2】KV 写失败黄条: 后台增删用户后若 KV 没落盘, URL 会带 kverr=1 -->
-        <script>
+        <script type="text/javascript">
           (function () {
             if (location.search.indexOf('kverr=1') !== -1) {
               var d = document.createElement('div');
-              d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#eab308;color:#000;padding:10px 16px;font-size:13px;font-weight:600;text-align:center;';
+              d.style.cssText = 'position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:9999;background:hsl(240 10% 3.9% / 0.96);border:1px solid rgba(245,158,11,0.45);backdrop-filter:blur(12px);color:#fde68a;padding:10px 16px;border-radius:8px;font-size:12.5px;font-weight:500;text-align:center;box-shadow:0 10px 25px -5px rgba(0,0,0,0.65);';
               d.innerText = '⚠ 警告: 用户库写入 Cloudflare KV 失败(未真正落盘)。请重试; 若持续出现请检查 KV 配额。';
               document.body.prepend(d);
               setTimeout(function () { d.remove(); }, 12000);
