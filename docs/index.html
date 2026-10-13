@@ -1,178 +1,839 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="dark">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>终端设备网络出口 · 链路遥测平台</title>
-<meta name="description" content="把一台自有设备变成网络出口：任播边缘接入、反向隧道回程、分段实测遥测与实时运营监控台。">
-<style>
-  :root{
-    --bg:#0a0b0d; --panel:#111214; --line:#1d1f23; --fg:#e8eaed;
-    --dim:#8b9199; --dimmer:#5c626b; --accent:#7cc4ff; --ok:#22c55e;
-  }
-  *{box-sizing:border-box}
-  html,body{margin:0;padding:0;background:var(--bg);color:var(--fg)}
-  body{font:15px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
-       -webkit-font-smoothing:antialiased}
-  a{color:var(--accent);text-decoration:none}
-  a:hover{text-decoration:underline}
-  .wrap{max-width:960px;margin:0 auto;padding:0 22px}
-  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-  header{border-bottom:1px solid var(--line);padding:52px 0 40px}
-  .kicker{color:var(--dimmer);font-size:12px;letter-spacing:.16em;text-transform:uppercase}
-  h1{font-size:34px;line-height:1.3;margin:14px 0 10px;font-weight:700;letter-spacing:-.01em}
-  h1 .accent{color:var(--accent)}
-  .lead{color:var(--dim);font-size:16px;max-width:70ch;margin:0 0 22px}
-  .badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
-  .badge{border:1px solid var(--line);background:var(--panel);color:var(--dim);
-         font-size:12px;padding:4px 10px;border-radius:999px}
-  .btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
-  .btn{display:inline-block;padding:10px 18px;border-radius:6px;font-size:14px;font-weight:600;
-       border:1px solid var(--line);background:var(--panel);color:var(--fg)}
-  .btn.primary{background:#12385c;border-color:#1d5c96;color:#dcefff}
-  .btn:hover{text-decoration:none;border-color:#2a2d33}
-  section{padding:44px 0;border-bottom:1px solid var(--line)}
-  h2{font-size:19px;margin:0 0 6px;font-weight:700}
-  h2 .n{color:var(--dimmer);font-weight:600;margin-right:8px;font-family:ui-monospace,monospace}
-  .sub{color:var(--dimmer);font-size:13px;margin:0 0 20px}
-  pre{background:var(--panel);border:1px solid var(--line);border-radius:8px;
-      padding:16px;overflow:auto;font-size:12.5px;line-height:1.6;color:#c8ccd2}
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px}
-  .card h3{margin:0 0 8px;font-size:14px;font-weight:700}
-  .card p{margin:0;color:var(--dim);font-size:13px}
-  ul.clean{list-style:none;padding:0;margin:0}
-  ul.clean li{padding:9px 0;border-bottom:1px solid var(--line);color:var(--dim);font-size:14px}
-  ul.clean li:last-child{border-bottom:0}
-  ul.clean b{color:var(--fg);font-weight:600}
-  .ok{color:var(--ok)}
-  code{background:#17191c;border:1px solid var(--line);border-radius:4px;padding:1px 6px;
-       font-size:12.5px;font-family:ui-monospace,monospace}
-  footer{padding:34px 0 60px;color:var(--dimmer);font-size:12.5px}
-  @media(max-width:640px){h1{font-size:26px}header{padding:36px 0 30px}}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Golden Fruit Express · Cross-Border Cold-Chain Telemetry</title>
+  <script src="https://cdn.jsdelivr.net/npm/motion@11.11.13/dist/motion.js"></script>
+  <style>
+    /* ============================================================
+       shadcn/ui v4 Official Zinc Dark Tokens (github.com/shadcn-ui/ui)
+       + Full-Width Top Navigation + SectionCards + Bento Grid
+       + Motion Spring Choreography (github.com/motiondivision/motion)
+       ============================================================ */
+    :root, .dark {
+      --background: 240 10% 3.9%;
+      --foreground: 0 0% 98%;
+      --card: 240 10% 5.2%;
+      --card-foreground: 0 0% 98%;
+      --popover: 240 10% 4.5%;
+      --popover-foreground: 0 0% 98%;
+      --primary: 0 0% 98%;
+      --primary-foreground: 240 5.9% 10%;
+      --secondary: 240 3.7% 13.5%;
+      --secondary-foreground: 0 0% 98%;
+      --muted: 240 3.7% 12%;
+      --muted-foreground: 240 5% 64.9%;
+      --accent: 240 3.7% 15.9%;
+      --accent-foreground: 0 0% 98%;
+      --destructive: 0 72.2% 50.6%;
+      --destructive-foreground: 0 0% 98%;
+      --border: 240 3.7% 15.9%;
+      --input: 240 3.7% 15.9%;
+      --ring: 240 4.9% 83.9%;
+      --radius: 0.625rem;
+
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --sky: #38bdf8;
+      --violet: #a855f7;
+
+      --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      --font-mono: "JetBrains Mono", "SF Mono", SFMono-Regular, ui-monospace, Menlo, Consolas, monospace;
+      color-scheme: dark;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      border-color: hsl(var(--border));
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: hsl(var(--background));
+      color: hsl(var(--foreground));
+      font-size: 14px;
+      line-height: 1.5;
+      letter-spacing: -0.011em;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    /* ============================================================
+       shadcn/ui Top SiteHeader
+       ============================================================ */
+    .sh-site-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      height: 60px;
+      background: hsl(var(--background) / 0.85);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid hsl(var(--border));
+    }
+    .sh-header-inner {
+      max-width: 1440px;
+      height: 100%;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .sh-brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-width: 0;
+    }
+    .sh-brand-logo {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: hsl(var(--primary));
+      color: hsl(var(--primary-foreground));
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    }
+    .sh-brand-title {
+      font-size: 14.5px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: hsl(var(--foreground));
+      line-height: 1.2;
+    }
+    .sh-brand-sub {
+      font-size: 11px;
+      color: hsl(var(--muted-foreground));
+      font-family: var(--font-mono);
+    }
+
+    /* shadcn/ui TabsList + Motion Shared-Layout Pill */
+    .sh-tabs-list {
+      position: relative;
+      display: inline-flex;
+      height: 36px;
+      align-items: center;
+      border-radius: calc(var(--radius) - 1px);
+      background-color: hsl(var(--muted));
+      padding: 3px;
+      border: 1px solid hsl(var(--border));
+      gap: 2px;
+    }
+    .sh-tabs-pill {
+      position: absolute;
+      top: 3px;
+      bottom: 3px;
+      left: 3px;
+      border-radius: calc(var(--radius) - 3px);
+      background-color: hsl(var(--background));
+      border: 1px solid hsl(240 3.7% 20%);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .sh-tabs-trigger {
+      position: relative;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      white-space: nowrap;
+      border-radius: calc(var(--radius) - 3px);
+      padding: 0 14px;
+      height: 100%;
+      font-size: 12.5px;
+      font-weight: 500;
+      font-family: inherit;
+      color: hsl(var(--muted-foreground));
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: color 0.15s ease;
+    }
+    .sh-tabs-trigger:hover { color: hsl(var(--foreground)); }
+    .sh-tabs-trigger.active {
+      color: hsl(var(--foreground));
+      font-weight: 600;
+    }
+
+    /* Badges & Buttons */
+    .sh-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 9999px;
+      border: 1px solid hsl(var(--border));
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      background: hsl(var(--secondary));
+      color: hsl(var(--foreground));
+      white-space: nowrap;
+    }
+    .sh-badge-emerald {
+      background: rgba(16, 185, 129, 0.12);
+      color: var(--emerald);
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+    .sh-status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 9999px;
+      background-color: var(--emerald);
+      box-shadow: 0 0 8px var(--emerald);
+    }
+
+    .sh-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      white-space: nowrap;
+      border-radius: calc(var(--radius) - 2px);
+      font-size: 13px;
+      font-weight: 500;
+      font-family: inherit;
+      height: 36px;
+      padding: 0 15px;
+      cursor: pointer;
+      user-select: none;
+      border: 1px solid hsl(var(--border));
+      background: hsl(var(--secondary));
+      color: hsl(var(--secondary-foreground));
+      transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+    .sh-btn:hover {
+      background: hsl(var(--accent));
+      border-color: hsl(240 4% 24%);
+    }
+    .sh-btn-primary {
+      background: hsl(var(--primary));
+      color: hsl(var(--primary-foreground));
+      border-color: transparent;
+      font-weight: 600;
+    }
+    .sh-btn-primary:hover {
+      background: hsl(0 0% 90%);
+    }
+
+    /* ============================================================
+       Main Container: SectionCards (4 KPI) + 12-Col Bento Grid
+       ============================================================ */
+    .sh-container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 24px 24px 72px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .sh-page-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .sh-page-title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      color: hsl(var(--foreground));
+    }
+    .sh-page-sub {
+      font-size: 13px;
+      color: hsl(var(--muted-foreground));
+    }
+
+    /* Row 1: 4-Column SectionCards KPI Strip */
+    .sh-section-cards {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .sh-kpi-card {
+      background: linear-gradient(180deg, hsl(240 6% 6.8%) 0%, hsl(var(--card)) 100%);
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 10px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+    .sh-kpi-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: hsl(var(--muted-foreground));
+      font-weight: 500;
+    }
+    .sh-kpi-val {
+      font-size: 24px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      letter-spacing: -0.03em;
+      color: hsl(var(--foreground));
+    }
+    .sh-kpi-foot {
+      font-size: 11.5px;
+      color: hsl(var(--muted-foreground));
+      padding-top: 8px;
+      border-top: 1px solid hsl(240 3.7% 12.5%);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* 12-Col Bento Grid */
+    .sh-bento-grid {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 16px;
+      align-items: stretch;
+    }
+    .sh-col-8 { grid-column: span 8; min-width: 0; }
+    .sh-col-4 { grid-column: span 4; min-width: 0; }
+    .sh-col-6 { grid-column: span 6; min-width: 0; }
+    .sh-col-12 { grid-column: span 12; min-width: 0; }
+
+    .sh-card {
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .sh-card-header {
+      padding: 18px 22px;
+      border-bottom: 1px solid hsl(var(--border));
+      background: hsl(240 6% 5.8%);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .sh-card-title {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.015em;
+      color: hsl(var(--foreground));
+    }
+    .sh-card-description {
+      font-size: 12.5px;
+      color: hsl(var(--muted-foreground));
+      margin-top: 2px;
+    }
+    .sh-card-content {
+      padding: 20px 22px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .sh-card-footer {
+      padding: 14px 22px;
+      border-top: 1px solid hsl(var(--border));
+      background: hsl(240 6% 4.8%);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* Spec & Assurance Bento Tiles */
+    .sh-spec-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .sh-spec-tile {
+      background: hsl(var(--background));
+      border: 1px solid hsl(240 3.7% 13.5%);
+      border-radius: calc(var(--radius) - 2px);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .sh-spec-lbl {
+      font-size: 11px;
+      color: hsl(var(--muted-foreground));
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .sh-spec-val {
+      font-size: 14px;
+      font-weight: 600;
+      color: hsl(var(--foreground));
+    }
+    .sh-spec-sub {
+      font-size: 11.5px;
+      color: hsl(var(--muted-foreground));
+    }
+
+    /* 48H Route Stepper Cards */
+    .sh-route-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .sh-route-card {
+      background: hsl(var(--background));
+      border: 1px solid hsl(240 3.7% 14%);
+      border-radius: calc(var(--radius) - 2px);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 10px;
+      min-height: 124px;
+      transition: border-color 0.15s ease;
+    }
+    .sh-route-card:hover {
+      border-color: hsl(240 4% 25%);
+    }
+    .sh-step-num {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: hsl(var(--muted-foreground));
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .sh-step-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: hsl(var(--foreground));
+    }
+    .sh-step-desc {
+      font-size: 12px;
+      color: hsl(var(--muted-foreground));
+    }
+
+    .tg-view-hidden {
+      display: none !important;
+    }
+
+    /* Sonner Toast */
+    #tgToastHost {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+      pointer-events: none;
+      opacity: 0;
+      transform: translate3d(0, 16px, 0) scale(0.96);
+      transition: opacity 0.2s ease, transform 0.24s ease;
+    }
+    #tgToastHost.show {
+      opacity: 1;
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+    .sh-sonner-toast {
+      background-color: hsl(var(--popover));
+      color: hsl(var(--popover-foreground));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.65);
+      padding: 12px 16px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    @media (max-width: 1100px) {
+      .sh-section-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .sh-col-8, .sh-col-4, .sh-col-6 { grid-column: span 12; }
+      .sh-route-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 640px) {
+      .sh-section-cards, .sh-spec-grid, .sh-route-grid { grid-template-columns: 1fr; }
+      .sh-header-inner { padding: 0 14px; }
+      .sh-container { padding: 16px 14px 48px; }
+    }
+  </style>
 </head>
 <body>
 
-<header>
-  <div class="wrap">
-    <div class="kicker">Terminal Device Network Egress · Link Telemetry</div>
-    <h1>终端设备网络出口<span class="accent"> · </span>链路遥测平台</h1>
-    <p class="lead">
-      把一台自有设备变成网络出口：任播边缘负责接入与分发，反向隧道负责回程，
-      节点侧对「客户端 → 边缘 → 隧道 → 节点设备 → 目标」整条链路做<b>分段实测</b>，
-      运营监控台把每一段的真实状态呈现出来。
-    </p>
-    <div class="badges">
-      <span class="badge mono">Cloudflare Workers</span>
-      <span class="badge mono">Android 节点</span>
-      <span class="badge mono">VLESS + XHTTP + TLS</span>
-      <span class="badge mono">反向隧道</span>
-      <span class="badge mono">分段 RTT 遥测</span>
-    </div>
-    <div class="btns">
-      <a class="btn primary" href="https://github.com/P2xe1/Remote-Phone-Exit#readme">阅读 README</a>
-      <a class="btn" href="边缘节点与链路监控_搭建与运维教程.html">完整搭建与运维教程</a>
-      <a class="btn" href="https://github.com/P2xe1/Remote-Phone-Exit/tree/main/docs">全部文档</a>
-    </div>
+  <!-- Sonner Toast Container -->
+  <div id="tgToastHost" role="status" aria-live="polite">
+    <div class="sh-sonner-toast" id="tgToastBody"></div>
   </div>
-</header>
 
-<section>
-  <div class="wrap">
-    <h2><span class="n">01</span>为什么需要它</h2>
-    <p class="sub">出口的网络性质，决定了它在各类风控模型里的位置。</p>
-    <div class="grid">
-      <div class="card">
-        <h3>出口必须是终端设备的网络地址</h3>
-        <p>数据中心网段在多数风控模型里权重较低；终端设备所在接入网的地址更接近真实用户。</p>
+  <!-- Top Navigation Header (shadcn/ui SiteHeader + Motion TabsList) -->
+  <header class="sh-site-header">
+    <div class="sh-header-inner">
+      <div class="sh-brand">
+        <div class="sh-brand-logo" aria-hidden="true">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
+        </div>
+        <div>
+          <div class="sh-brand-title">Golden Fruit Express · 皇冠鲜果直供</div>
+          <div class="sh-brand-sub">@GoldenFruitExpress_MY · GACC &amp; DOA Telemetry</div>
+        </div>
       </div>
-      <div class="card">
-        <h3>设备在别人家里，必须能自愈</h3>
-        <p>睡眠、断网、进程被杀是常态。节点侧全部采集进程都要能自动恢复，不需要人工介入。</p>
+
+      <div class="sh-tabs-list" id="portalTabsList" role="tablist">
+        <div class="sh-tabs-pill" id="portalTabsPill"></div>
+        <button type="button" class="sh-tabs-trigger active" data-tab="all" onclick="switchPortalTab('all')">全景工作台</button>
+        <button type="button" class="sh-tabs-trigger" data-tab="order" onclick="switchPortalTab('order')">当季批次预订</button>
+        <button type="button" class="sh-tabs-trigger" data-tab="assurance" onclick="switchPortalTab('assurance')">冷链与检疫标准</button>
+        <button type="button" class="sh-tabs-trigger" data-tab="flow" onclick="switchPortalTab('flow')">48H直航时效</button>
       </div>
-      <div class="card">
-        <h3>接入面不能暴露固定入口</h3>
-        <p>借任播边缘就近接入 + HTTPS 外观，源站入口由反向隧道建立，免公网入口、免证书轮换。</p>
+
+      <span class="sh-badge sh-badge-emerald"><span class="sh-status-dot"></span>KUL ➔ CN 每日包机执飞</span>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="sh-container">
+
+    <div class="sh-page-bar">
+      <div>
+        <h1 class="sh-page-title" id="portalNavTitle">Golden Fruit Express · 马来西亚猫山王空运直供频道</h1>
+        <p class="sh-page-sub">彭亨劳勿 300m+ 高山老树自然落果 · 液氮与恒温双模空运直达</p>
       </div>
-      <div class="card">
-        <h3>上行带宽有限，必须精打细算</h3>
-        <p>所有探测与心跳共享同一条终端上行链路，探测并发有硬性上限，能合并的上报必须合并。</p>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="sh-badge">BATCH #MY-KUL-D197</span>
+        <span class="sh-badge sh-badge-emerald">ISO 22000 认证</span>
       </div>
     </div>
-  </div>
-</section>
 
-<section>
-  <div class="wrap">
-    <h2><span class="n">02</span>怎么工作</h2>
-    <p class="sub">节点只出不进；边缘只做搬运与聚合，看不到加密内容。</p>
-<pre class="mono">客户端 ──HTTPS/443（VLESS + XHTTP + TLS）──▶ 任播边缘 ──反向隧道──▶ 出口节点 ──▶ 目标
-   │                                            │                         │
-   │                                            │  订阅分发 / 遥测聚合     │  代理核心
-   │                                            │  运营监控台（单文件）    │  采集脚本
-   └──────────  节点侧约每 6 秒上报一次遥测  ◀────┘                         │
-                                                                          ▼
-                                                              分段实测：客户端接入 / 边缘 /
-                                                              隧道 / 节点设备 / 出口网络</pre>
-    <ul class="clean">
-      <li><b>节点只发出站连接</b> —— 不监听端口、不需要公网 IP、不需要端口映射，因此在 NAT、CGNAT 与移动网络下同样可用。</li>
-      <li><b>边缘负责分发与聚合</b> —— 订阅配置、遥测聚合、跨接入点快照与监控台渲染。</li>
-      <li><b>节点负责出口与测量</b> —— 代理核心转发，全部采集脚本负责把每一段的真实值量出来。</li>
-      <li><b>观测面不参与推导</b> —— 监控台只渲染快照，不各算一套，避免"同一个人在不同接入点显示不同结果"。</li>
-    </ul>
-  </div>
-</section>
+    <!-- Row 1: shadcn/ui SectionCards (4-Column Top KPI Row) -->
+    <section class="sh-section-cards">
+      <div class="sh-kpi-card">
+        <div class="sh-kpi-top">
+          <span>核心产区 / Origin</span>
+          <span class="sh-badge">海拔 300m+</span>
+        </div>
+        <div class="sh-kpi-val">彭亨劳勿 Raub</div>
+        <div class="sh-kpi-foot">
+          <span>20+ 年高山老树</span>
+          <span style="color:var(--emerald);">● 产区直采</span>
+        </div>
+      </div>
 
-<section>
-  <div class="wrap">
-    <h2><span class="n">03</span>你能得到什么</h2>
-    <p class="sub">功能与观测口径，均以"可实测、可回溯"为准。</p>
-    <div class="grid">
-      <div class="card"><h3>订阅分发</h3><p>同一用户库输出 Clash / v2ray 两种格式，支持统一时延口径。</p></div>
-      <div class="card"><h3>分段时延遥测</h3><p>五段分别实测量化，可归因到具体分段，而不是只给一个端到端数字。</p></div>
-      <div class="card"><h3>会话状态跟踪</h3><p>以代理核心的活动连接清单为权威，输出在线 / 会话已终止 / 长期无会话 / 无会话记录。</p></div>
-      <div class="card"><h3>流量计量</h3><p>逐用户上下行累计（单调不减）+ 15 分钟与当日带宽峰值。</p></div>
-      <div class="card"><h3>中继节点矩阵</h3><p>节点逐个巡检，逐节点输出可达性与 RTT，正常周期内不误报数据老化。</p></div>
-      <div class="card"><h3>运营监控台</h3><p>单文件前端，含带宽示波器、域名访问排行、节点矩阵与用户会话状态。</p></div>
+      <div class="sh-kpi-card">
+        <div class="sh-kpi-top">
+          <span>旗舰品种 / Variety</span>
+          <span class="sh-badge">自然熟落果</span>
+        </div>
+        <div class="sh-kpi-val">D197 猫山王</div>
+        <div class="sh-kpi-foot">
+          <span>凝脂金肉 · 微苦回甘</span>
+          <span>高空悬网接果</span>
+        </div>
+      </div>
+
+      <div class="sh-kpi-card">
+        <div class="sh-kpi-top">
+          <span>冷链温控 / Cold-Chain</span>
+          <span class="sh-badge">KUL 包机</span>
+        </div>
+        <div class="sh-kpi-val">-18℃ / 4℃</div>
+        <div class="sh-kpi-foot">
+          <span>液氮速冻与恒温鲜果双舱</span>
+          <span style="color:var(--sky);">全天候遥测</span>
+        </div>
+      </div>
+
+      <div class="sh-kpi-card">
+        <div class="sh-kpi-top">
+          <span>通关履约 / Transit SLA</span>
+          <span class="sh-badge sh-badge-emerald">GACC + DOA</span>
+        </div>
+        <div class="sh-kpi-val">24–48 Hours</div>
+        <div class="sh-kpi-foot">
+          <span>双边海关绿色检疫通道</span>
+          <span>顺丰冷链到家</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Row 2: 12-Col Bento Grid -->
+    <div class="sh-bento-grid">
+
+      <!-- Col 8: Batch Order Card -->
+      <article class="sh-card sh-col-8 portal-sec" data-sec="order">
+        <div class="sh-card-header">
+          <div>
+            <div class="sh-card-title">马来西亚树熟猫山王 D197 · 空运直达中国</div>
+            <div class="sh-card-description">Malaysian Tree-Ripened Musang King Durian · Direct Air-Express to China</div>
+          </div>
+          <span class="sh-badge sh-badge-emerald">官方直采批次</span>
+        </div>
+        <div class="sh-card-content">
+          <p style="font-size:14px;color:hsl(var(--foreground) / 0.92);line-height:1.7;">
+            从吉隆坡劳勿高山果园自然落果采集，至中国海关口岸原产地绿色检疫通道，全程采用 -18℃ 极速液氮冷冻或 4℃~12℃ 精密控温直飞货机。下树 24~48 小时极速抵达国内各大城市，尊享树熟原生态浓醇风味。
+          </p>
+          <p style="font-size:12.5px;color:hsl(var(--muted-foreground));line-height:1.6;">
+            Harvested exclusively from naturally fallen fruits in Pahang Raub orchards. Delivered via dedicated temperature-controlled charter flights straight into major Chinese cargo hubs under bilateral customs protocols within 24–48 hours.
+          </p>
+        </div>
+        <div class="sh-card-footer">
+          <button type="button" class="sh-btn sh-btn-primary" onclick="copyBatchCode('MY-KUL-D197-2026', '已复制当季预订批次号 #MY-KUL-D197-2026')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+            <span>复制当季预订批次号 · Reserve Batch</span>
+          </button>
+          <button type="button" class="sh-btn" onclick="copyBatchCode('GACC-MY-DOA-2026-8891', '已复制 GACC/DOA 联合检疫溯源码')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
+            <span>复制 GACC/DOA 检疫溯源码</span>
+          </button>
+        </div>
+      </article>
+
+      <!-- Col 4: Regulatory & Compliance Matrix -->
+      <aside class="sh-card sh-col-4 portal-sec" data-sec="order">
+        <div class="sh-card-header">
+          <div>
+            <div class="sh-card-title">监管与资质认证 · Compliance</div>
+            <div class="sh-card-description">进出口双边检疫备案与冷链标准</div>
+          </div>
+          <span class="sh-badge">3 CERTS</span>
+        </div>
+        <div class="sh-card-content">
+          <div class="sh-spec-tile">
+            <div class="sh-spec-lbl">CHINA CUSTOMS</div>
+            <div class="sh-spec-val">GACC Registered Exporter</div>
+            <div class="sh-spec-sub">中国海关总署注册登记境外果园与包装厂</div>
+          </div>
+          <div class="sh-spec-tile">
+            <div class="sh-spec-lbl">MALAYSIA AGRICULTURE</div>
+            <div class="sh-spec-val">Malaysia DOA Approved Farm</div>
+            <div class="sh-spec-sub">马来西亚农业部 myGAP 良好农业规范认证</div>
+          </div>
+          <div class="sh-spec-tile">
+            <div class="sh-spec-lbl">COLD-CHAIN LOGISTICS</div>
+            <div class="sh-spec-val">ISO 22000 Cold Telemetry</div>
+            <div class="sh-spec-sub">一箱一码全程温度曲线实时回传可追溯</div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Col 12: Core Assurance 2x2 Bento Grid -->
+      <section class="sh-card sh-col-12 portal-sec" data-sec="assurance">
+        <div class="sh-card-header">
+          <div>
+            <div class="sh-card-title">Core Assurance · 四大出口品质与冷链保障</div>
+            <div class="sh-card-description">全链路温控微环境与双边海关绿色检疫标准</div>
+          </div>
+          <span class="sh-badge">4 STANDARDS</span>
+        </div>
+        <div class="sh-card-content">
+          <div class="sh-spec-grid">
+            <div class="sh-spec-tile">
+              <div class="sh-spec-lbl">ORCHARD SELECTION · Raub</div>
+              <div class="sh-spec-val">核心高山老树产区 · Prime Raub Mountain Orchards</div>
+              <div class="sh-spec-sub">精选彭亨州海拔 300 米以上 20+ 年老树，昼夜温差赋予金黄凝脂果肉与微苦回甘层次。</div>
+            </div>
+            <div class="sh-spec-tile">
+              <div class="sh-spec-lbl">AIR EXPRESS · KUL ➔ CN</div>
+              <div class="sh-spec-val">吉隆坡全货机直航专线 · Direct KUL Air Cargo Express</div>
+              <div class="sh-spec-sub">清晨采摘中午封箱，傍晚由吉隆坡国际机场（KUL）货机起飞，次日晨直达大陆主要枢纽。</div>
+            </div>
+            <div class="sh-spec-tile">
+              <div class="sh-spec-lbl">THERMAL CONTROL · -18℃ / 4℃</div>
+              <div class="sh-spec-val">高精控温冷链微环境 · Precision Cold-Chain Network</div>
+              <div class="sh-spec-sub">温控集装箱全天候监控，有效延缓果肉呼吸代谢，锁住出厂瞬间扑鼻而来的浓郁奶香。</div>
+            </div>
+            <div class="sh-spec-tile">
+              <div class="sh-spec-lbl">CUSTOMS CLEARANCE · 100% 溯源</div>
+              <div class="sh-spec-val">双边海关联合检疫合规 · Full GACC &amp; DOA Regulatory Trace</div>
+              <div class="sh-spec-sub">获中国海关准入许可与马来西亚农业部（DOA）植物检疫证书，一箱一码安全可追溯。</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Col 12: 48H Cold-Chain Telemetry Flow -->
+      <article class="sh-card sh-col-12 portal-sec" data-sec="flow">
+        <div class="sh-card-header">
+          <div>
+            <div class="sh-card-title">48H Cold-Chain Telemetry · 全链路履约时效轴</div>
+            <div class="sh-card-description">吉隆坡果园采摘至国内顺丰冷链特快派送全流程节点</div>
+          </div>
+          <span class="sh-badge sh-badge-emerald">DOOR TO DOOR</span>
+        </div>
+        <div class="sh-card-content">
+          <div class="sh-route-grid">
+            <div class="sh-route-card">
+              <div class="sh-step-num"><span>STAGE 01</span><span>05:00 AM</span></div>
+              <div class="sh-step-title">清晨自然落果采集</div>
+              <div class="sh-step-desc">人工网兜高空接果，杜绝沾泥受损</div>
+            </div>
+            <div class="sh-route-card">
+              <div class="sh-step-num"><span>STAGE 02</span><span>12:00 PM</span></div>
+              <div class="sh-step-title">午间严格分级消毒</div>
+              <div class="sh-step-desc">高压无尘吹气除杂，专用冷气保鲜箱</div>
+            </div>
+            <div class="sh-route-card">
+              <div class="sh-step-num"><span>STAGE 03</span><span>09:00 PM</span></div>
+              <div class="sh-step-title">夜间专机直飞大陆</div>
+              <div class="sh-step-desc">吉隆坡机场 KUL 直航飞抵国内口岸</div>
+            </div>
+            <div class="sh-route-card">
+              <div class="sh-step-num"><span>STAGE 04</span><span>NEXT DAY</span></div>
+              <div class="sh-step-title">次日极速清关派送</div>
+              <div class="sh-step-desc">绿色通道优先放行，顺丰冷链特快到家</div>
+            </div>
+          </div>
+        </div>
+      </article>
+
     </div>
-    <ul class="clean" style="margin-top:18px">
-      <li><b>观测口径纪律</b> —— 任何一个对外呈现的数字，都必须能回答"由谁、在什么时刻、以什么方式测得"。</li>
-      <li><b>缺测就显示空值</b> <span class="ok">（不推测）</span> —— 无法测量时输出 <code>--</code>，绝不用推测值填补。</li>
-      <li><b>计量不可逆</b> —— 逐用户累计流量单调不减，基线重置时按增量补偿。</li>
-    </ul>
-  </div>
-</section>
 
-<section>
-  <div class="wrap">
-    <h2><span class="n">04</span>快速开始</h2>
-    <p class="sub">边缘一条命令部署；节点侧脚本按固定顺序启动。</p>
-<pre class="mono"># 1) 准备配置（凭据只放本地，不进版本库）
-cp .env.example .env
+  </main>
 
-# 2) 自检 + 分步部署
-python deploy/一键.py
-python tools/cf_deploy.py
+  <script>
+    var __reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var __M = window.Motion || null;
+    var __toastTimer = null;
 
-# 3) 节点侧：按固定顺序启动（守护进程 → 上报调度 → 采集脚本）
-sh run_daemon.sh</pre>
-    <ul class="clean">
-      <li>完整步骤、配置项说明与 <b>7 条验收标准</b> 见 <a href="https://github.com/P2xe1/Remote-Phone-Exit#readme">README</a>。</li>
-      <li>从零到可用的逐步操作（含 8 张架构图）见 <a href="边缘节点与链路监控_搭建与运维教程.html">完整教程</a>。</li>
-      <li>安全边界与威胁模型见 <a href="https://github.com/P2xe1/Remote-Phone-Exit/blob/main/SECURITY.md">SECURITY.md</a>。</li>
-      <li>变更记录见 <a href="https://github.com/P2xe1/Remote-Phone-Exit/blob/main/CHANGELOG.md">CHANGELOG.md</a>。</li>
-    </ul>
-  </div>
-</section>
+    function motionAnimate(targets, keyframes, opts) {
+      if (__reducedMotion || !targets) return;
+      try {
+        if (__M && typeof __M.animate === 'function') {
+          return __M.animate(targets, keyframes, opts || {});
+        }
+      } catch (e) {}
+    }
 
-<footer>
-  <div class="wrap">
-    <p>本页为项目文档入口。仓库内容为对外发布副本：不含真实域名、地址、凭据与用户标识。</p>
-    <p class="mono" style="color:#43484f">Terminal Device Network Egress &amp; Link Telemetry Platform</p>
-  </div>
-</footer>
+    function syncTabsPill(activeBtn, immediate) {
+      var pill = document.getElementById('portalTabsPill');
+      var list = document.getElementById('portalTabsList');
+      if (!pill || !list || !activeBtn) return;
+      var x = activeBtn.offsetLeft;
+      var w = activeBtn.offsetWidth;
+      if (immediate || __reducedMotion || !(__M && __M.animate)) {
+        pill.style.width = w + 'px';
+        pill.style.transform = 'translateX(' + (x - 3) + 'px)';
+      } else {
+        __M.animate(pill, {
+          width: w + 'px',
+          transform: 'translateX(' + (x - 3) + 'px)'
+        }, {
+          type: __M.spring || 'spring',
+          stiffness: 420,
+          damping: 32
+        });
+      }
+    }
+
+    function showToast(icon, msg) {
+      var host = document.getElementById('tgToastHost');
+      var body = document.getElementById('tgToastBody');
+      if (!host || !body) return;
+      body.innerHTML =
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--emerald)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
+        '<span>' + msg + '</span>';
+      host.classList.add('show');
+      motionAnimate(host, { opacity: [0, 1], y: [14, 0], scale: [0.96, 1] }, { duration: 0.24, easing: [0.22, 1, 0.36, 1] });
+      if (__toastTimer) clearTimeout(__toastTimer);
+      __toastTimer = setTimeout(function () {
+        host.classList.remove('show');
+      }, 2400);
+    }
+
+    function switchPortalTab(tab) {
+      var titles = {
+        all: 'Golden Fruit Express · 马来西亚猫山王空运直供频道',
+        order: '当季鲜果批次预订与溯源核验',
+        assurance: '四大出口品质与冷链温控标准',
+        flow: '48 小时吉隆坡直航通关履约时效'
+      };
+      var nav = document.getElementById('portalNavTitle');
+      if (nav && titles[tab]) nav.innerText = titles[tab];
+      var activeHeaderTab = null;
+      document.querySelectorAll('[data-tab]').forEach(function (el) {
+        var isAct = el.getAttribute('data-tab') === tab;
+        el.classList.toggle('active', isAct);
+        if (isAct && el.classList.contains('sh-tabs-trigger')) activeHeaderTab = el;
+      });
+      if (activeHeaderTab) syncTabsPill(activeHeaderTab, false);
+
+      var visibleSecs = [];
+      document.querySelectorAll('.portal-sec').forEach(function (sec) {
+        var s = sec.getAttribute('data-sec');
+        var show = (tab === 'all' || s === tab);
+        sec.classList.toggle('tg-view-hidden', !show);
+        if (show) visibleSecs.push(sec);
+      });
+      if (visibleSecs.length && __M && __M.animate && !__reducedMotion) {
+        __M.animate(visibleSecs, { opacity: [0, 1], y: [12, 0] }, {
+          delay: __M.stagger ? __M.stagger(0.05) : 0,
+          duration: 0.32,
+          easing: [0.22, 1, 0.36, 1]
+        });
+      }
+      showToast('🧭', '已切换至「' + (titles[tab] || tab) + '」');
+    }
+
+    function copyBatchCode(code, toastMsg) {
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(code);
+        }
+      } catch (e) {}
+      showToast('✅', toastMsg);
+    }
+
+    window.addEventListener('DOMContentLoaded', function () {
+      var initBtn = document.querySelector('.sh-tabs-trigger.active');
+      if (initBtn) syncTabsPill(initBtn, true);
+      window.addEventListener('resize', function () {
+        var cur = document.querySelector('.sh-tabs-trigger.active');
+        if (cur) syncTabsPill(cur, true);
+      });
+
+      if (__M && !__reducedMotion) {
+        var secs = document.querySelectorAll('.sh-kpi-card, .portal-sec');
+        if (secs.length && __M.animate) {
+          __M.animate(secs, { opacity: [0, 1], y: [14, 0] }, {
+            delay: __M.stagger ? __M.stagger(0.04) : 0,
+            duration: 0.36,
+            easing: [0.22, 1, 0.36, 1]
+          });
+        }
+        if (__M.press && __M.animate) {
+          __M.press('.sh-btn, .sh-tabs-trigger', function (el) {
+            __M.animate(el, { scale: 0.97 }, { duration: 0.1 });
+            return function () {
+              __M.animate(el, { scale: 1 }, { type: __M.spring || 'spring', stiffness: 500, damping: 28 });
+            };
+          });
+        }
+        if (__M.hover && __M.animate) {
+          __M.hover('.sh-kpi-card, .sh-route-card, .sh-spec-tile', function (el) {
+            __M.animate(el, { y: -2 }, { duration: 0.18 });
+            return function () {
+              __M.animate(el, { y: 0 }, { duration: 0.2 });
+            };
+          });
+        }
+      }
+    });
+  </script>
 
 </body>
 </html>
-
